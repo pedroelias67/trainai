@@ -1,0 +1,284 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  passwordHash  String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  athlete       Athlete?
+  accounts      Account[]
+  sessions      Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Athlete {
+  id              String    @id @default(cuid())
+  userId          String    @unique
+  dateOfBirth     DateTime?
+  gender          Gender?
+  sport           Sport[]
+  fitnessLevel    FitnessLevel @default(BEGINNER)
+  weeklyHours     Float?    // horas de treino por semana disponíveis
+  trainingDaysPerWeek Int?  // dias de treino por semana (ex: 4)
+  longRunDay      Int?      // dia da semana para o treino longo (0=Dom, 1=Seg, ..., 6=Sáb)
+  restingHR       Int?      // FC repouso
+  maxHR           Int?      // FC máxima
+  ftp             Float?    // Functional Threshold Power (ciclismo/triatlo)
+  ltPace          String?   // Limiar anaeróbio pace (corrida, ex: "5:30/km")
+  garminConnected  Boolean   @default(false)
+  garminUserId     String?
+  stravaConnected  Boolean   @default(false)
+  stravaAthleteId  String?
+  stravaAccessToken  String?
+  stravaRefreshToken String?
+  stravaTokenExpiry  DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  events          Event[]
+  trainingPlans   TrainingPlan[]
+  activities      Activity[]
+  weeklyReports   WeeklyReport[]
+}
+
+model Event {
+  id          String    @id @default(cuid())
+  athleteId   String
+  name        String
+  sport       Sport
+  distance    Distance
+  date        DateTime
+  goalType    GoalType
+  goalTime    String?   // ex: "3:30:00" para maratona
+  priority    Priority  @default(A)
+  createdAt   DateTime  @default(now())
+
+  athlete      Athlete        @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  trainingPlans TrainingPlan[]
+}
+
+model TrainingPlan {
+  id              String    @id @default(cuid())
+  athleteId       String
+  eventId         String
+  name            String
+  startDate       DateTime
+  endDate         DateTime
+  totalWeeks      Int
+  currentWeek     Int       @default(1)
+  status          PlanStatus @default(ACTIVE)
+  aiPromptContext String?
+  periodization   String?
+  coachNotes      String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  athlete         Athlete   @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  event           Event     @relation(fields: [eventId], references: [id])
+  weeks           TrainingWeek[]
+}
+
+model TrainingWeek {
+  id              String    @id @default(cuid())
+  planId          String
+  weekNumber      Int
+  startDate       DateTime
+  endDate         DateTime
+  focus           String?
+  coachMessage    String?
+  totalDistance   Float?
+  totalDuration   Float?
+  aiAnalysis      String?
+  adaptations     String?
+  createdAt       DateTime  @default(now())
+
+  plan            TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
+  sessions        TrainingSession[]
+  weeklyReport    WeeklyReport?
+
+  @@unique([planId, weekNumber])
+}
+
+model TrainingSession {
+  id              String    @id @default(cuid())
+  weekId          String
+  dayOfWeek       Int
+  date            DateTime
+  sport           Sport
+  sessionType     SessionType
+  name            String
+  shortDescription String?
+  warmup          String?
+  mainSet         String?
+  cooldown        String?
+  coachTip        String?
+  rpe             String?
+  keyFocus        String?
+  plannedDistance Float?
+  plannedDuration Float?
+  plannedPace     String?
+  plannedZones    Json?
+  completed       Boolean   @default(false)
+  activityId      String?
+  createdAt       DateTime  @default(now())
+
+  week            TrainingWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
+  activity        Activity?    @relation(fields: [activityId], references: [id])
+}
+
+model Activity {
+  id              String    @id @default(cuid())
+  athleteId       String
+  garminActivityId String?  @unique
+  sport           Sport
+  date            DateTime
+  name            String?
+  distance        Float?    // metros
+  duration        Float?    // segundos
+  elevationGain   Float?    // metros
+  avgHR           Int?
+  maxHR           Int?
+  avgPace         String?
+  avgPower        Float?    // watts
+  avgCadence      Float?    // passos/min ou rpm
+  calories        Int?
+  trainingLoad    Float?
+  perceivedExertion Float?  // RPE do Strava (1-10)
+  aerobicEffect   Float?
+  anaerobicEffect Float?
+  hrZones         Json?
+  gpsTrack        Json?     // array de {lat, lng, ele, hr, pace} por ponto
+  splits          Json?     // splits por km
+  rawData         Json?
+  createdAt       DateTime  @default(now())
+
+  athlete         Athlete   @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  sessions        TrainingSession[]
+}
+
+model WeeklyReport {
+  id              String    @id @default(cuid())
+  athleteId       String
+  weekId          String    @unique
+  weekStartDate   DateTime
+  weekEndDate     DateTime
+  plannedSessions Int
+  completedSessions Int
+  plannedDistance Float?
+  actualDistance  Float?
+  plannedDuration Float?
+  actualDuration  Float?
+  avgHR           Int?
+  totalLoad       Float?
+  aiSummary       String?   // resumo gerado pela IA
+  nextWeekAdaptations String? // adaptações para a semana seguinte
+  createdAt       DateTime  @default(now())
+
+  athlete         Athlete   @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  week            TrainingWeek @relation(fields: [weekId], references: [id])
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum Sport {
+  RUNNING
+  CYCLING
+  SWIMMING
+  TRIATHLON_SPRINT
+  TRIATHLON_OLYMPIC
+  TRIATHLON_HALF
+  TRIATHLON_FULL
+}
+
+enum Distance {
+  FIVE_K
+  TEN_K
+  HALF_MARATHON
+  MARATHON
+  ULTRA
+  SPRINT_TRIATHLON
+  OLYMPIC_TRIATHLON
+  HALF_IRONMAN
+  IRONMAN
+}
+
+enum FitnessLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  ELITE
+}
+
+enum GoalType {
+  FINISH
+  TIME
+  PODIUM
+}
+
+enum Priority {
+  A
+  B
+  C
+}
+
+enum PlanStatus {
+  ACTIVE
+  PAUSED
+  COMPLETED
+  CANCELLED
+  ARCHIVED
+}
+
+enum SessionType {
+  EASY
+  TEMPO
+  INTERVALS
+  LONG
+  RECOVERY
+  STRENGTH
+  BRICK
+  SWIM
+  RACE
+}
