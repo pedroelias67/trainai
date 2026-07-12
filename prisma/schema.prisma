@@ -17,6 +17,12 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  emailVerified         Boolean   @default(false)
+  verificationToken     String?   @unique
+  verificationTokenExpiry DateTime?
+  resetToken            String?   @unique
+  resetTokenExpiry      DateTime?
+
   athlete       Athlete?
   accounts      Account[]
   sessions      Session[]
@@ -281,4 +287,15 @@ enum SessionType {
   BRICK
   SWIM
   RACE
+}
+
+model Invite {
+  id           String    @id @default(cuid())
+  token        String    @unique @default(cuid())
+  email        String?
+  createdAt    DateTime  @default(now())
+  expiresAt    DateTime
+  usedAt       DateTime?
+  usedByUserId String?
+  createdById  String
 }

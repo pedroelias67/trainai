@@ -11,10 +11,37 @@ const loginSchema = z.object({
   password: z.string(),
 });
 
+// Simple in-memory rate limiting (resets on server restart)
+const loginAttempts = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(email: string): boolean {
+  const now = Date.now();
+  const record = loginAttempts.get(email);
+  if (!record || record.resetAt < now) {
+    loginAttempts.set(email, { count: 1, resetAt: now + 15 * 60 * 1000 });
+    return true;
+  }
+  if (record.count >= 5) return false;
+  record.count++;
+  return true;
+}
+
+function clearRateLimit(email: string) {
+  loginAttempts.delete(email);
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { email, password } = loginSchema.parse(body);
+
+    // Rate limiting check
+    if (!checkRateLimit(email)) {
+      return NextResponse.json(
+        { error: "Muitas tentativas. Tenta novamente em 15 minutos." },
+        { status: 429 }
+      );
+    }
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -30,7 +57,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
     }
 
-    // Sessão simples com cookie — em produção usar NextAuth ou Supabase Auth
+    // Only block unverified users if they have a verificationToken set
+    // (meaning they registered after the email verification feature was added)
+    if (!user.emailVerified && user.verificationToken) {
+      return NextResponse.json(
+        { error: "Email não confirmado. Verifica a tua caixa de entrada." },
+        { status: 403 }
+      );
+    }
+
+    // Clear rate limit on successful login
+    clearRateLimit(email);
+
     const cookieStore = await cookies();
     cookieStore.set("user_id", user.id, {
       httpOnly: true,

@@ -2,7 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
-      "Bash(ls /opt/homebrew/bin/ 2>/dev/null | grep node; ls /usr/local/bin/ 2>/dev/null | grep node; find /Users/pedroelias -name \"node\" -type f 2>/dev/null | head -5)"
+      "Bash(ls /opt/homebrew/bin/ 2>/dev/null | grep node; ls /usr/local/bin/ 2>/dev/null | grep node; find /Users/pedroelias -name \"node\" -type f 2>/dev/null | head -5)",
+      "Bash(npx tsc *)",
+      "Bash(npm install *)",
+      "Bash(npm list *)",
+      "Bash(npx prisma *)"
     ]
   }
 }
