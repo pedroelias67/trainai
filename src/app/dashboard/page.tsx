@@ -34,7 +34,7 @@ async function getRunningActivities(athleteId: string) {
   return prisma.activity.findMany({
     where: {
       athleteId,
-      sport: "RUNNING",
+      sport: { in: ["RUNNING", "TRIATHLON_SPRINT", "TRIATHLON_OLYMPIC", "TRIATHLON_HALF", "TRIATHLON_FULL"] },
       date: { gte: subDays(new Date(), 30) },
     },
     select: { id: true, distance: true, duration: true, date: true },
@@ -49,10 +49,14 @@ const sessionTypeLabels: Record<string, string> = {
 
 const sportLabels: Record<string, string> = {
   RUNNING: "Corrida", CYCLING: "Ciclismo", SWIMMING: "Natação",
+  TRIATHLON_SPRINT: "Triatlo Sprint", TRIATHLON_OLYMPIC: "Triatlo Olímpico",
+  TRIATHLON_HALF: "Half Ironman", TRIATHLON_FULL: "Ironman",
 };
 
 const sportIcon: Record<string, string> = {
   RUNNING: "🏃", CYCLING: "🚴", SWIMMING: "🏊",
+  TRIATHLON_SPRINT: "🏊🚴🏃", TRIATHLON_OLYMPIC: "🏊🚴🏃",
+  TRIATHLON_HALF: "🏊🚴🏃", TRIATHLON_FULL: "🏊🚴🏃",
 };
 
 export default async function DashboardPage() {

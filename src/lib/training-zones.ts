@@ -16,6 +16,18 @@ export function calculateHRZones(maxHR: number, restingHR?: number) {
   ];
 }
 
+// Power zones based on FTP (Functional Threshold Power in watts)
+export function calculatePowerZones(ftp: number) {
+  return [
+    { name: "Z1 — Recuperação ativa", low: 0, high: Math.round(ftp * 0.55), color: "bg-zinc-400", description: "Recuperação, sem stress fisiológico" },
+    { name: "Z2 — Resistência", low: Math.round(ftp * 0.55), high: Math.round(ftp * 0.75), color: "bg-green-400", description: "Aeróbico base, longa duração" },
+    { name: "Z3 — Tempo", low: Math.round(ftp * 0.75), high: Math.round(ftp * 0.90), color: "bg-yellow-400", description: "Aeróbico moderado, sustentável por 60-90min" },
+    { name: "Z4 — Limiar (FTP)", low: Math.round(ftp * 0.90), high: Math.round(ftp * 1.05), color: "bg-orange-400", description: "Ritmo de limiar, 20-60min de esforço" },
+    { name: "Z5 — VO2max", low: Math.round(ftp * 1.05), high: Math.round(ftp * 1.20), color: "bg-red-400", description: "Intervalos curtos de alta intensidade" },
+    { name: "Z6 — Capacidade anaeróbica", low: Math.round(ftp * 1.20), high: Math.round(ftp * 1.50), color: "bg-purple-400", description: "Sprints, esforços muito curtos" },
+  ];
+}
+
 // Pace zones based on threshold pace (ltPace in format "M:SS")
 export function calculatePaceZones(ltPace: string) {
   const parts = ltPace.replace(/\/km$/, "").split(":");

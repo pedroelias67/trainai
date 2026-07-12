@@ -30,6 +30,13 @@ export async function POST(req: NextRequest) {
     BEGINNER: "iniciante", INTERMEDIATE: "intermédio", ADVANCED: "avançado", ELITE: "elite",
   };
 
+  const isTriathlonSession = ["BRICK", "SWIM"].includes(session.sessionType) ||
+    ["TRIATHLON_SPRINT", "TRIATHLON_OLYMPIC", "TRIATHLON_HALF", "TRIATHLON_FULL"].includes(session.sport);
+
+  const triathlonExtra = isTriathlonSession
+    ? `\n🚴 **Nutrição na bicicleta** — géis a cada 20-30min, barras energéticas, bebida isotónica\n🔄 **Transições (T1/T2)** — gel rápido na T1, ajuste de hidratação na T2`
+    : "";
+
   const prompt = `Cria um plano detalhado de nutrição e hidratação para este treino:
 Tipo: ${session.sessionType}, Distância: ${session.plannedDistance ?? "?"}km, Duração: ${session.plannedDuration ?? "?"}min, Pace alvo: ${session.plannedPace ?? "?"}
 Nível do atleta: ${fitnessMap[athlete.fitnessLevel] ?? "intermédio"}
@@ -37,7 +44,7 @@ Nível do atleta: ${fitnessMap[athlete.fitnessLevel] ?? "intermédio"}
 Inclui:
 🍽️ **Refeição 2-3h antes** — o que comer, quantidades, exemplos
 🍌 **Lanche 30-60min antes** — snack rápido e fácil de digerir
-💧 **Durante o treino** — hidratação (ml/hora), géis, eletrólitos (se necessário)
+💧 **Durante o treino** — hidratação (ml/hora), géis, eletrólitos (se necessário)${triathlonExtra}
 🏁 **Recuperação imediata (15-30min após)** — janela anabólica, proteínas + hidratos
 🍗 **Refeição de recuperação** — refeição completa de recuperação
 

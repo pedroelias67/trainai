@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { Sport } from "@prisma/client";
 
 const STANDARD_DISTANCES = [
   { name: "5 km", meters: 5000, minM: 4500, maxM: 5500 },
@@ -10,6 +11,15 @@ const STANDARD_DISTANCES = [
   { name: "Meia Maratona", meters: 21097, minM: 20000, maxM: 22200 },
   { name: "Maratona", meters: 42195, minM: 40000, maxM: 44400 },
 ];
+
+const TRIATHLON_DISTANCES = [
+  { name: "Triatlo Sprint", totalMeters: 25750, swimM: 750, bikeM: 20000, runM: 5000 },
+  { name: "Triatlo Olímpico", totalMeters: 51500, swimM: 1500, bikeM: 40000, runM: 10000 },
+  { name: "Half Ironman", totalMeters: 112900, swimM: 1900, bikeM: 90000, runM: 21100 },
+  { name: "Ironman", totalMeters: 225800, swimM: 3800, bikeM: 180000, runM: 42200 },
+];
+
+const TRIATHLON_SPORTS: Sport[] = [Sport.TRIATHLON_SPRINT, Sport.TRIATHLON_OLYMPIC, Sport.TRIATHLON_HALF, Sport.TRIATHLON_FULL];
 
 function formatPace(secondsPerKm: number): string {
   const mins = Math.floor(secondsPerKm / 60);
@@ -38,6 +48,34 @@ export async function GET() {
   return NextResponse.json(records);
 }
 
+async function upsertRecord(
+  athleteId: string,
+  distanceMeters: number,
+  name: string,
+  timeSeconds: number,
+  paceSecPerKm: number,
+  activityId: string,
+  date: Date,
+  upserted: string[]
+) {
+  const existing = await prisma.personalRecord.findFirst({
+    where: { athleteId, distance: distanceMeters },
+    select: { id: true },
+  });
+
+  if (existing) {
+    await prisma.personalRecord.update({
+      where: { id: existing.id },
+      data: { timeSeconds, pace: formatPace(paceSecPerKm), date, activityId },
+    });
+  } else {
+    await prisma.personalRecord.create({
+      data: { athleteId, distance: distanceMeters, timeSeconds, pace: formatPace(paceSecPerKm), date, activityId },
+    });
+  }
+  upserted.push(name);
+}
+
 export async function POST(_req: NextRequest) {
   const cookieStore = await cookies();
   const userId = cookieStore.get("user_id")?.value;
@@ -46,83 +84,51 @@ export async function POST(_req: NextRequest) {
   const athlete = await prisma.athlete.findUnique({ where: { userId } });
   if (!athlete) return NextResponse.json({ error: "Atleta não encontrado" }, { status: 404 });
 
-  // Get all running activities with distance and duration
-  const activities = await prisma.activity.findMany({
-    where: {
-      athleteId: athlete.id,
-      sport: "RUNNING",
-      distance: { not: null },
-      duration: { not: null },
-    },
+  const upserted: string[] = [];
+
+  // Running PRs — Riegel estimation across all running activities
+  const runActivities = await prisma.activity.findMany({
+    where: { athleteId: athlete.id, sport: "RUNNING", distance: { not: null }, duration: { not: null } },
     select: { id: true, distance: true, duration: true, date: true },
   });
 
-  const upserted = [];
-
   for (const std of STANDARD_DISTANCES) {
-    // Find activities in exact range for this distance
-    const exactActivities = activities.filter(
-      (a) => a.distance! >= std.minM && a.distance! <= std.maxM
-    );
-
-    // Also estimate via Riegel for all running activities
     const candidates: { timeSeconds: number; activityId: string; date: Date }[] = [];
 
-    for (const act of activities) {
+    for (const act of runActivities) {
       const dist = act.distance!;
       const dur = act.duration!;
       const speedKmh = (dist / 1000) / (dur / 3600);
-      // Skip unrealistic paces
       if (speedKmh < 5 || speedKmh > 25) continue;
-
-      if (exactActivities.includes(act)) {
-        // Use actual time, adjusted for standard distance
-        const adjustedTime = riegelTime(dist, dur, std.meters);
-        candidates.push({ timeSeconds: adjustedTime, activityId: act.id, date: act.date });
-      } else {
-        // Use Riegel to estimate
-        const estimatedTime = riegelTime(dist, dur, std.meters);
-        candidates.push({ timeSeconds: estimatedTime, activityId: act.id, date: act.date });
-      }
+      candidates.push({ timeSeconds: riegelTime(dist, dur, std.meters), activityId: act.id, date: act.date });
     }
 
     if (candidates.length === 0) continue;
-
-    // Find best (minimum time)
     candidates.sort((a, b) => a.timeSeconds - b.timeSeconds);
     const best = candidates[0];
+    await upsertRecord(athlete.id, std.meters, std.name, best.timeSeconds, best.timeSeconds / (std.meters / 1000), best.activityId, best.date, upserted);
+  }
 
-    const paceSecPerKm = best.timeSeconds / (std.meters / 1000);
+  // Triathlon PRs — use actual total time from triathlon activities
+  const triActivities = await prisma.activity.findMany({
+    where: { athleteId: athlete.id, sport: { in: TRIATHLON_SPORTS }, duration: { not: null } },
+    select: { id: true, sport: true, distance: true, duration: true, date: true },
+  });
 
-    const existing = await prisma.personalRecord.findFirst({
-      where: { athleteId: athlete.id, distance: std.meters },
-      select: { id: true },
-    });
+  const sportToDistance: Record<string, typeof TRIATHLON_DISTANCES[0]> = {
+    TRIATHLON_SPRINT: TRIATHLON_DISTANCES[0],
+    TRIATHLON_OLYMPIC: TRIATHLON_DISTANCES[1],
+    TRIATHLON_HALF: TRIATHLON_DISTANCES[2],
+    TRIATHLON_FULL: TRIATHLON_DISTANCES[3],
+  };
 
-    if (existing) {
-      await prisma.personalRecord.update({
-        where: { id: existing.id },
-        data: {
-          timeSeconds: best.timeSeconds,
-          pace: formatPace(paceSecPerKm),
-          date: best.date,
-          activityId: best.activityId,
-        },
-      });
-    } else {
-      await prisma.personalRecord.create({
-        data: {
-          athleteId: athlete.id,
-          distance: std.meters,
-          timeSeconds: best.timeSeconds,
-          pace: formatPace(paceSecPerKm),
-          date: best.date,
-          activityId: best.activityId,
-        },
-      });
-    }
-
-    upserted.push(std.name);
+  for (const [sport, triDist] of Object.entries(sportToDistance)) {
+    const matching = triActivities.filter(a => a.sport === sport);
+    if (matching.length === 0) continue;
+    matching.sort((a, b) => a.duration! - b.duration!);
+    const best = matching[0];
+    const paceSecPerKm = best.duration! / (triDist.totalMeters / 1000);
+    await upsertRecord(athlete.id, triDist.totalMeters, triDist.name, best.duration!, paceSecPerKm, best.id, best.date, upserted);
   }
 
   return NextResponse.json({ updated: upserted });

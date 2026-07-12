@@ -11,9 +11,13 @@ import { ShoeSelector } from "@/components/dashboard/ShoeSelector";
 
 const sportLabels: Record<string, string> = {
   RUNNING: "Corrida", CYCLING: "Ciclismo", SWIMMING: "Natação",
+  TRIATHLON_SPRINT: "Triatlo Sprint", TRIATHLON_OLYMPIC: "Triatlo Olímpico",
+  TRIATHLON_HALF: "Half Ironman", TRIATHLON_FULL: "Ironman",
 };
 const sportIcons: Record<string, string> = {
   RUNNING: "🏃", CYCLING: "🚴", SWIMMING: "🏊",
+  TRIATHLON_SPRINT: "🏊🚴🏃", TRIATHLON_OLYMPIC: "🏊🚴🏃",
+  TRIATHLON_HALF: "🏊🚴🏃", TRIATHLON_FULL: "🏊🚴🏃",
 };
 const zoneColors = ["bg-zinc-500", "bg-green-500", "bg-yellow-500", "bg-orange-500", "bg-red-500"];
 
@@ -211,12 +215,14 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
             ))}
           </div>
         )}
-        {/* Shoe selector */}
-        <ShoeSelector
-          activityId={activity.id}
-          currentShoeId={activity.shoeId ?? null}
-          shoes={athleteShoes}
-        />
+        {/* Shoe selector — only for running activities */}
+        {activity.sport === "RUNNING" && (
+          <ShoeSelector
+            activityId={activity.id}
+            currentShoeId={activity.shoeId ?? null}
+            shoes={athleteShoes}
+          />
+        )}
       </main>
     </div>
   );

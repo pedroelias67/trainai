@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LogoFull } from "@/components/ui/Logo";
-import { calculateHRZones, calculatePaceZones } from "@/lib/training-zones";
+import { calculateHRZones, calculatePaceZones, calculatePowerZones } from "@/lib/training-zones";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -24,12 +24,13 @@ export default async function ZonesPage() {
 
   const athlete = await prisma.athlete.findUnique({
     where: { userId },
-    select: { maxHR: true, restingHR: true, ltPace: true },
+    select: { maxHR: true, restingHR: true, ltPace: true, ftp: true },
   });
   if (!athlete) redirect("/onboarding");
 
   const hrZones = athlete.maxHR ? calculateHRZones(athlete.maxHR, athlete.restingHR ?? undefined) : null;
   const paceZones = athlete.ltPace ? calculatePaceZones(athlete.ltPace) : null;
+  const powerZones = athlete.ftp ? calculatePowerZones(athlete.ftp) : null;
 
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
@@ -149,6 +150,44 @@ export default async function ZonesPage() {
                     perfil
                   </Link>{" "}
                   para calcular as zonas de pace.
+                </p>
+              </div>
+            )}
+
+            {/* Power zones */}
+            {powerZones ? (
+              <div className="card">
+                <div className="flex items-center justify-between mb-1">
+                  <h2 className="font-bold text-white">Zonas de Potência</h2>
+                  <span className="text-xs text-zinc-500">FTP: {athlete.ftp}W</span>
+                </div>
+                <p className="text-xs text-zinc-600 mb-4">Baseado no FTP (Functional Threshold Power) — ciclismo e triatlo</p>
+                <div className="space-y-3">
+                  {powerZones.map((zone, i) => (
+                    <div key={i} className="flex items-center gap-4">
+                      <div className={`w-2 h-10 rounded-full shrink-0 ${zone.color}`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <p className="text-sm font-medium text-white">{zone.name}</p>
+                          <p className="text-sm font-mono text-zinc-300 shrink-0 ml-4">
+                            {zone.low}–{zone.high}W
+                          </p>
+                        </div>
+                        <p className="text-xs text-zinc-500 mt-0.5">{zone.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="p-4 rounded-2xl border border-[#1f1f1f] bg-[#111]">
+                <p className="text-sm text-zinc-400">
+                  <span className="text-white font-medium">FTP não configurado.</span>{" "}
+                  Adiciona o teu FTP (Potência de Limiar Funcional) no{" "}
+                  <Link href="/dashboard/profile" className="text-green-400 hover:text-green-300 underline">
+                    perfil
+                  </Link>{" "}
+                  para ver as zonas de potência para ciclismo e triatlo.
                 </p>
               </div>
             )}

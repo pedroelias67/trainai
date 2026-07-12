@@ -28,6 +28,8 @@ const sessionTypeLabels: Record<string, string> = {
 
 const sportIcons: Record<string, string> = {
   RUNNING: "🏃", CYCLING: "🚴", SWIMMING: "🏊",
+  TRIATHLON_SPRINT: "🏊🚴🏃", TRIATHLON_OLYMPIC: "🏊🚴🏃",
+  TRIATHLON_HALF: "🏊🚴🏃", TRIATHLON_FULL: "🏊🚴🏃",
 };
 
 const zoneColors = ["bg-zinc-500", "bg-green-500", "bg-yellow-500", "bg-orange-500", "bg-red-500"];
