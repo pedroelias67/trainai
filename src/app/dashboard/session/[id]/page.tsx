@@ -73,9 +73,24 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
                 </p>
               </div>
             </div>
-            <span className={`px-3 py-1 rounded-full text-xs font-medium border ${sessionTypeColors[session.sessionType] ?? "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"}`}>
-              {sessionTypeLabels[session.sessionType]}
-            </span>
+            <div className="flex items-center gap-2">
+              <a
+                href={`/api/sessions/${session.id}/export-tcx`}
+                download
+                title="Exportar para Garmin Connect (.tcx)"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[#2a2a2a] bg-[#161616] text-zinc-400 hover:text-white hover:border-[#3a3a3a] transition-all text-xs font-medium"
+              >
+                <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-none stroke-current" strokeWidth={2}>
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round"/>
+                  <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round"/>
+                  <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round"/>
+                </svg>
+                Garmin
+              </a>
+              <span className={`px-3 py-1 rounded-full text-xs font-medium border ${sessionTypeColors[session.sessionType] ?? "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"}`}>
+                {sessionTypeLabels[session.sessionType]}
+              </span>
+            </div>
           </div>
 
           {/* Planned metrics */}
