@@ -75,6 +75,7 @@ model Athlete {
   stravaAccessToken  String?
   stravaRefreshToken String?
   stravaTokenExpiry  DateTime?
+  pushSubscription Json?
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -83,6 +84,8 @@ model Athlete {
   trainingPlans   TrainingPlan[]
   activities      Activity[]
   weeklyReports   WeeklyReport[]
+  shoes           Shoe[]
+  personalRecords PersonalRecord[]
 }
 
 model Event {
@@ -164,6 +167,7 @@ model TrainingSession {
   plannedZones    Json?
   completed       Boolean   @default(false)
   activityId      String?
+  athleteNote     String?
   createdAt       DateTime  @default(now())
 
   week            TrainingWeek @relation(fields: [weekId], references: [id], onDelete: Cascade)
@@ -194,10 +198,13 @@ model Activity {
   gpsTrack        Json?     // array de {lat, lng, ele, hr, pace} por ponto
   splits          Json?     // splits por km
   rawData         Json?
+  shoeId          String?
   createdAt       DateTime  @default(now())
 
   athlete         Athlete   @relation(fields: [athleteId], references: [id], onDelete: Cascade)
   sessions        TrainingSession[]
+  shoe            Shoe?     @relation(fields: [shoeId], references: [id])
+  personalRecords PersonalRecord[]
 }
 
 model WeeklyReport {
@@ -298,4 +305,33 @@ model Invite {
   usedAt       DateTime?
   usedByUserId String?
   createdById  String
+}
+
+model Shoe {
+  id            String    @id @default(cuid())
+  athleteId     String
+  name          String
+  brand         String?
+  color         String?
+  purchaseDate  DateTime?
+  totalKm       Float     @default(0)
+  distanceLimit Float     @default(700)
+  retired       Boolean   @default(false)
+  createdAt     DateTime  @default(now())
+
+  athlete    Athlete    @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  activities Activity[]
+}
+
+model PersonalRecord {
+  id          String   @id @default(cuid())
+  athleteId   String
+  distance    Float
+  timeSeconds Float
+  pace        String?
+  date        DateTime
+  activityId  String?
+
+  athlete    Athlete   @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+  activity   Activity? @relation(fields: [activityId], references: [id])
 }

@@ -4,8 +4,10 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
-import ActivityMap from "@/components/activity/ActivityMap";
+import EnrichedMap from "@/components/dashboard/EnrichedMap";
+import ActivityShareCard from "@/components/dashboard/ActivityShareCard";
 import { LogoFull } from "@/components/ui/Logo";
+import { ShoeSelector } from "@/components/dashboard/ShoeSelector";
 
 const sportLabels: Record<string, string> = {
   RUNNING: "Corrida", CYCLING: "Ciclismo", SWIMMING: "Natação",
@@ -29,11 +31,17 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
     include: { sessions: { include: { week: { include: { plan: true } } } } },
   });
 
+  const athleteShoes = await prisma.shoe.findMany({
+    where: { athleteId: athlete.id },
+    orderBy: [{ retired: "asc" }, { createdAt: "desc" }],
+    select: { id: true, name: true, brand: true, retired: true },
+  });
+
   if (!activity || activity.athleteId !== athlete.id) notFound();
 
   const hrZones = activity.hrZones as Record<string, number> | null;
   const splits = activity.splits as Array<{ km: number; pace: string; hr: number }> | null;
-  const gpsTrack = activity.gpsTrack as Array<{ lat: number; lng: number; ele?: number }> | null;
+  const gpsTrack = activity.gpsTrack as Array<{ lat: number; lng: number; ele?: number; hr?: number; pace?: number }> | null;
 
   const topStats = [
     { label: "Distância", value: activity.distance ? `${(activity.distance / 1000).toFixed(2)} km` : "—" },
@@ -85,13 +93,24 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
           </div>
         </div>
 
+        {/* Share Card */}
+        <ActivityShareCard
+          name={activity.name ?? "Atividade"}
+          distance={activity.distance ? (activity.distance / 1000).toFixed(2) : null}
+          duration={activity.duration ? `${Math.floor(activity.duration / 3600)}h ${Math.floor((activity.duration % 3600) / 60)}min` : null}
+          avgPace={activity.avgPace ?? null}
+          avgHR={activity.avgHR ?? null}
+          date={activity.date.toISOString()}
+          sport={activity.sport}
+        />
+
         {/* Map */}
         {gpsTrack && gpsTrack.length > 0 ? (
           <div className="overflow-hidden rounded-2xl border border-[#222]">
             <div className="px-5 py-4 border-b border-[#1a1a1a] bg-[#111]">
               <h2 className="font-semibold text-white text-sm">Percurso</h2>
             </div>
-            <ActivityMap track={gpsTrack} />
+            <EnrichedMap gpsTrack={gpsTrack} elevationGain={activity.elevationGain} />
           </div>
         ) : (
           <div className="text-center py-10 rounded-2xl border border-dashed border-[#2a2a2a]">
@@ -192,6 +211,12 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
             ))}
           </div>
         )}
+        {/* Shoe selector */}
+        <ShoeSelector
+          activityId={activity.id}
+          currentShoeId={activity.shoeId ?? null}
+          shoes={athleteShoes}
+        />
       </main>
     </div>
   );

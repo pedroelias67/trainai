@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LogoFull } from "@/components/ui/Logo";
 import { format, subDays, isSameDay } from "date-fns";
 import { FitnessChart } from "@/components/dashboard/FitnessChart";
+import { PersonalRecords } from "@/components/dashboard/PersonalRecords";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -53,6 +54,11 @@ export default async function FitnessPage() {
     },
   });
   if (!athlete) redirect("/onboarding");
+
+  const personalRecords = await prisma.personalRecord.findMany({
+    where: { athleteId: athlete.id },
+    orderBy: { distance: "asc" },
+  });
 
   // Build daily TSS for last 90 days
   const today = new Date();
@@ -126,6 +132,15 @@ export default async function FitnessPage() {
             Carga de treino, fadiga e forma dos últimos 90 dias
           </p>
         </div>
+
+        <PersonalRecords records={personalRecords.map((r) => ({
+          id: r.id,
+          distance: r.distance,
+          timeSeconds: r.timeSeconds,
+          pace: r.pace,
+          date: r.date.toISOString(),
+          activityId: r.activityId,
+        }))} />
 
         <FitnessChart
           data={chartData}

@@ -90,6 +90,8 @@ export default async function DashboardPage() {
               { href: "/dashboard/calendar", label: "Calendário" },
               { href: "/dashboard/fitness", label: "Fitness" },
               { href: "/dashboard/activities", label: "Atividades" },
+              { href: "/dashboard/shoes", label: "Sapatilhas" },
+              { href: "/dashboard/zones", label: "Zonas" },
               { href: "/dashboard/chat", label: "Chat IA" },
               { href: "/dashboard/profile", label: "Perfil" },
             ].map((item) => (

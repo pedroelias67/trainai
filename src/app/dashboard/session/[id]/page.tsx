@@ -6,6 +6,8 @@ import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { LogoFull } from "@/components/ui/Logo";
 import { GarminExportButton } from "@/components/dashboard/GarminHelpModal";
+import { SessionJournal } from "@/components/dashboard/SessionJournal";
+import NutritionPlan from "@/components/dashboard/NutritionPlan";
 
 const sessionTypeColors: Record<string, string> = {
   EASY: "bg-green-500/10 text-green-400 border-green-500/20",
@@ -164,6 +166,9 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           )}
         </div>
 
+        {/* Nutrition Plan */}
+        <NutritionPlan sessionId={session.id} />
+
         {/* Coach tip */}
         {session.coachTip && (
           <div className="flex gap-3 p-4 rounded-2xl border border-yellow-500/20 bg-yellow-500/5">
@@ -219,6 +224,9 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             <p className="text-zinc-700 text-xs mt-1">Será preenchido automaticamente após sincronização Strava</p>
           </div>
         )}
+
+        {/* Training journal */}
+        <SessionJournal sessionId={session.id} initialNote={session.athleteNote ?? null} />
       </main>
     </div>
   );

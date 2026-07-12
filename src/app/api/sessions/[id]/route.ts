@@ -37,6 +37,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   if (body.plannedDistance != null) data.plannedDistance = Number(body.plannedDistance);
+  if (body.athleteNote !== undefined) data.athleteNote = body.athleteNote;
 
   const updated = await prisma.trainingSession.update({ where: { id }, data });
   return NextResponse.json(updated);
