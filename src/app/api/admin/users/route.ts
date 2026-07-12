@@ -25,6 +25,7 @@ export async function GET() {
     include: {
       athlete: {
         select: {
+          id: true,
           fitnessLevel: true,
           stravaConnected: true,
           trainingPlans: { where: { status: "ACTIVE" }, select: { id: true }, take: 1 },

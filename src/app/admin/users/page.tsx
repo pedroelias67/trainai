@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/ui/Logo";
 import Link from "next/link";
@@ -11,6 +11,7 @@ type User = {
   email: string;
   createdAt: string;
   athlete: {
+    id: string;
     fitnessLevel: string | null;
     stravaConnected: boolean;
     trainingPlans: { id: string }[];
@@ -28,6 +29,27 @@ type Invite = {
   usedByUserId: string | null;
 };
 
+type Stats = {
+  totalUsers: number;
+  verifiedUsers: number;
+  usersThisWeek: number;
+  totalAthletes: number;
+  activePlans: number;
+  totalActivities: number;
+  activitiesThisWeek: number;
+  totalKm: number;
+  stravaConnected: number;
+  topAthletes: { id: string; name: string; activityCount: number; totalKm: number }[];
+  registrationsByDay: { date: string; count: number }[];
+};
+
+type FeedItem = {
+  type: "register" | "activity" | "plan";
+  date: string;
+  description: string;
+  userName: string;
+};
+
 const fitnessLabels: Record<string, string> = {
   BEGINNER: "Iniciante", INTERMEDIATE: "Intermédio", ADVANCED: "Avançado", ELITE: "Elite",
 };
@@ -38,9 +60,20 @@ function inviteStatus(invite: Invite): { label: string; color: string } {
   return { label: "Pendente", color: "text-green-400" };
 }
 
+function relativeTime(date: string) {
+  const ms = Date.now() - new Date(date).getTime();
+  const mins = Math.floor(ms / 60000);
+  if (mins < 1) return "agora mesmo";
+  if (mins < 60) return `há ${mins} min`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `há ${hours} hora${hours !== 1 ? "s" : ""}`;
+  const days = Math.floor(hours / 24);
+  return `há ${days} dia${days !== 1 ? "s" : ""}`;
+}
+
 export default function AdminUsersPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<"users" | "invites">("users");
+  const [tab, setTab] = useState<"users" | "invites" | "stats" | "activity">("users");
 
   // Users state
   const [users, setUsers] = useState<User[]>([]);
@@ -59,6 +92,16 @@ export default function AdminUsersPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
+
+  // Stats state
+  const [stats, setStats] = useState<Stats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(false);
+  const statsFetchedRef = useRef(false);
+
+  // Activity feed state
+  const [feed, setFeed] = useState<FeedItem[]>([]);
+  const [feedLoading, setFeedLoading] = useState(false);
+  const feedFetchedRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/admin/users")
@@ -80,6 +123,28 @@ export default function AdminUsersPage() {
       .then((data) => { if (Array.isArray(data)) setInvites(data); })
       .catch(() => {})
       .finally(() => setInvitesLoading(false));
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab !== "stats" || statsFetchedRef.current) return;
+    statsFetchedRef.current = true;
+    setStatsLoading(true);
+    fetch("/api/admin/stats")
+      .then((r) => r.json())
+      .then((data) => setStats(data))
+      .catch(() => {})
+      .finally(() => setStatsLoading(false));
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab !== "activity" || feedFetchedRef.current) return;
+    feedFetchedRef.current = true;
+    setFeedLoading(true);
+    fetch("/api/admin/activity")
+      .then((r) => r.json())
+      .then((data) => { if (Array.isArray(data)) setFeed(data); })
+      .catch(() => {})
+      .finally(() => setFeedLoading(false));
   }, [tab]);
 
   async function handleSave() {
@@ -142,6 +207,10 @@ export default function AdminUsersPage() {
     });
   }
 
+  const maxBarCount = stats
+    ? Math.max(...stats.registrationsByDay.map((d) => d.count), 1)
+    : 1;
+
   return (
     <div className="min-h-screen bg-[#0a0a0a]">
       <header className="sticky top-0 z-40 border-b border-[#1a1a1a] backdrop-blur-xl bg-black/60 px-6 py-3">
@@ -156,25 +225,24 @@ export default function AdminUsersPage() {
 
       <main className="max-w-5xl mx-auto px-6 py-8">
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-[#111] border border-[#1f1f1f] rounded-xl p-1 w-fit">
-          <button
-            onClick={() => setTab("users")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              tab === "users" ? "bg-[#1f1f1f] text-white" : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            Utilizadores
-          </button>
-          <button
-            onClick={() => setTab("invites")}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-              tab === "invites" ? "bg-[#1f1f1f] text-white" : "text-zinc-500 hover:text-zinc-300"
-            }`}
-          >
-            Convites
-          </button>
+        <div className="flex gap-1 mb-6 bg-[#111] border border-[#1f1f1f] rounded-xl p-1 w-fit flex-wrap">
+          {(["users", "invites", "stats", "activity"] as const).map((t) => {
+            const labels = { users: "Utilizadores", invites: "Convites", stats: "Estatísticas", activity: "Atividade" };
+            return (
+              <button
+                key={t}
+                onClick={() => setTab(t)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                  tab === t ? "bg-[#1f1f1f] text-white" : "text-zinc-500 hover:text-zinc-300"
+                }`}
+              >
+                {labels[t]}
+              </button>
+            );
+          })}
         </div>
 
+        {/* ── USERS TAB ── */}
         {tab === "users" && (
           <>
             <div className="flex items-center justify-between mb-6">
@@ -216,6 +284,14 @@ export default function AdminUsersPage() {
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
+                        {user.athlete?.id && (
+                          <Link
+                            href={`/admin/athletes/${user.athlete.id}`}
+                            className="px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-zinc-400 hover:text-white hover:border-[#3a3a3a] text-xs transition-all"
+                          >
+                            Ver detalhe →
+                          </Link>
+                        )}
                         <button
                           onClick={() => { setEditing(user); setEditName(user.name ?? ""); setEditEmail(user.email); }}
                           className="px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-zinc-400 hover:text-white hover:border-[#3a3a3a] text-xs transition-all">
@@ -251,6 +327,7 @@ export default function AdminUsersPage() {
           </>
         )}
 
+        {/* ── INVITES TAB ── */}
         {tab === "invites" && (
           <>
             <div className="flex items-center justify-between mb-6">
@@ -260,7 +337,6 @@ export default function AdminUsersPage() {
               </div>
             </div>
 
-            {/* Create invite form */}
             <div className="card mb-6">
               <h2 className="text-sm font-semibold text-white mb-4">Criar convite</h2>
               <form onSubmit={handleCreateInvite} className="flex gap-3">
@@ -320,6 +396,169 @@ export default function AdminUsersPage() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── STATS TAB ── */}
+        {tab === "stats" && (
+          <>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-white">Estatísticas</h1>
+              <p className="text-zinc-500 text-sm mt-0.5">Visão geral da plataforma</p>
+            </div>
+
+            {statsLoading || !stats ? (
+              <div className="card text-center py-12 text-zinc-500 text-sm">A carregar…</div>
+            ) : (
+              <div className="space-y-4">
+                {/* Row 1: 4 primary stat cards */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: "Total Utilizadores", value: stats.totalUsers },
+                    { label: "Utilizadores Esta Semana", value: stats.usersThisWeek },
+                    { label: "Atividades Esta Semana", value: stats.activitiesThisWeek },
+                    { label: "Total km Treinados", value: `${stats.totalKm} km` },
+                  ].map((s) => (
+                    <div key={s.label} className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+                      <p className="text-zinc-500 text-xs">{s.label}</p>
+                      <p className="text-white text-2xl font-bold mt-1">{s.value}</p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Row 2: 3 secondary cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+                    <p className="text-zinc-500 text-xs">Planos Ativos</p>
+                    <p className="text-white text-2xl font-bold mt-1">{stats.activePlans}</p>
+                  </div>
+                  <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+                    <p className="text-zinc-500 text-xs">Strava Ligado</p>
+                    <p className="text-white text-2xl font-bold mt-1">{stats.stravaConnected}</p>
+                    {stats.totalAthletes > 0 && (
+                      <p className="text-zinc-600 text-xs mt-1">
+                        {Math.round((stats.stravaConnected / stats.totalAthletes) * 100)}% dos atletas
+                      </p>
+                    )}
+                  </div>
+                  <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+                    <p className="text-zinc-500 text-xs">Email Verificado</p>
+                    <p className="text-white text-2xl font-bold mt-1">{stats.verifiedUsers}</p>
+                    {stats.totalUsers > 0 && (
+                      <p className="text-zinc-600 text-xs mt-1">
+                        {Math.round((stats.verifiedUsers / stats.totalUsers) * 100)}% dos utilizadores
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Top athletes table */}
+                <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+                  <h2 className="text-sm font-semibold text-white mb-4">Top Atletas</h2>
+                  {stats.topAthletes.length === 0 ? (
+                    <p className="text-zinc-500 text-sm">Sem dados ainda.</p>
+                  ) : (
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="text-zinc-500 text-xs text-left border-b border-[#1a1a1a]">
+                          <th className="pb-2 w-8">#</th>
+                          <th className="pb-2">Nome</th>
+                          <th className="pb-2 text-right">Atividades</th>
+                          <th className="pb-2 text-right">Total km</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {stats.topAthletes.map((a, i) => (
+                          <tr key={a.id} className="border-b border-[#1a1a1a] last:border-0">
+                            <td className="py-2.5 text-zinc-600 text-xs">{i + 1}</td>
+                            <td className="py-2.5 text-zinc-300">{a.name}</td>
+                            <td className="py-2.5 text-right text-zinc-300">{a.activityCount}</td>
+                            <td className="py-2.5 text-right text-green-400 font-medium">{a.totalKm} km</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+
+                {/* Bar chart: registrations last 30 days */}
+                <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+                  <h2 className="text-sm font-semibold text-white mb-4">Registos — últimos 30 dias</h2>
+                  <div className="flex items-end gap-1 h-24">
+                    {stats.registrationsByDay.map((d, i) => {
+                      const heightPct = maxBarCount > 0 ? Math.round((d.count / maxBarCount) * 100) : 0;
+                      const showLabel = i % 7 === 0;
+                      return (
+                        <div key={d.date} className="flex flex-col items-center flex-1 min-w-0">
+                          <div className="w-full flex items-end h-20">
+                            <div
+                              className="w-full rounded-t-sm bg-green-500/60 hover:bg-green-500 transition-colors"
+                              style={{ height: `${Math.max(heightPct, d.count > 0 ? 4 : 0)}%` }}
+                              title={`${d.date}: ${d.count} registo${d.count !== 1 ? "s" : ""}`}
+                            />
+                          </div>
+                          {showLabel && (
+                            <span className="text-zinc-600 text-[9px] mt-1 truncate w-full text-center">
+                              {new Date(d.date).toLocaleDateString("pt-PT", { day: "numeric", month: "numeric" })}
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── ACTIVITY FEED TAB ── */}
+        {tab === "activity" && (
+          <>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-white">Atividade da Plataforma</h1>
+              <p className="text-zinc-500 text-sm mt-0.5">Últimos 50 eventos</p>
+            </div>
+
+            {feedLoading ? (
+              <div className="card text-center py-12 text-zinc-500 text-sm">A carregar…</div>
+            ) : feed.length === 0 ? (
+              <div className="card text-center py-12 text-zinc-500 text-sm">Sem eventos recentes.</div>
+            ) : (
+              <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+                <div className="space-y-0">
+                  {feed.map((item, i) => {
+                    const dotColor =
+                      item.type === "register"
+                        ? "bg-green-500"
+                        : item.type === "activity"
+                        ? "bg-blue-500"
+                        : "bg-purple-500";
+                    const lineColor =
+                      item.type === "register"
+                        ? "bg-green-500/20"
+                        : item.type === "activity"
+                        ? "bg-blue-500/20"
+                        : "bg-purple-500/20";
+                    const isLast = i === feed.length - 1;
+                    return (
+                      <div key={i} className="flex gap-4">
+                        {/* Timeline column */}
+                        <div className="flex flex-col items-center">
+                          <div className={`w-2.5 h-2.5 rounded-full ${dotColor} mt-1.5 shrink-0`} />
+                          {!isLast && <div className={`w-0.5 flex-1 ${lineColor} mt-1`} />}
+                        </div>
+                        {/* Content */}
+                        <div className={`pb-4 flex-1 min-w-0 ${isLast ? "" : ""}`}>
+                          <p className="text-zinc-300 text-sm">{item.description}</p>
+                          <p className="text-zinc-600 text-xs mt-0.5">{relativeTime(item.date)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </>
