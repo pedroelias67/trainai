@@ -1,25 +1,19 @@
 {
-  "name": "TrainAI - Plataforma de Treino",
+  "name": "TrainAI — Treino com IA",
   "short_name": "TrainAI",
-  "description": "Planos de treino com IA para corredores e triatletas",
+  "description": "Planos de treino personalizados para corredores e triatletas",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#f9fafb",
-  "theme_color": "#16a34a",
-  "orientation": "portrait",
+  "background_color": "#0a0a0a",
+  "theme_color": "#22c55e",
+  "orientation": "portrait-primary",
   "icons": [
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
-  "categories": ["health", "fitness", "sports"]
+  "categories": ["sports", "health", "fitness"],
+  "shortcuts": [
+    { "name": "Dashboard", "url": "/dashboard", "description": "Ver o dashboard" },
+    { "name": "Plano", "url": "/dashboard/plan", "description": "Ver o plano de treino" }
+  ]
 }

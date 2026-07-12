@@ -6,7 +6,12 @@
       "Bash(npx tsc *)",
       "Bash(npm install *)",
       "Bash(npm list *)",
-      "Bash(npx prisma *)"
+      "Bash(npx prisma *)",
+      "Bash(git stash *)",
+      "Bash(node -e \"const { Prisma } = require\\('@prisma/client'\\); console.log\\(Object.keys\\(Prisma\\).filter\\(k => k.toLowerCase\\(\\).includes\\('null'\\)\\)\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)"
     ]
   }
 }

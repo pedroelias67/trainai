@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import PWAInstall from "@/components/PWAInstall";
 
 export const metadata: Metadata = {
   title: "TrainAI - Planos de Treino com IA",
@@ -15,7 +16,7 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: "#16a34a",
+  themeColor: "#22c55e",
 };
 
 export default function RootLayout({
@@ -27,6 +28,7 @@ export default function RootLayout({
     <html lang="pt">
       <body className="bg-gray-50 text-gray-900 antialiased">
         {children}
+        <PWAInstall />
       </body>
     </html>
   );

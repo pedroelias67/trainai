@@ -5,6 +5,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { LogoFull } from "@/components/ui/Logo";
+import NotificationSettings from "@/components/dashboard/NotificationSettings";
 
 const fitnessLabels: Record<string, string> = {
   BEGINNER: "Iniciante", INTERMEDIATE: "Intermédio", ADVANCED: "Avançado", ELITE: "Elite",
@@ -176,6 +177,8 @@ export default async function ProfilePage() {
             </button>
           </form>
         </div>
+
+        <NotificationSettings />
       </main>
     </div>
   );
