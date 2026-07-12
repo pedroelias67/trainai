@@ -44,7 +44,10 @@ export default async function PlanPage() {
             {[
               { href: "/dashboard", label: "Dashboard" },
               { href: "/dashboard/plan", label: "Plano" },
+              { href: "/dashboard/calendar", label: "Calendário" },
+              { href: "/dashboard/fitness", label: "Fitness" },
               { href: "/dashboard/activities", label: "Atividades" },
+              { href: "/dashboard/chat", label: "Chat IA" },
               { href: "/dashboard/profile", label: "Perfil" },
             ].map((item) => (
               <Link key={item.href} href={item.href}

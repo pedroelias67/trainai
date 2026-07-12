@@ -2,9 +2,10 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { format, isToday, isTomorrow } from "date-fns";
+import { format, isToday, isTomorrow, subDays } from "date-fns";
 import { pt } from "date-fns/locale";
 import { LogoFull } from "@/components/ui/Logo";
+import { RacePrediction } from "@/components/dashboard/RacePrediction";
 
 async function getDashboardData(userId: string) {
   return prisma.athlete.findUnique({
@@ -29,6 +30,18 @@ async function getDashboardData(userId: string) {
   });
 }
 
+async function getRunningActivities(athleteId: string) {
+  return prisma.activity.findMany({
+    where: {
+      athleteId,
+      sport: "RUNNING",
+      date: { gte: subDays(new Date(), 30) },
+    },
+    select: { id: true, distance: true, duration: true, date: true },
+    orderBy: { date: "desc" },
+  });
+}
+
 const sessionTypeLabels: Record<string, string> = {
   EASY: "Fácil", TEMPO: "Tempo", INTERVALS: "Intervalos", LONG: "Longo",
   RECOVERY: "Recuperação", STRENGTH: "Força", BRICK: "Brick", SWIM: "Natação", RACE: "Corrida",
@@ -49,6 +62,8 @@ export default async function DashboardPage() {
 
   const athlete = await getDashboardData(userId);
   if (!athlete) redirect("/onboarding");
+
+  const runningActivities = await getRunningActivities(athlete.id);
 
   const activePlan = athlete.trainingPlans[0];
   const currentWeek = activePlan?.weeks[0];
@@ -72,7 +87,10 @@ export default async function DashboardPage() {
             {[
               { href: "/dashboard", label: "Dashboard" },
               { href: "/dashboard/plan", label: "Plano" },
+              { href: "/dashboard/calendar", label: "Calendário" },
+              { href: "/dashboard/fitness", label: "Fitness" },
               { href: "/dashboard/activities", label: "Atividades" },
+              { href: "/dashboard/chat", label: "Chat IA" },
               { href: "/dashboard/profile", label: "Perfil" },
             ].map((item) => (
               <Link key={item.href} href={item.href}
@@ -201,6 +219,14 @@ export default async function DashboardPage() {
                   </div>
                 </div>
               )}
+
+              {/* Race prediction */}
+              <RacePrediction recentActivities={runningActivities.map((a) => ({
+                id: a.id,
+                distance: a.distance,
+                duration: a.duration,
+                date: a.date.toISOString(),
+              }))} />
 
               {/* Recent activities */}
               {athlete.activities.length > 0 && (
