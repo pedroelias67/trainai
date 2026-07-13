@@ -55,7 +55,7 @@ const fitnessLabels: Record<string, string> = {
 };
 
 function inviteStatus(invite: Invite): { label: string; color: string } {
-  if (invite.usedAt) return { label: "Usado", color: "text-zinc-500" };
+  if (invite.usedAt) return { label: "Usado", color: "text-[var(--text-muted)]" };
   if (new Date(invite.expiresAt) < new Date()) return { label: "Expirado", color: "text-red-400" };
   return { label: "Pendente", color: "text-green-400" };
 }
@@ -212,20 +212,20 @@ export default function AdminUsersPage() {
     : 1;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <header className="sticky top-0 z-40 border-b border-[#1a1a1a] backdrop-blur-xl bg-black/60 px-6 py-3">
+    <div className="min-h-screen bg-[var(--bg-base)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <LogoFull size={28} />
-            <span className="text-zinc-600 text-xs font-mono px-2 py-0.5 rounded bg-[#1a1a1a] border border-[#2a2a2a]">admin</span>
+            <span className="text-[var(--text-faint)] text-xs font-mono px-2 py-0.5 rounded bg-[var(--bg-hover)] border border-[var(--border-hover)]">admin</span>
           </div>
-          <Link href="/dashboard" className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors">← Dashboard</Link>
+          <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">← Dashboard</Link>
         </div>
       </header>
 
       <main className="max-w-5xl mx-auto px-6 py-8">
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-[#111] border border-[#1f1f1f] rounded-xl p-1 w-fit flex-wrap">
+        <div className="flex gap-1 mb-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-1 w-fit flex-wrap">
           {(["users", "invites", "stats", "activity"] as const).map((t) => {
             const labels = { users: "Utilizadores", invites: "Convites", stats: "Estatísticas", activity: "Atividade" };
             return (
@@ -233,7 +233,7 @@ export default function AdminUsersPage() {
                 key={t}
                 onClick={() => setTab(t)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  tab === t ? "bg-[#1f1f1f] text-white" : "text-zinc-500 hover:text-zinc-300"
+                  tab === t ? "bg-[#1f1f1f] text-white" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                 }`}
               >
                 {labels[t]}
@@ -248,7 +248,7 @@ export default function AdminUsersPage() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-white">Utilizadores</h1>
-                <p className="text-zinc-500 text-sm mt-0.5">{users.length} utilizador{users.length !== 1 ? "es" : ""} registado{users.length !== 1 ? "s" : ""}</p>
+                <p className="text-[var(--text-muted)] text-sm mt-0.5">{users.length} utilizador{users.length !== 1 ? "es" : ""} registado{users.length !== 1 ? "s" : ""}</p>
               </div>
             </div>
 
@@ -257,7 +257,7 @@ export default function AdminUsersPage() {
             )}
 
             {loading ? (
-              <div className="card text-center py-12 text-zinc-500 text-sm">A carregar…</div>
+              <div className="card text-center py-12 text-[var(--text-muted)] text-sm">A carregar…</div>
             ) : (
               <div className="space-y-3">
                 {users.map((user) => (
@@ -276,8 +276,8 @@ export default function AdminUsersPage() {
                             <span className="text-orange-400 text-xs bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">Strava</span>
                           )}
                         </div>
-                        <p className="text-zinc-500 text-xs">{user.email}</p>
-                        <p className="text-zinc-600 text-xs mt-0.5">
+                        <p className="text-[var(--text-muted)] text-xs">{user.email}</p>
+                        <p className="text-[var(--text-faint)] text-xs mt-0.5">
                           Registado {new Date(user.createdAt).toLocaleDateString("pt-PT")}
                           {user.athlete && ` · ${user.athlete._count.activities} atividade${user.athlete._count.activities !== 1 ? "s" : ""}`}
                           {user.athlete?.fitnessLevel && ` · ${fitnessLabels[user.athlete.fitnessLevel] ?? user.athlete.fitnessLevel}`}
@@ -287,14 +287,14 @@ export default function AdminUsersPage() {
                         {user.athlete?.id && (
                           <Link
                             href={`/admin/athletes/${user.athlete.id}`}
-                            className="px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-zinc-400 hover:text-white hover:border-[#3a3a3a] text-xs transition-all"
+                            className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] text-xs transition-all"
                           >
                             Ver detalhe →
                           </Link>
                         )}
                         <button
                           onClick={() => { setEditing(user); setEditName(user.name ?? ""); setEditEmail(user.email); }}
-                          className="px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-zinc-400 hover:text-white hover:border-[#3a3a3a] text-xs transition-all">
+                          className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] text-xs transition-all">
                           Editar
                         </button>
                         <button
@@ -305,8 +305,8 @@ export default function AdminUsersPage() {
                       </div>
                     </div>
                     {confirmDelete === user.id && (
-                      <div className="mt-4 pt-4 border-t border-[#1a1a1a] flex items-center justify-between">
-                        <p className="text-sm text-zinc-400">
+                      <div className="mt-4 pt-4 border-t border-[var(--border)] flex items-center justify-between">
+                        <p className="text-sm text-[var(--text-secondary)]">
                           Tens a certeza? Esta ação é <span className="text-red-400 font-medium">irreversível</span> e elimina todos os dados do atleta.
                         </p>
                         <div className="flex gap-2 shrink-0 ml-4">
@@ -333,7 +333,7 @@ export default function AdminUsersPage() {
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h1 className="text-2xl font-bold text-white">Convites</h1>
-                <p className="text-zinc-500 text-sm mt-0.5">{invites.length} convite{invites.length !== 1 ? "s" : ""}</p>
+                <p className="text-[var(--text-muted)] text-sm mt-0.5">{invites.length} convite{invites.length !== 1 ? "s" : ""}</p>
               </div>
             </div>
 
@@ -354,9 +354,9 @@ export default function AdminUsersPage() {
             </div>
 
             {invitesLoading ? (
-              <div className="card text-center py-12 text-zinc-500 text-sm">A carregar…</div>
+              <div className="card text-center py-12 text-[var(--text-muted)] text-sm">A carregar…</div>
             ) : invites.length === 0 ? (
-              <div className="card text-center py-12 text-zinc-500 text-sm">Nenhum convite criado ainda.</div>
+              <div className="card text-center py-12 text-[var(--text-muted)] text-sm">Nenhum convite criado ainda.</div>
             ) : (
               <div className="space-y-3">
                 {invites.map((invite) => {
@@ -373,7 +373,7 @@ export default function AdminUsersPage() {
                               {status.label}
                             </span>
                           </div>
-                          <p className="text-zinc-600 text-xs mt-0.5">
+                          <p className="text-[var(--text-faint)] text-xs mt-0.5">
                             Criado {new Date(invite.createdAt).toLocaleDateString("pt-PT")}
                             {" · "}Expira {new Date(invite.expiresAt).toLocaleDateString("pt-PT")}
                           </p>
@@ -381,7 +381,7 @@ export default function AdminUsersPage() {
                         <div className="flex items-center gap-2 shrink-0">
                           <button
                             onClick={() => copyInviteLink(invite.token)}
-                            className="px-3 py-1.5 rounded-lg border border-[#2a2a2a] text-zinc-400 hover:text-white hover:border-[#3a3a3a] text-xs transition-all"
+                            className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] text-xs transition-all"
                           >
                             {copiedToken === invite.token ? "Copiado ✓" : "Copiar link"}
                           </button>
@@ -406,11 +406,11 @@ export default function AdminUsersPage() {
           <>
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-white">Estatísticas</h1>
-              <p className="text-zinc-500 text-sm mt-0.5">Visão geral da plataforma</p>
+              <p className="text-[var(--text-muted)] text-sm mt-0.5">Visão geral da plataforma</p>
             </div>
 
             {statsLoading || !stats ? (
-              <div className="card text-center py-12 text-zinc-500 text-sm">A carregar…</div>
+              <div className="card text-center py-12 text-[var(--text-muted)] text-sm">A carregar…</div>
             ) : (
               <div className="space-y-4">
                 {/* Row 1: 4 primary stat cards */}
@@ -421,8 +421,8 @@ export default function AdminUsersPage() {
                     { label: "Atividades Esta Semana", value: stats.activitiesThisWeek },
                     { label: "Total km Treinados", value: `${stats.totalKm} km` },
                   ].map((s) => (
-                    <div key={s.label} className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
-                      <p className="text-zinc-500 text-xs">{s.label}</p>
+                    <div key={s.label} className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
+                      <p className="text-[var(--text-muted)] text-xs">{s.label}</p>
                       <p className="text-white text-2xl font-bold mt-1">{s.value}</p>
                     </div>
                   ))}
@@ -430,24 +430,24 @@ export default function AdminUsersPage() {
 
                 {/* Row 2: 3 secondary cards */}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
-                    <p className="text-zinc-500 text-xs">Planos Ativos</p>
+                  <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
+                    <p className="text-[var(--text-muted)] text-xs">Planos Ativos</p>
                     <p className="text-white text-2xl font-bold mt-1">{stats.activePlans}</p>
                   </div>
-                  <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
-                    <p className="text-zinc-500 text-xs">Strava Ligado</p>
+                  <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
+                    <p className="text-[var(--text-muted)] text-xs">Strava Ligado</p>
                     <p className="text-white text-2xl font-bold mt-1">{stats.stravaConnected}</p>
                     {stats.totalAthletes > 0 && (
-                      <p className="text-zinc-600 text-xs mt-1">
+                      <p className="text-[var(--text-faint)] text-xs mt-1">
                         {Math.round((stats.stravaConnected / stats.totalAthletes) * 100)}% dos atletas
                       </p>
                     )}
                   </div>
-                  <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
-                    <p className="text-zinc-500 text-xs">Email Verificado</p>
+                  <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
+                    <p className="text-[var(--text-muted)] text-xs">Email Verificado</p>
                     <p className="text-white text-2xl font-bold mt-1">{stats.verifiedUsers}</p>
                     {stats.totalUsers > 0 && (
-                      <p className="text-zinc-600 text-xs mt-1">
+                      <p className="text-[var(--text-faint)] text-xs mt-1">
                         {Math.round((stats.verifiedUsers / stats.totalUsers) * 100)}% dos utilizadores
                       </p>
                     )}
@@ -455,14 +455,14 @@ export default function AdminUsersPage() {
                 </div>
 
                 {/* Top athletes table */}
-                <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
                   <h2 className="text-sm font-semibold text-white mb-4">Top Atletas</h2>
                   {stats.topAthletes.length === 0 ? (
-                    <p className="text-zinc-500 text-sm">Sem dados ainda.</p>
+                    <p className="text-[var(--text-muted)] text-sm">Sem dados ainda.</p>
                   ) : (
                     <table className="w-full text-sm">
                       <thead>
-                        <tr className="text-zinc-500 text-xs text-left border-b border-[#1a1a1a]">
+                        <tr className="text-[var(--text-muted)] text-xs text-left border-b border-[var(--border)]">
                           <th className="pb-2 w-8">#</th>
                           <th className="pb-2">Nome</th>
                           <th className="pb-2 text-right">Atividades</th>
@@ -471,10 +471,10 @@ export default function AdminUsersPage() {
                       </thead>
                       <tbody>
                         {stats.topAthletes.map((a, i) => (
-                          <tr key={a.id} className="border-b border-[#1a1a1a] last:border-0">
-                            <td className="py-2.5 text-zinc-600 text-xs">{i + 1}</td>
-                            <td className="py-2.5 text-zinc-300">{a.name}</td>
-                            <td className="py-2.5 text-right text-zinc-300">{a.activityCount}</td>
+                          <tr key={a.id} className="border-b border-[var(--border)] last:border-0">
+                            <td className="py-2.5 text-[var(--text-faint)] text-xs">{i + 1}</td>
+                            <td className="py-2.5 text-[var(--text-secondary)]">{a.name}</td>
+                            <td className="py-2.5 text-right text-[var(--text-secondary)]">{a.activityCount}</td>
                             <td className="py-2.5 text-right text-green-400 font-medium">{a.totalKm} km</td>
                           </tr>
                         ))}
@@ -484,7 +484,7 @@ export default function AdminUsersPage() {
                 </div>
 
                 {/* Bar chart: registrations last 30 days */}
-                <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
                   <h2 className="text-sm font-semibold text-white mb-4">Registos — últimos 30 dias</h2>
                   <div className="flex items-end gap-1 h-24">
                     {stats.registrationsByDay.map((d, i) => {
@@ -500,7 +500,7 @@ export default function AdminUsersPage() {
                             />
                           </div>
                           {showLabel && (
-                            <span className="text-zinc-600 text-[9px] mt-1 truncate w-full text-center">
+                            <span className="text-[var(--text-faint)] text-[9px] mt-1 truncate w-full text-center">
                               {new Date(d.date).toLocaleDateString("pt-PT", { day: "numeric", month: "numeric" })}
                             </span>
                           )}
@@ -519,15 +519,15 @@ export default function AdminUsersPage() {
           <>
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-white">Atividade da Plataforma</h1>
-              <p className="text-zinc-500 text-sm mt-0.5">Últimos 50 eventos</p>
+              <p className="text-[var(--text-muted)] text-sm mt-0.5">Últimos 50 eventos</p>
             </div>
 
             {feedLoading ? (
-              <div className="card text-center py-12 text-zinc-500 text-sm">A carregar…</div>
+              <div className="card text-center py-12 text-[var(--text-muted)] text-sm">A carregar…</div>
             ) : feed.length === 0 ? (
-              <div className="card text-center py-12 text-zinc-500 text-sm">Sem eventos recentes.</div>
+              <div className="card text-center py-12 text-[var(--text-muted)] text-sm">Sem eventos recentes.</div>
             ) : (
-              <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+              <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
                 <div className="space-y-0">
                   {feed.map((item, i) => {
                     const dotColor =
@@ -552,8 +552,8 @@ export default function AdminUsersPage() {
                         </div>
                         {/* Content */}
                         <div className={`pb-4 flex-1 min-w-0 ${isLast ? "" : ""}`}>
-                          <p className="text-zinc-300 text-sm">{item.description}</p>
-                          <p className="text-zinc-600 text-xs mt-0.5">{relativeTime(item.date)}</p>
+                          <p className="text-[var(--text-secondary)] text-sm">{item.description}</p>
+                          <p className="text-[var(--text-faint)] text-xs mt-0.5">{relativeTime(item.date)}</p>
                         </div>
                       </div>
                     );
@@ -568,7 +568,7 @@ export default function AdminUsersPage() {
       {/* Edit modal */}
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
-          <div className="bg-[#111] border border-[#2a2a2a] rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-[var(--bg-card)] border border-[var(--border-hover)] rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <h2 className="text-lg font-bold text-white mb-5">Editar utilizador</h2>
             <div className="space-y-4">
               <div>

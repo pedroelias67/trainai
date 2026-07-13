@@ -77,8 +77,8 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col">
-      <header className="sticky top-0 z-40 border-b border-[#1a1a1a] backdrop-blur-xl bg-black/60 px-6 py-3">
+    <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
           <nav className="hidden md:flex items-center gap-1">
@@ -87,13 +87,13 @@ export default function ChatPage() {
                 className={`px-4 py-2 rounded-lg text-sm transition-all ${
                   item.href === "/dashboard/chat"
                     ? "text-white bg-white/10"
-                    : "text-zinc-400 hover:text-white hover:bg-white/5"
+                    : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
                 }`}>
                 {item.label}
               </Link>
             ))}
           </nav>
-          <Link href="/dashboard" className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors">← Dashboard</Link>
+          <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">← Dashboard</Link>
         </div>
       </header>
 
@@ -102,7 +102,7 @@ export default function ChatPage() {
           <h1 className="text-xl font-bold text-white flex items-center gap-2">
             🤖 Chat com o Treinador IA
           </h1>
-          <p className="text-zinc-500 text-sm mt-0.5">Faz perguntas sobre o teu plano, treino ou nutrição</p>
+          <p className="text-[var(--text-muted)] text-sm mt-0.5">Faz perguntas sobre o teu plano, treino ou nutrição</p>
         </div>
 
         {/* Messages */}
@@ -113,19 +113,19 @@ export default function ChatPage() {
                 <div className="w-8 h-8 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-sm shrink-0">
                   🤖
                 </div>
-                <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-zinc-300 max-w-lg">
+                <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl rounded-tl-sm px-4 py-3 text-sm text-[var(--text-secondary)] max-w-lg">
                   Olá! Sou o teu treinador de IA. Tenho acesso ao teu plano de treino e atividades recentes. Como posso ajudar-te hoje?
                 </div>
               </div>
 
               <div>
-                <p className="text-xs text-zinc-600 mb-2 ml-11">Sugestões:</p>
+                <p className="text-xs text-[var(--text-faint)] mb-2 ml-11">Sugestões:</p>
                 <div className="ml-11 flex flex-wrap gap-2">
                   {SUGGESTED_QUESTIONS.map((q) => (
                     <button
                       key={q}
                       onClick={() => sendMessage(q)}
-                      className="text-xs px-3 py-1.5 rounded-xl border border-[#2a2a2a] text-zinc-400 hover:text-white hover:border-[#3a3a3a] transition-all">
+                      className="text-xs px-3 py-1.5 rounded-xl border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all">
                       {q}
                     </button>
                   ))}
@@ -139,14 +139,14 @@ export default function ChatPage() {
               <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-sm shrink-0 ${
                 msg.role === "user"
                   ? "bg-green-500/10 border border-green-500/20"
-                  : "bg-[#1a1a1a] border border-[#2a2a2a]"
+                  : "bg-[var(--bg-hover)] border border-[var(--border-hover)]"
               }`}>
                 {msg.role === "user" ? "👤" : "🤖"}
               </div>
               <div className={`rounded-2xl px-4 py-3 text-sm max-w-lg leading-relaxed whitespace-pre-wrap ${
                 msg.role === "user"
                   ? "bg-green-500/10 border border-green-500/20 text-white rounded-tr-sm"
-                  : "bg-[#111] border border-[#1f1f1f] text-zinc-300 rounded-tl-sm"
+                  : "bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] rounded-tl-sm"
               }`}>
                 {msg.content}
               </div>
@@ -155,10 +155,10 @@ export default function ChatPage() {
 
           {loading && (
             <div className="flex items-start gap-3">
-              <div className="w-8 h-8 rounded-xl bg-[#1a1a1a] border border-[#2a2a2a] flex items-center justify-center text-sm shrink-0">
+              <div className="w-8 h-8 rounded-xl bg-[var(--bg-hover)] border border-[var(--border-hover)] flex items-center justify-center text-sm shrink-0">
                 🤖
               </div>
-              <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl rounded-tl-sm px-4 py-3">
+              <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl rounded-tl-sm px-4 py-3">
                 <div className="flex gap-1">
                   <span className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: "0ms" }} />
                   <span className="w-2 h-2 bg-zinc-500 rounded-full animate-bounce" style={{ animationDelay: "150ms" }} />
@@ -178,7 +178,7 @@ export default function ChatPage() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Escreve a tua pergunta..."
             disabled={loading}
-            className="flex-1 bg-[#111] border border-[#2a2a2a] rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600
+            className="flex-1 bg-[var(--bg-card)] border border-[var(--border-hover)] rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600
               focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 transition-all
               disabled:opacity-50"
           />

@@ -43,16 +43,16 @@ export function PersonalRecords({ records }: Props) {
           const isRecent = pr && new Date(pr.date) >= thirtyDaysAgo;
 
           return (
-            <div key={meters} className="bg-[#161616] rounded-xl p-4 text-center">
-              <p className="text-xs text-zinc-500 uppercase tracking-wide mb-2">{label}</p>
+            <div key={meters} className="bg-[var(--bg-subtle)] rounded-xl p-4 text-center">
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-2">{label}</p>
               {pr ? (
                 <>
                   <p className={`text-xl font-bold ${isRecent ? "text-green-400" : "text-white"}`}>
                     {formatTime(pr.timeSeconds)}
                     {isRecent && <span className="ml-1 text-sm">↗</span>}
                   </p>
-                  {pr.pace && <p className="text-xs text-zinc-500 mt-1">{pr.pace}</p>}
-                  <p className="text-xs text-zinc-600 mt-1">
+                  {pr.pace && <p className="text-xs text-[var(--text-muted)] mt-1">{pr.pace}</p>}
+                  <p className="text-xs text-[var(--text-faint)] mt-1">
                     {new Date(pr.date).toLocaleDateString("pt-PT", { day: "numeric", month: "short", year: "numeric" })}
                   </p>
                   {pr.activityId && (

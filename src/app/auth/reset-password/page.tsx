@@ -87,18 +87,18 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6"><LogoFull size={36} /></div>
           <h1 className="text-2xl font-bold text-white">Nova password</h1>
-          <p className="text-zinc-500 text-sm mt-1">Define uma nova password para a tua conta</p>
+          <p className="text-[var(--text-muted)] text-sm mt-1">Define uma nova password para a tua conta</p>
         </div>
-        <Suspense fallback={<div className="card text-center text-zinc-500 text-sm py-8">A carregar…</div>}>
+        <Suspense fallback={<div className="card text-center text-[var(--text-muted)] text-sm py-8">A carregar…</div>}>
           <ResetPasswordForm />
         </Suspense>
-        <p className="text-center text-sm text-zinc-600 mt-6">
-          <Link href="/auth/login" className="text-zinc-500 hover:text-zinc-300 transition-colors">
+        <p className="text-center text-sm text-[var(--text-faint)] mt-6">
+          <Link href="/auth/login" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
             ← Voltar ao login
           </Link>
         </p>

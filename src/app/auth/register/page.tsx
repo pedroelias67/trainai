@@ -73,12 +73,12 @@ function RegisterForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4 py-12">
+    <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6"><LogoFull size={36} /></div>
           <h1 className="text-2xl font-bold text-white">Criar conta</h1>
-          <p className="text-zinc-500 text-sm mt-1">
+          <p className="text-[var(--text-muted)] text-sm mt-1">
             Começa o teu plano de treino personalizado
           </p>
           {inviteToken && (
@@ -93,7 +93,7 @@ function RegisterForm() {
             {/* Google OAuth button */}
             <a
               href="/api/auth/google"
-              className="flex items-center justify-center gap-3 w-full py-3 px-4 mb-4 rounded-xl border border-[#2a2a2a] bg-[#111] hover:bg-[#1a1a1a] hover:border-[#3a3a3a] transition-all text-white text-sm font-medium"
+              className="flex items-center justify-center gap-3 w-full py-3 px-4 mb-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)] transition-all text-white text-sm font-medium"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M17.64 9.2045C17.64 8.5664 17.5827 7.9527 17.4764 7.3636H9V10.845H13.8436C13.635 11.9700 13.0009 12.9232 12.0477 13.5613V15.8195H14.9564C16.6582 14.2527 17.64 11.9455 17.64 9.2045Z" fill="#4285F4"/>
@@ -106,7 +106,7 @@ function RegisterForm() {
 
             <div className="flex items-center gap-3 mb-4">
               <div className="flex-1 h-px bg-[#1f1f1f]" />
-              <span className="text-zinc-600 text-xs">ou</span>
+              <span className="text-[var(--text-faint)] text-xs">ou</span>
               <div className="flex-1 h-px bg-[#1f1f1f]" />
             </div>
           </>
@@ -119,11 +119,11 @@ function RegisterForm() {
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
                 step === s ? "bg-green-500 text-black"
                 : s === "account" && step === "athlete" ? "bg-green-500/20 text-green-400"
-                : "bg-[#1a1a1a] text-zinc-600"
+                : "bg-[var(--bg-hover)] text-[var(--text-faint)]"
               }`}>
                 {s === "account" && step === "athlete" ? "✓" : i + 1}
               </div>
-              <span className={`text-xs ${step === s ? "text-white" : "text-zinc-600"}`}>
+              <span className={`text-xs ${step === s ? "text-white" : "text-[var(--text-faint)]"}`}>
                 {s === "account" ? "Conta" : "Perfil atleta"}
               </span>
               {i === 0 && <div className="flex-1 h-px bg-[#222]" />}
@@ -188,7 +188,7 @@ function RegisterForm() {
                 <input type="range" min="3" max="20" value={athlete.weeklyHours}
                   onChange={(e) => setAthlete({ ...athlete, weeklyHours: Number(e.target.value) })}
                   className="w-full accent-green-500 mt-2" />
-                <div className="flex justify-between text-xs text-zinc-600 mt-1"><span>3h</span><span>20h</span></div>
+                <div className="flex justify-between text-xs text-[var(--text-faint)] mt-1"><span>3h</span><span>20h</span></div>
               </div>
 
               <div>
@@ -199,10 +199,10 @@ function RegisterForm() {
                       className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                         athlete.fitnessLevel === level.value
                           ? "border-green-500/40 bg-green-500/5"
-                          : "border-[#2a2a2a] hover:border-[#3a3a3a]"
+                          : "border-[var(--border-hover)] hover:border-[var(--border-strong)]"
                       }`}>
                       <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        athlete.fitnessLevel === level.value ? "border-green-500" : "border-[#3a3a3a]"
+                        athlete.fitnessLevel === level.value ? "border-green-500" : "border-[var(--border-strong)]"
                       }`}>
                         {athlete.fitnessLevel === level.value && <div className="w-2 h-2 bg-green-500 rounded-full" />}
                       </div>
@@ -212,7 +212,7 @@ function RegisterForm() {
                         className="sr-only" />
                       <div>
                         <p className="text-sm font-medium text-white">{level.label}</p>
-                        <p className="text-xs text-zinc-500">{level.desc}</p>
+                        <p className="text-xs text-[var(--text-muted)]">{level.desc}</p>
                       </div>
                     </label>
                   ))}
@@ -221,19 +221,19 @@ function RegisterForm() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">FC Máxima <span className="normal-case text-zinc-600">(opcional)</span></label>
+                  <label className="label">FC Máxima <span className="normal-case text-[var(--text-faint)]">(opcional)</span></label>
                   <input type="number" className="input" value={athlete.maxHR}
                     onChange={(e) => setAthlete({ ...athlete, maxHR: e.target.value })}
                     placeholder="ex: 185" min="100" max="220" />
                 </div>
                 <div>
-                  <label className="label">FC Repouso <span className="normal-case text-zinc-600">(opcional)</span></label>
+                  <label className="label">FC Repouso <span className="normal-case text-[var(--text-faint)]">(opcional)</span></label>
                   <input type="number" className="input" value={athlete.restingHR}
                     onChange={(e) => setAthlete({ ...athlete, restingHR: e.target.value })}
                     placeholder="ex: 48" min="30" max="100" />
                 </div>
               </div>
-              <p className="text-xs text-zinc-600">A FC máxima permite calcular zonas de treino precisas. Podes adicionar mais tarde.</p>
+              <p className="text-xs text-[var(--text-faint)]">A FC máxima permite calcular zonas de treino precisas. Podes adicionar mais tarde.</p>
 
               <div className="flex gap-3 pt-2">
                 <button type="button" onClick={() => setStep("account")}
@@ -246,7 +246,7 @@ function RegisterForm() {
           </div>
         )}
 
-        <p className="text-center text-sm text-zinc-600 mt-6">
+        <p className="text-center text-sm text-[var(--text-faint)] mt-6">
           Já tens conta?{" "}
           <Link href="/auth/login" className="text-green-400 hover:text-green-300 font-medium">Entrar</Link>
         </p>
@@ -257,7 +257,7 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0a]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg-base)]" />}>
       <RegisterForm />
     </Suspense>
   );

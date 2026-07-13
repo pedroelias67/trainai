@@ -36,11 +36,11 @@ export default function RacePlanPage() {
   const handlePrint = () => window.print();
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <header className="sticky top-0 z-40 border-b border-[#1a1a1a] backdrop-blur-xl bg-black/60 px-6 py-3 print:hidden">
+    <div className="min-h-screen bg-[var(--bg-base)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3 print:hidden">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <span className="text-white font-bold text-lg">TrainAI</span>
-          <Link href="/dashboard" className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors">← Dashboard</Link>
+          <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">← Dashboard</Link>
         </div>
       </header>
 
@@ -48,13 +48,13 @@ export default function RacePlanPage() {
         <div className="mb-6 flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">Estratégia de Corrida</h1>
-            <p className="text-zinc-500 text-sm mt-1">Plano detalhado para o dia do evento</p>
+            <p className="text-[var(--text-muted)] text-sm mt-1">Plano detalhado para o dia do evento</p>
           </div>
           <div className="flex items-center gap-2 print:hidden">
             {plan && (
               <button
                 onClick={handlePrint}
-                className="px-3 py-1.5 bg-[#1a1a1a] hover:bg-[#252525] text-zinc-300 text-xs font-medium rounded-lg transition-colors border border-[#2a2a2a]"
+                className="px-3 py-1.5 bg-[var(--bg-hover)] hover:bg-[#252525] text-[var(--text-secondary)] text-xs font-medium rounded-lg transition-colors border border-[var(--border-hover)]"
               >
                 🖨️ Imprimir / Guardar PDF
               </button>
@@ -62,7 +62,7 @@ export default function RacePlanPage() {
             {plan && (
               <button
                 onClick={() => { setPlan(null); localStorage.removeItem(`race_plan_${eventId}`); }}
-                className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+                className="text-xs text-[var(--text-faint)] hover:text-[var(--text-secondary)] transition-colors"
               >
                 Regenerar
               </button>
@@ -73,7 +73,7 @@ export default function RacePlanPage() {
         {!plan && !loading && (
           <div className="card text-center py-12">
             <span className="text-5xl mb-4 block">🏁</span>
-            <p className="text-zinc-400 mb-6">Gera a tua estratégia personalizada para este evento com base no teu perfil e atividades recentes.</p>
+            <p className="text-[var(--text-secondary)] mb-6">Gera a tua estratégia personalizada para este evento com base no teu perfil e atividades recentes.</p>
             <button
               onClick={generatePlan}
               className="px-6 py-2.5 bg-green-500 hover:bg-green-400 text-black font-semibold rounded-xl transition-colors"
@@ -86,13 +86,13 @@ export default function RacePlanPage() {
         {loading && (
           <div className="card text-center py-12">
             <div className="w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-            <p className="text-zinc-500">A preparar a tua estratégia…</p>
+            <p className="text-[var(--text-muted)]">A preparar a tua estratégia…</p>
           </div>
         )}
 
         {plan && (
           <div className="card">
-            <div className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap print:text-black print:bg-white">
+            <div className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap print:text-black print:bg-white">
               {plan}
             </div>
           </div>

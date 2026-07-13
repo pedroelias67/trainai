@@ -17,18 +17,18 @@ export default async function EditProfilePage() {
   if (!athlete) redirect("/onboarding");
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <header className="sticky top-0 z-40 border-b border-[#1a1a1a] backdrop-blur-xl bg-black/60 px-6 py-3">
+    <div className="min-h-screen bg-[var(--bg-base)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
         <div className="max-w-2xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
-          <Link href="/dashboard/profile" className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors">← Perfil</Link>
+          <Link href="/dashboard/profile" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">← Perfil</Link>
         </div>
       </header>
 
       <main className="max-w-2xl mx-auto px-6 py-8">
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-white">Editar perfil</h1>
-          <p className="text-zinc-500 text-sm mt-1">Os dados de FC e pace melhoram a precisão dos planos gerados por IA</p>
+          <p className="text-[var(--text-muted)] text-sm mt-1">Os dados de FC e pace melhoram a precisão dos planos gerados por IA</p>
         </div>
 
         <EditProfileForm

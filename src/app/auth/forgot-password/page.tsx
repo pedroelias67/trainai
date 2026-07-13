@@ -29,12 +29,12 @@ export default function ForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6"><LogoFull size={36} /></div>
           <h1 className="text-2xl font-bold text-white">Recuperar password</h1>
-          <p className="text-zinc-500 text-sm mt-1">Envia-te um link para redefinires a password</p>
+          <p className="text-[var(--text-muted)] text-sm mt-1">Envia-te um link para redefinires a password</p>
         </div>
 
         <div className="card">
@@ -42,10 +42,10 @@ export default function ForgotPasswordPage() {
             <div className="text-center space-y-4 py-4">
               <div className="text-4xl">📬</div>
               <h2 className="text-white font-semibold">Email enviado</h2>
-              <p className="text-zinc-400 text-sm">
+              <p className="text-[var(--text-secondary)] text-sm">
                 Se existir uma conta com esse email, enviámos instruções para recuperares a password.
               </p>
-              <p className="text-zinc-600 text-xs">Verifica também a pasta de spam.</p>
+              <p className="text-[var(--text-faint)] text-xs">Verifica também a pasta de spam.</p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
@@ -70,8 +70,8 @@ export default function ForgotPasswordPage() {
           )}
         </div>
 
-        <p className="text-center text-sm text-zinc-600 mt-6">
-          <Link href="/auth/login" className="text-zinc-500 hover:text-zinc-300 transition-colors">
+        <p className="text-center text-sm text-[var(--text-faint)] mt-6">
+          <Link href="/auth/login" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
             ← Voltar ao login
           </Link>
         </p>

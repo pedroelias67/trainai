@@ -32,7 +32,7 @@ const SESSION_TYPE_COLORS: Record<string, string> = {
   LONG: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   TEMPO: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   INTERVALS: "bg-red-500/10 text-red-400 border-red-500/20",
-  RECOVERY: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+  RECOVERY: "bg-zinc-500/10 text-[var(--text-secondary)] border-zinc-500/20",
   STRENGTH: "bg-purple-500/10 text-purple-400 border-purple-500/20",
   BRICK: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
   SWIM: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
@@ -85,7 +85,7 @@ export function SessionEditDrawer({ session, onClose }: Props) {
 
       {/* Drawer */}
       <div className="fixed bottom-0 left-0 right-0 z-50 md:right-0 md:top-0 md:left-auto md:bottom-0 md:w-96
-        bg-[#111] border-t md:border-t-0 md:border-l border-[#2a2a2a] rounded-t-2xl md:rounded-none
+        bg-[var(--bg-card)] border-t md:border-t-0 md:border-l border-[var(--border-hover)] rounded-t-2xl md:rounded-none
         shadow-2xl flex flex-col max-h-[90vh] md:max-h-none overflow-y-auto">
 
         {/* Handle (mobile) */}
@@ -94,10 +94,10 @@ export function SessionEditDrawer({ session, onClose }: Props) {
         </div>
 
         {/* Header */}
-        <div className="flex items-start justify-between px-5 py-4 border-b border-[#1a1a1a] shrink-0">
+        <div className="flex items-start justify-between px-5 py-4 border-b border-[var(--border)] shrink-0">
           <div>
             <div className="flex items-center gap-2 mb-1">
-              <span className={`text-xs px-2 py-0.5 rounded border ${SESSION_TYPE_COLORS[session.sessionType] ?? "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"}`}>
+              <span className={`text-xs px-2 py-0.5 rounded border ${SESSION_TYPE_COLORS[session.sessionType] ?? "bg-zinc-500/10 text-[var(--text-secondary)] border-zinc-500/20"}`}>
                 {SESSION_TYPE_LABELS[session.sessionType] ?? session.sessionType}
               </span>
               {session.completed && (
@@ -106,7 +106,7 @@ export function SessionEditDrawer({ session, onClose }: Props) {
             </div>
             <h2 className="text-white font-semibold">{session.name}</h2>
           </div>
-          <button onClick={onClose} className="text-zinc-500 hover:text-white transition-colors ml-4 mt-1">
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-white transition-colors ml-4 mt-1">
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth={2}>
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
             </svg>
@@ -116,18 +116,18 @@ export function SessionEditDrawer({ session, onClose }: Props) {
         {/* Content */}
         <div className="flex-1 px-5 py-4 space-y-6">
           {session.shortDescription && (
-            <p className="text-zinc-400 text-sm leading-relaxed">{session.shortDescription}</p>
+            <p className="text-[var(--text-secondary)] text-sm leading-relaxed">{session.shortDescription}</p>
           )}
           {session.coachTip && (
-            <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-2.5">
-              <p className="text-xs text-zinc-500 uppercase tracking-widest mb-1">Dica do treinador</p>
-              <p className="text-sm text-zinc-300">{session.coachTip}</p>
+            <div className="bg-[var(--bg-hover)] border border-[var(--border-hover)] rounded-xl px-3 py-2.5">
+              <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1">Dica do treinador</p>
+              <p className="text-sm text-[var(--text-secondary)]">{session.coachTip}</p>
             </div>
           )}
 
           {/* Day selector */}
           <div>
-            <label className="text-xs text-zinc-500 uppercase tracking-widest font-medium block mb-3">
+            <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest font-medium block mb-3">
               Dia da semana
             </label>
             <div className="grid grid-cols-7 gap-1">
@@ -141,7 +141,7 @@ export function SessionEditDrawer({ session, onClose }: Props) {
                     className={`py-2 rounded-lg text-xs font-medium transition-all ${
                       isSelected
                         ? "bg-green-500 text-black"
-                        : "bg-[#1a1a1a] text-zinc-400 hover:bg-[#222] hover:text-white border border-[#2a2a2a]"
+                        : "bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[#222] hover:text-white border border-[var(--border-hover)]"
                     }`}>
                     {name}
                   </button>
@@ -157,7 +157,7 @@ export function SessionEditDrawer({ session, onClose }: Props) {
 
           {/* Distance */}
           <div>
-            <label className="text-xs text-zinc-500 uppercase tracking-widest font-medium block mb-2">
+            <label className="text-xs text-[var(--text-muted)] uppercase tracking-widest font-medium block mb-2">
               Distância planeada (km)
             </label>
             <input
@@ -177,7 +177,7 @@ export function SessionEditDrawer({ session, onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-4 border-t border-[#1a1a1a] flex gap-3 shrink-0">
+        <div className="px-5 py-4 border-t border-[var(--border)] flex gap-3 shrink-0">
           <button onClick={onClose} className="btn-secondary flex-1 py-2.5">
             Cancelar
           </button>

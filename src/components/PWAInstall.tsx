@@ -55,10 +55,10 @@ export default function PWAInstall() {
   if (!showBanner) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-[#111] border-t border-[#1f1f1f] flex items-center justify-between gap-3">
+    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-[var(--bg-card)] border-t border-[var(--border)] flex items-center justify-between gap-3">
       <div className="flex items-center gap-3">
         <span className="text-2xl">📱</span>
-        <p className="text-sm text-zinc-300">Instala o TrainAI no teu telemóvel</p>
+        <p className="text-sm text-[var(--text-secondary)]">Instala o TrainAI no teu telemóvel</p>
       </div>
       <div className="flex items-center gap-2 shrink-0">
         <button
@@ -69,7 +69,7 @@ export default function PWAInstall() {
         </button>
         <button
           onClick={handleDismiss}
-          className="px-2 py-1.5 text-zinc-500 hover:text-zinc-300 text-sm transition-colors"
+          className="px-2 py-1.5 text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors"
           aria-label="Fechar"
         >
           ×

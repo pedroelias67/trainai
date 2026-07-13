@@ -108,7 +108,7 @@ export default function OnboardingPage() {
   const distances = DISTANCES[event.sport] ?? DISTANCES.RUNNING;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center px-4 pt-10 pb-20">
+    <div className="min-h-screen bg-[var(--bg-base)] flex flex-col items-center px-4 pt-10 pb-20">
       <div className="mb-10">
         <LogoFull size={32} />
       </div>
@@ -124,11 +124,11 @@ export default function OnboardingPage() {
                     ? "bg-green-500 text-black"
                     : s === "profile" && step === "event"
                     ? "bg-green-500/20 text-green-400"
-                    : "bg-[#1a1a1a] text-zinc-600"
+                    : "bg-[var(--bg-hover)] text-[var(--text-faint)]"
                 }`}>
                   {s === "profile" && step === "event" ? "✓" : i + 1}
                 </div>
-                <span className={`text-xs font-medium ${step === s ? "text-white" : "text-zinc-600"}`}>
+                <span className={`text-xs font-medium ${step === s ? "text-white" : "text-[var(--text-faint)]"}`}>
                   {s === "profile" ? "Perfil" : "Evento"}
                 </span>
                 {i === 0 && <div className="flex-1 h-px bg-[#222] ml-1" />}
@@ -140,7 +140,7 @@ export default function OnboardingPage() {
         {step === "profile" && (
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">O teu perfil de atleta</h1>
-            <p className="text-zinc-500 text-sm mb-8">Ajuda-nos a criar o plano certo para ti</p>
+            <p className="text-[var(--text-muted)] text-sm mb-8">Ajuda-nos a criar o plano certo para ti</p>
 
             <form onSubmit={handleProfileSubmit} className="card space-y-6">
               {error && (
@@ -171,7 +171,7 @@ export default function OnboardingPage() {
                 <input type="range" min="3" max="20" value={profile.weeklyHours}
                   onChange={(e) => setProfile({ ...profile, weeklyHours: Number(e.target.value) })}
                   className="w-full accent-green-500 mt-2" />
-                <div className="flex justify-between text-xs text-zinc-600 mt-1">
+                <div className="flex justify-between text-xs text-[var(--text-faint)] mt-1">
                   <span>3h</span><span>20h</span>
                 </div>
               </div>
@@ -184,10 +184,10 @@ export default function OnboardingPage() {
                       className={`flex items-center gap-3 p-3.5 rounded-xl border cursor-pointer transition-all ${
                         profile.fitnessLevel === level.value
                           ? "border-green-500/40 bg-green-500/5"
-                          : "border-[#2a2a2a] hover:border-[#3a3a3a]"
+                          : "border-[var(--border-hover)] hover:border-[var(--border-strong)]"
                       }`}>
                       <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 transition-all ${
-                        profile.fitnessLevel === level.value ? "border-green-500" : "border-[#3a3a3a]"
+                        profile.fitnessLevel === level.value ? "border-green-500" : "border-[var(--border-strong)]"
                       }`}>
                         {profile.fitnessLevel === level.value && (
                           <div className="w-2 h-2 bg-green-500 rounded-full" />
@@ -199,7 +199,7 @@ export default function OnboardingPage() {
                         className="sr-only" />
                       <div>
                         <p className="text-sm font-medium text-white">{level.label}</p>
-                        <p className="text-xs text-zinc-500">{level.desc}</p>
+                        <p className="text-xs text-[var(--text-muted)]">{level.desc}</p>
                       </div>
                     </label>
                   ))}
@@ -216,7 +216,7 @@ export default function OnboardingPage() {
         {step === "event" && (
           <div>
             <h1 className="text-2xl font-bold text-white mb-1">O teu evento alvo</h1>
-            <p className="text-zinc-500 text-sm mb-8">A IA vai criar um plano periodizado até ao evento</p>
+            <p className="text-[var(--text-muted)] text-sm mb-8">A IA vai criar um plano periodizado até ao evento</p>
 
             <form onSubmit={handleEventSubmit} className="card space-y-6">
               {error && (
@@ -238,10 +238,10 @@ export default function OnboardingPage() {
                       className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all ${
                         event.sport === sport.value
                           ? "border-green-500/40 bg-green-500/5"
-                          : "border-[#2a2a2a] hover:border-[#3a3a3a]"
+                          : "border-[var(--border-hover)] hover:border-[var(--border-strong)]"
                       }`}>
                       <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        event.sport === sport.value ? "border-green-500" : "border-[#3a3a3a]"
+                        event.sport === sport.value ? "border-green-500" : "border-[var(--border-strong)]"
                       }`}>
                         {event.sport === sport.value && <div className="w-2 h-2 bg-green-500 rounded-full" />}
                       </div>
@@ -285,7 +285,7 @@ export default function OnboardingPage() {
                       className={`text-center p-3 rounded-xl border cursor-pointer text-sm font-medium transition-all ${
                         event.goalType === goal.value
                           ? "border-green-500/40 bg-green-500/5 text-green-400"
-                          : "border-[#2a2a2a] text-zinc-400 hover:border-[#3a3a3a]"
+                          : "border-[var(--border-hover)] text-[var(--text-secondary)] hover:border-[var(--border-strong)]"
                       }`}>
                       <input type="radio" name="goalType" value={goal.value}
                         checked={event.goalType === goal.value}
@@ -326,7 +326,7 @@ export default function OnboardingPage() {
               🎉
             </div>
             <h2 className="text-2xl font-bold text-white mb-2">Plano criado!</h2>
-            <p className="text-zinc-500 text-sm">O teu plano de treino personalizado está pronto. A redirecionar…</p>
+            <p className="text-[var(--text-muted)] text-sm">O teu plano de treino personalizado está pronto. A redirecionar…</p>
             <div className="mt-6 flex justify-center">
               <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
             </div>

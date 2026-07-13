@@ -39,18 +39,18 @@ export function FitnessChart({ data, todayCTL, todayATL, todayTSB }: Props) {
     <div className="space-y-6">
       {/* Summary cards */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5 text-center">
-          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">Forma Crónica (CTL)</p>
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5 text-center">
+          <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-2">Forma Crónica (CTL)</p>
           <p className="text-3xl font-bold text-blue-400">{todayCTL.toFixed(1)}</p>
-          <p className="text-xs text-zinc-600 mt-1">Fitness base</p>
+          <p className="text-xs text-[var(--text-faint)] mt-1">Fitness base</p>
         </div>
-        <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5 text-center">
-          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">Fadiga (ATL)</p>
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5 text-center">
+          <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-2">Fadiga (ATL)</p>
           <p className="text-3xl font-bold text-orange-400">{todayATL.toFixed(1)}</p>
-          <p className="text-xs text-zinc-600 mt-1">Carga recente</p>
+          <p className="text-xs text-[var(--text-faint)] mt-1">Carga recente</p>
         </div>
-        <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5 text-center">
-          <p className="text-xs text-zinc-500 uppercase tracking-widest mb-2">Forma Atual (TSB)</p>
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5 text-center">
+          <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-2">Forma Atual (TSB)</p>
           <p className={`text-3xl font-bold ${todayTSB >= 0 ? "text-green-400" : "text-red-400"}`}>
             {todayTSB > 0 ? "+" : ""}{todayTSB.toFixed(1)}
           </p>
@@ -59,7 +59,7 @@ export function FitnessChart({ data, todayCTL, todayATL, todayTSB }: Props) {
       </div>
 
       {/* Chart */}
-      <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
         <h3 className="font-bold text-white mb-4">Evolução dos últimos 60 dias</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
@@ -125,10 +125,10 @@ export function FitnessChart({ data, todayCTL, todayATL, todayTSB }: Props) {
           { range: "TSB -10–0", label: "Em carga", desc: "Treino pesado", color: "text-orange-400" },
           { range: "TSB < -10", label: "Fatigado", desc: "Descanso necessário", color: "text-red-400" },
         ].map((item) => (
-          <div key={item.label} className="bg-[#111] border border-[#1f1f1f] rounded-xl p-3">
+          <div key={item.label} className="bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-3">
             <p className={`font-bold ${item.color}`}>{item.label}</p>
-            <p className="text-zinc-500 mt-0.5">{item.range}</p>
-            <p className="text-zinc-600 mt-0.5">{item.desc}</p>
+            <p className="text-[var(--text-muted)] mt-0.5">{item.range}</p>
+            <p className="text-[var(--text-faint)] mt-0.5">{item.desc}</p>
           </div>
         ))}
       </div>

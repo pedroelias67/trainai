@@ -36,8 +36,8 @@ export default async function PlanPage() {
   const plan = athlete.trainingPlans[0];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <header className="sticky top-0 z-40 border-b border-[#1a1a1a] backdrop-blur-xl bg-black/60 px-6 py-3">
+    <div className="min-h-screen bg-[var(--bg-base)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
           <nav className="hidden md:flex items-center gap-1">
@@ -51,12 +51,12 @@ export default async function PlanPage() {
               { href: "/dashboard/profile", label: "Perfil" },
             ].map((item) => (
               <Link key={item.href} href={item.href}
-                className="px-4 py-2 rounded-lg text-sm text-zinc-400 hover:text-white hover:bg-white/5 transition-all">
+                className="px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all">
                 {item.label}
               </Link>
             ))}
           </nav>
-          <Link href="/dashboard" className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors">← Dashboard</Link>
+          <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">← Dashboard</Link>
         </div>
       </header>
 
@@ -65,7 +65,7 @@ export default async function PlanPage() {
           <div className="card text-center py-20">
             <p className="text-4xl mb-4">📋</p>
             <h2 className="text-xl font-bold text-white mb-2">Sem plano ativo</h2>
-            <p className="text-zinc-500 text-sm mb-6">Cria um evento para gerar o teu plano personalizado</p>
+            <p className="text-[var(--text-muted)] text-sm mb-6">Cria um evento para gerar o teu plano personalizado</p>
             <Link href="/onboarding" className="btn-primary inline-block">Criar plano</Link>
           </div>
         ) : (
@@ -75,12 +75,12 @@ export default async function PlanPage() {
               <div>
                 <p className="text-green-400 text-xs font-medium uppercase tracking-widest mb-1">Plano ativo</p>
                 <h1 className="text-2xl font-bold text-white">{plan.event.name}</h1>
-                <p className="text-zinc-500 text-sm mt-1 capitalize">
+                <p className="text-[var(--text-muted)] text-sm mt-1 capitalize">
                   {format(new Date(plan.event.date), "d 'de' MMMM yyyy", { locale: pt })}
                   {" · "}{plan.totalWeeks} semanas
                 </p>
                 {plan.coachNotes && (
-                  <p className="mt-3 text-zinc-400 text-sm leading-relaxed max-w-2xl">{plan.coachNotes}</p>
+                  <p className="mt-3 text-[var(--text-secondary)] text-sm leading-relaxed max-w-2xl">{plan.coachNotes}</p>
                 )}
               </div>
               <Link href="/dashboard/plan/edit" className="shrink-0 btn-secondary text-sm py-2">
@@ -100,10 +100,10 @@ export default async function PlanPage() {
                     className={`rounded-2xl border transition-all ${
                       isCurrentWeek
                         ? "border-green-500/30 bg-green-500/3"
-                        : "border-[#222] bg-[#111]"
+                        : "border-[var(--border)] bg-[var(--bg-card)]"
                     }`}>
                     {/* Week header */}
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-[#1a1a1a]">
+                    <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
                       <div className="flex items-center gap-3">
                         {isCurrentWeek && (
                           <span className="text-xs font-medium text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">
@@ -112,10 +112,10 @@ export default async function PlanPage() {
                         )}
                         <h2 className="font-semibold text-white text-sm">
                           Semana {week.weekNumber}
-                          {week.focus && <span className="text-zinc-500 font-normal"> · {week.focus}</span>}
+                          {week.focus && <span className="text-[var(--text-muted)] font-normal"> · {week.focus}</span>}
                         </h2>
                       </div>
-                      <div className="flex items-center gap-3 text-xs text-zinc-500">
+                      <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
                         <span>{completedCount}/{week.sessions.length} treinos</span>
                         {week.totalDistance && <span>{week.totalDistance} km</span>}
                         {isPastWeek && completedCount === week.sessions.length && (
@@ -141,15 +141,15 @@ export default async function PlanPage() {
 
                     {/* Week coach message */}
                     {week.coachMessage && (
-                      <div className="mx-3 mb-3 p-3 rounded-xl bg-[#161616] border border-[#2a2a2a]">
-                        <p className="text-xs text-zinc-500 uppercase tracking-widest mb-1">Nota do treinador</p>
-                        <p className="text-sm text-zinc-300 leading-relaxed">{week.coachMessage}</p>
+                      <div className="mx-3 mb-3 p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-hover)]">
+                        <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1">Nota do treinador</p>
+                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{week.coachMessage}</p>
                       </div>
                     )}
 
                     {/* Weekly AI analysis */}
                     {(isPastWeek || isCurrentWeek) && (
-                      <div className="mx-3 mb-3 p-4 rounded-xl bg-[#0f0f0f] border border-[#1f1f1f]">
+                      <div className="mx-3 mb-3 p-4 rounded-xl bg-[#0f0f0f] border border-[var(--border)]">
                         <WeeklyAnalysis
                           weekId={week.id}
                           weekNumber={week.weekNumber}

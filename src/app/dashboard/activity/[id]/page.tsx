@@ -64,11 +64,11 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
   ];
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <header className="sticky top-0 z-40 border-b border-[#1a1a1a] backdrop-blur-xl bg-black/60 px-6 py-3">
+    <div className="min-h-screen bg-[var(--bg-base)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
-          <Link href="/dashboard/activities" className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors">← Atividades</Link>
+          <Link href="/dashboard/activities" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">← Atividades</Link>
         </div>
       </header>
 
@@ -81,7 +81,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
               <h1 className="text-xl font-bold text-white">
                 {activity.name ?? sportLabels[activity.sport]}
               </h1>
-              <p className="text-zinc-500 text-sm capitalize">
+              <p className="text-[var(--text-muted)] text-sm capitalize">
                 {format(new Date(activity.date), "EEEE, d 'de' MMMM yyyy 'às' HH:mm", { locale: pt })}
               </p>
             </div>
@@ -89,9 +89,9 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
 
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {topStats.map((s) => (
-              <div key={s.label} className="text-center bg-[#161616] rounded-xl py-3 px-2">
+              <div key={s.label} className="text-center bg-[var(--bg-subtle)] rounded-xl py-3 px-2">
                 <p className="text-lg font-bold text-white">{s.value}</p>
-                <p className="text-xs text-zinc-500 mt-0.5">{s.label}</p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5">{s.label}</p>
               </div>
             ))}
           </div>
@@ -110,15 +110,15 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
 
         {/* Map */}
         {gpsTrack && gpsTrack.length > 0 ? (
-          <div className="overflow-hidden rounded-2xl border border-[#222]">
-            <div className="px-5 py-4 border-b border-[#1a1a1a] bg-[#111]">
+          <div className="overflow-hidden rounded-2xl border border-[var(--border)]">
+            <div className="px-5 py-4 border-b border-[var(--border)] bg-[var(--bg-card)]">
               <h2 className="font-semibold text-white text-sm">Percurso</h2>
             </div>
             <EnrichedMap gpsTrack={gpsTrack} elevationGain={activity.elevationGain} />
           </div>
         ) : (
-          <div className="text-center py-10 rounded-2xl border border-dashed border-[#2a2a2a]">
-            <p className="text-zinc-600 text-sm">Sem dados GPS para esta atividade</p>
+          <div className="text-center py-10 rounded-2xl border border-dashed border-[var(--border-hover)]">
+            <p className="text-[var(--text-faint)] text-sm">Sem dados GPS para esta atividade</p>
           </div>
         )}
 
@@ -135,11 +135,11 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                   const mins = Math.floor(seconds / 60);
                   return (
                     <div key={z}>
-                      <div className="flex justify-between text-xs text-zinc-500 mb-1.5">
+                      <div className="flex justify-between text-xs text-[var(--text-muted)] mb-1.5">
                         <span className="font-medium">Zona {i + 1}</span>
                         <span>{mins}min ({pct}%)</span>
                       </div>
-                      <div className="bg-[#1a1a1a] rounded-full h-2">
+                      <div className="bg-[var(--bg-hover)] rounded-full h-2">
                         <div className={`h-2 rounded-full ${zoneColors[i]}`} style={{ width: `${pct}%` }} />
                       </div>
                     </div>
@@ -154,8 +154,8 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
             <h2 className="font-semibold text-white mb-4">Análise de Carga</h2>
             <div className="space-y-1">
               {extraStats.map((s) => (
-                <div key={s.label} className="flex justify-between items-center py-2.5 border-b border-[#1a1a1a] last:border-0">
-                  <span className="text-sm text-zinc-500">{s.label}</span>
+                <div key={s.label} className="flex justify-between items-center py-2.5 border-b border-[var(--border)] last:border-0">
+                  <span className="text-sm text-[var(--text-muted)]">{s.label}</span>
                   <span className="text-sm font-medium text-white">{s.value}</span>
                 </div>
               ))}
@@ -170,7 +170,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
-                  <tr className="text-left text-xs text-zinc-600 uppercase tracking-wide border-b border-[#1a1a1a]">
+                  <tr className="text-left text-xs text-[var(--text-faint)] uppercase tracking-wide border-b border-[var(--border)]">
                     <th className="pb-3">Km</th>
                     <th className="pb-3">Pace</th>
                     <th className="pb-3">FC Média</th>
@@ -178,10 +178,10 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                 </thead>
                 <tbody>
                   {splits.map((split) => (
-                    <tr key={split.km} className="border-b border-[#161616] hover:bg-[#161616] transition-colors">
+                    <tr key={split.km} className="border-b border-[#161616] hover:bg-[var(--bg-subtle)] transition-colors">
                       <td className="py-2.5 font-medium text-white">{split.km}</td>
-                      <td className="py-2.5 text-zinc-300">{split.pace}</td>
-                      <td className="py-2.5 text-zinc-300">{split.hr ? `${split.hr} bpm` : "—"}</td>
+                      <td className="py-2.5 text-[var(--text-secondary)]">{split.pace}</td>
+                      <td className="py-2.5 text-[var(--text-secondary)]">{split.hr ? `${split.hr} bpm` : "—"}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -197,19 +197,19 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
             {activity.sessions.map((session) => (
               <div key={session.id} className="grid grid-cols-3 gap-4 text-center">
                 <div>
-                  <p className="text-xs text-zinc-500 mb-2">Planeado</p>
+                  <p className="text-xs text-[var(--text-muted)] mb-2">Planeado</p>
                   <p className="text-lg font-bold text-white">
                     {session.plannedDistance ? `${session.plannedDistance}km` : "—"}
                   </p>
-                  <p className="text-xs text-zinc-500">{session.plannedPace ?? "—"}</p>
+                  <p className="text-xs text-[var(--text-muted)]">{session.plannedPace ?? "—"}</p>
                 </div>
                 <div className="flex items-center justify-center text-zinc-700 text-xl font-light">vs</div>
                 <div>
-                  <p className="text-xs text-zinc-500 mb-2">Realizado</p>
+                  <p className="text-xs text-[var(--text-muted)] mb-2">Realizado</p>
                   <p className="text-lg font-bold text-white">
                     {activity.distance ? `${(activity.distance / 1000).toFixed(1)}km` : "—"}
                   </p>
-                  <p className="text-xs text-zinc-500">{activity.avgPace ?? "—"}</p>
+                  <p className="text-xs text-[var(--text-muted)]">{activity.avgPace ?? "—"}</p>
                 </div>
               </div>
             ))}

@@ -47,9 +47,9 @@ export function RacePrediction({ recentActivities }: Props) {
 
   if (validActivities.length === 0) {
     return (
-      <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+      <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
         <h3 className="font-bold text-white mb-1">Previsão de Tempos de Corrida</h3>
-        <p className="text-zinc-500 text-sm">Sem dados suficientes (precisa de pelo menos 1 corrida ≥5km nos últimos 30 dias)</p>
+        <p className="text-[var(--text-muted)] text-sm">Sem dados suficientes (precisa de pelo menos 1 corrida ≥5km nos últimos 30 dias)</p>
       </div>
     );
   }
@@ -107,14 +107,14 @@ export function RacePrediction({ recentActivities }: Props) {
   const bestPacePerKm = bestPacePerMeter * 1000;
 
   return (
-    <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="font-bold text-white">Previsão de Tempos de Corrida</h3>
-          <p className="text-zinc-500 text-xs mt-0.5">
+          <p className="text-[var(--text-muted)] text-xs mt-0.5">
             Baseado no melhor ritmo recente: {formatPace(bestPacePerKm)}
             {trendText && (
-              <span className={`ml-2 ${trendIcon === "↑" ? "text-green-400" : trendIcon === "↓" ? "text-red-400" : "text-zinc-400"}`}>
+              <span className={`ml-2 ${trendIcon === "↑" ? "text-green-400" : trendIcon === "↓" ? "text-red-400" : "text-[var(--text-secondary)]"}`}>
                 {trendIcon} {trendText}
               </span>
             )}
@@ -124,10 +124,10 @@ export function RacePrediction({ recentActivities }: Props) {
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {predictions.map((p) => (
-          <div key={p.label} className="bg-[#0f0f0f] border border-[#1a1a1a] rounded-xl p-3 text-center">
-            <p className="text-xs text-zinc-500 mb-1">{p.label}</p>
+          <div key={p.label} className="bg-[#0f0f0f] border border-[var(--border)] rounded-xl p-3 text-center">
+            <p className="text-xs text-[var(--text-muted)] mb-1">{p.label}</p>
             <p className="text-lg font-bold text-white">{formatTime(p.predictedSeconds)}</p>
-            <p className="text-xs text-zinc-600 mt-0.5">
+            <p className="text-xs text-[var(--text-faint)] mt-0.5">
               {formatPace((p.predictedSeconds / p.meters) * 1000)}
             </p>
           </div>

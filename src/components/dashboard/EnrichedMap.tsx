@@ -150,12 +150,12 @@ export default function EnrichedMap({ gpsTrack, elevationGain }: Props) {
   return (
     <div>
       {/* Toggle */}
-      <div className="px-5 py-3 border-b border-[#1a1a1a] bg-[#111] flex items-center gap-2">
-        <span className="text-xs text-zinc-500 mr-1">Colorir por:</span>
+      <div className="px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-card)] flex items-center gap-2">
+        <span className="text-xs text-[var(--text-muted)] mr-1">Colorir por:</span>
         <button
           onClick={() => setColorBy("pace")}
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-            colorBy === "pace" ? "bg-green-500 text-black" : "bg-[#1a1a1a] text-zinc-400 hover:text-zinc-200"
+            colorBy === "pace" ? "bg-green-500 text-black" : "bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-zinc-200"
           }`}
         >
           Pace
@@ -163,7 +163,7 @@ export default function EnrichedMap({ gpsTrack, elevationGain }: Props) {
         <button
           onClick={() => setColorBy("hr")}
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-            colorBy === "hr" ? "bg-green-500 text-black" : "bg-[#1a1a1a] text-zinc-400 hover:text-zinc-200"
+            colorBy === "hr" ? "bg-green-500 text-black" : "bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-zinc-200"
           }`}
         >
           FC
@@ -174,12 +174,12 @@ export default function EnrichedMap({ gpsTrack, elevationGain }: Props) {
       <div ref={mapRef} style={{ height: "380px", width: "100%" }} />
 
       {/* Legend */}
-      <div className="px-5 py-3 bg-[#111] border-t border-[#1a1a1a]">
+      <div className="px-5 py-3 bg-[var(--bg-card)] border-t border-[var(--border)]">
         {colorBy === "pace" ? (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-500">Rápido</span>
+            <span className="text-xs text-[var(--text-muted)]">Rápido</span>
             <div className="flex-1 h-2 rounded-full" style={{ background: "linear-gradient(to right, #22c55e, #eab308, #ef4444)" }} />
-            <span className="text-xs text-zinc-500">Lento</span>
+            <span className="text-xs text-[var(--text-muted)]">Lento</span>
           </div>
         ) : (
           <div className="flex items-center gap-3 flex-wrap">
@@ -192,7 +192,7 @@ export default function EnrichedMap({ gpsTrack, elevationGain }: Props) {
             ].map(({ color, label }) => (
               <div key={label} className="flex items-center gap-1">
                 <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-                <span className="text-xs text-zinc-500">{label}</span>
+                <span className="text-xs text-[var(--text-muted)]">{label}</span>
               </div>
             ))}
           </div>
@@ -201,11 +201,11 @@ export default function EnrichedMap({ gpsTrack, elevationGain }: Props) {
 
       {/* Elevation profile */}
       {hasElevation && elevations.length > 1 && (
-        <div className="px-5 py-4 bg-[#111] border-t border-[#1a1a1a]">
+        <div className="px-5 py-4 bg-[var(--bg-card)] border-t border-[var(--border)]">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xs font-semibold text-zinc-400 uppercase tracking-wide">Perfil de Elevação</h3>
+            <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">Perfil de Elevação</h3>
             {elevationGain && (
-              <span className="text-xs text-zinc-500">+{Math.round(elevationGain)}m ganho</span>
+              <span className="text-xs text-[var(--text-muted)]">+{Math.round(elevationGain)}m ganho</span>
             )}
           </div>
           <div className="relative">
@@ -219,7 +219,7 @@ export default function EnrichedMap({ gpsTrack, elevationGain }: Props) {
               <path d={svgArea} fill="url(#eleGradient)" />
               <path d={svgPath} fill="none" stroke="#22c55e" strokeWidth="1.5" />
             </svg>
-            <div className="flex justify-between text-xs text-zinc-600 mt-1">
+            <div className="flex justify-between text-xs text-[var(--text-faint)] mt-1">
               <span>{Math.round(minEle)}m</span>
               <span>{Math.round(maxEle)}m</span>
             </div>

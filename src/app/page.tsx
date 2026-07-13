@@ -3,12 +3,12 @@ import { LogoFull } from "@/components/ui/Logo";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[#0a0a0a] text-white overflow-hidden">
+    <div className="min-h-screen bg-[var(--bg-base)] text-white overflow-hidden">
 
       {/* Nav */}
       <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 border-b border-white/5 backdrop-blur-xl bg-black/40">
         <LogoFull size={32} />
-        <div className="hidden md:flex items-center gap-6 text-sm text-zinc-400">
+        <div className="hidden md:flex items-center gap-6 text-sm text-[var(--text-secondary)]">
           <a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a>
           <a href="#como-funciona" className="hover:text-white transition-colors">Como funciona</a>
         </div>
@@ -34,7 +34,7 @@ export default function HomePage() {
           <span className="text-gradient">alimentado por IA</span>
         </h1>
 
-        <p className="text-lg text-zinc-400 max-w-xl mx-auto mb-10 leading-relaxed">
+        <p className="text-lg text-[var(--text-secondary)] max-w-xl mx-auto mb-10 leading-relaxed">
           Planos de treino periodizados para corrida e triatlo, adaptados semanalmente com base nos teus dados reais.
         </p>
 
@@ -56,7 +56,7 @@ export default function HomePage() {
           ].map((s) => (
             <div key={s.label} className="text-center">
               <p className="text-white font-semibold text-lg">{s.value}</p>
-              <p className="text-zinc-500 text-xs mt-0.5">{s.label}</p>
+              <p className="text-[var(--text-muted)] text-xs mt-0.5">{s.label}</p>
             </div>
           ))}
         </div>
@@ -94,7 +94,7 @@ export default function HomePage() {
               <div className="text-3xl mb-4">{item.icon}</div>
               <div className="text-green-400/40 text-xs font-mono font-bold mb-2">{item.step}</div>
               <h3 className="text-lg font-semibold mb-2">{item.title}</h3>
-              <p className="text-zinc-400 text-sm leading-relaxed">{item.desc}</p>
+              <p className="text-[var(--text-secondary)] text-sm leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -116,11 +116,11 @@ export default function HomePage() {
             { icon: "📋", title: "Orientações de treino", desc: "Aquecimento, parte principal e arrefecimento detalhados para cada sessão." },
             { icon: "🏆", title: "Splits por km", desc: "Pace, FC e cadência kilómetro a kilómetro em cada atividade registada." },
           ].map((f) => (
-            <div key={f.title} className="flex gap-4 p-5 rounded-2xl border border-[#1f1f1f] hover:border-[#2a2a2a] hover:bg-[#111] transition-all">
+            <div key={f.title} className="flex gap-4 p-5 rounded-2xl border border-[var(--border)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-card)] transition-all">
               <span className="text-2xl shrink-0">{f.icon}</span>
               <div>
                 <h3 className="font-semibold text-sm mb-1">{f.title}</h3>
-                <p className="text-zinc-500 text-xs leading-relaxed">{f.desc}</p>
+                <p className="text-[var(--text-muted)] text-xs leading-relaxed">{f.desc}</p>
               </div>
             </div>
           ))}
@@ -129,10 +129,10 @@ export default function HomePage() {
 
       {/* CTA final */}
       <section className="py-24 px-6">
-        <div className="max-w-2xl mx-auto text-center bg-[#111] border border-[#222] rounded-3xl p-12 relative overflow-hidden">
+        <div className="max-w-2xl mx-auto text-center bg-[var(--bg-card)] border border-[var(--border)] rounded-3xl p-12 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-br from-green-500/5 to-transparent pointer-events-none" />
           <h2 className="text-3xl font-bold mb-4">Pronto para treinar melhor?</h2>
-          <p className="text-zinc-400 mb-8">Cria o teu primeiro plano em menos de 2 minutos.</p>
+          <p className="text-[var(--text-secondary)] mb-8">Cria o teu primeiro plano em menos de 2 minutos.</p>
           <Link href="/auth/register" className="btn-primary text-base px-10 py-4 rounded-2xl inline-block">
             Começar agora — é grátis
           </Link>
@@ -140,10 +140,10 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-[#1a1a1a] py-8 px-6">
+      <footer className="border-t border-[var(--border)] py-8 px-6">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <LogoFull size={28} />
-          <p className="text-zinc-600 text-xs">© 2025 TrainAI · Todos os direitos reservados</p>
+          <p className="text-[var(--text-faint)] text-xs">© 2025 TrainAI · Todos os direitos reservados</p>
         </div>
       </footer>
     </div>

@@ -27,7 +27,7 @@ const statusColors: Record<string, string> = {
   PAUSED: "text-yellow-400 bg-yellow-500/10 border-yellow-500/20",
   COMPLETED: "text-blue-400 bg-blue-500/10 border-blue-500/20",
   CANCELLED: "text-red-400 bg-red-500/10 border-red-500/20",
-  ARCHIVED: "text-zinc-400 bg-zinc-500/10 border-zinc-500/20",
+  ARCHIVED: "text-[var(--text-secondary)] bg-zinc-500/10 border-zinc-500/20",
 };
 
 const statusLabels: Record<string, string> = {
@@ -93,8 +93,8 @@ export default async function AthleteDetailPage({
 
   if (!athlete) {
     return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="text-zinc-500 text-sm">Atleta não encontrado.</div>
+      <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center">
+        <div className="text-[var(--text-muted)] text-sm">Atleta não encontrado.</div>
       </div>
     );
   }
@@ -111,18 +111,18 @@ export default async function AthleteDetailPage({
   const completedSessions = currentWeekSessions.filter((s) => s.completed).length;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <header className="sticky top-0 z-40 border-b border-[#1a1a1a] backdrop-blur-xl bg-black/60 px-6 py-3">
+    <div className="min-h-screen bg-[var(--bg-base)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <LogoFull size={28} />
-            <span className="text-zinc-600 text-xs font-mono px-2 py-0.5 rounded bg-[#1a1a1a] border border-[#2a2a2a]">
+            <span className="text-[var(--text-faint)] text-xs font-mono px-2 py-0.5 rounded bg-[var(--bg-hover)] border border-[var(--border-hover)]">
               admin
             </span>
           </div>
           <Link
             href="/admin/users"
-            className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors"
+            className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors"
           >
             ← Utilizadores
           </Link>
@@ -131,7 +131,7 @@ export default async function AthleteDetailPage({
 
       <main className="max-w-5xl mx-auto px-6 py-8 space-y-6">
         {/* Header */}
-        <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
           <div className="flex items-start gap-4">
             <div className="w-14 h-14 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center text-xl font-bold text-green-400 shrink-0">
               {athlete.user.name?.[0]?.toUpperCase() ?? athlete.user.email[0].toUpperCase()}
@@ -140,9 +140,9 @@ export default async function AthleteDetailPage({
               <h1 className="text-2xl font-bold text-white">
                 {athlete.user.name ?? "Sem nome"}
               </h1>
-              <p className="text-zinc-500 text-sm mt-0.5">{athlete.user.email}</p>
+              <p className="text-[var(--text-muted)] text-sm mt-0.5">{athlete.user.email}</p>
               <div className="flex flex-wrap gap-2 mt-2">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-[#1a1a1a] border border-[#2a2a2a] text-zinc-400">
+                <span className="text-xs px-2 py-0.5 rounded-full bg-[var(--bg-hover)] border border-[var(--border-hover)] text-[var(--text-secondary)]">
                   {fitnessLabels[athlete.fitnessLevel] ?? athlete.fitnessLevel}
                 </span>
                 {athlete.stravaConnected && (
@@ -161,7 +161,7 @@ export default async function AthleteDetailPage({
                   </span>
                 )}
               </div>
-              <p className="text-zinc-600 text-xs mt-2">
+              <p className="text-[var(--text-faint)] text-xs mt-2">
                 Registado em{" "}
                 {new Date(athlete.createdAt).toLocaleDateString("pt-PT", {
                   day: "numeric",
@@ -189,9 +189,9 @@ export default async function AthleteDetailPage({
           ].map((s) => (
             <div
               key={s.label}
-              className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5"
+              className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5"
             >
-              <p className="text-zinc-500 text-xs">{s.label}</p>
+              <p className="text-[var(--text-muted)] text-xs">{s.label}</p>
               <p className="text-white text-lg font-bold mt-1 truncate">{s.value}</p>
             </div>
           ))}
@@ -199,16 +199,16 @@ export default async function AthleteDetailPage({
 
         {/* Active plan */}
         {activePlan && (
-          <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+          <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
             <h2 className="text-sm font-semibold text-white mb-4">Plano Ativo</h2>
             <div className="flex items-center justify-between mb-2">
-              <p className="text-zinc-300 text-sm">{activePlan.name}</p>
-              <span className="text-zinc-500 text-xs">
+              <p className="text-[var(--text-secondary)] text-sm">{activePlan.name}</p>
+              <span className="text-[var(--text-muted)] text-xs">
                 Semana {activePlan.currentWeek} / {activePlan.totalWeeks}
               </span>
             </div>
             {/* Progress bar */}
-            <div className="h-2 bg-[#1a1a1a] rounded-full overflow-hidden mb-4">
+            <div className="h-2 bg-[var(--bg-hover)] rounded-full overflow-hidden mb-4">
               <div
                 className="h-full bg-green-500 rounded-full transition-all"
                 style={{
@@ -221,7 +221,7 @@ export default async function AthleteDetailPage({
             {/* Current week sessions */}
             {currentWeekSessions.length > 0 && (
               <div>
-                <p className="text-zinc-500 text-xs mb-2">
+                <p className="text-[var(--text-muted)] text-xs mb-2">
                   Sessões semana atual —{" "}
                   <span className="text-green-400">
                     {completedSessions}/{currentWeekSessions.length} concluídas
@@ -237,7 +237,7 @@ export default async function AthleteDetailPage({
                         className={`w-4 h-4 rounded-full border flex items-center justify-center shrink-0 ${
                           s.completed
                             ? "bg-green-500/20 border-green-500/40"
-                            : "bg-[#1a1a1a] border-[#2a2a2a]"
+                            : "bg-[var(--bg-hover)] border-[var(--border-hover)]"
                         }`}
                       >
                         {s.completed && (
@@ -246,13 +246,13 @@ export default async function AthleteDetailPage({
                       </div>
                       <span
                         className={
-                          s.completed ? "text-zinc-400 line-through" : "text-zinc-300"
+                          s.completed ? "text-[var(--text-secondary)] line-through" : "text-[var(--text-secondary)]"
                         }
                       >
                         {s.name}
                       </span>
                       {s.plannedDistance && (
-                        <span className="text-zinc-600">
+                        <span className="text-[var(--text-faint)]">
                           {formatDistance(s.plannedDistance * 1000)}
                         </span>
                       )}
@@ -265,30 +265,30 @@ export default async function AthleteDetailPage({
         )}
 
         {/* Recent activities */}
-        <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-white mb-4">Atividades Recentes</h2>
           {athlete.activities.length === 0 ? (
-            <p className="text-zinc-500 text-sm">Sem atividades registadas.</p>
+            <p className="text-[var(--text-muted)] text-sm">Sem atividades registadas.</p>
           ) : (
             <div className="space-y-2">
               {athlete.activities.slice(0, 10).map((a) => (
                 <div
                   key={a.id}
-                  className="flex items-center gap-4 py-2 border-b border-[#1a1a1a] last:border-0"
+                  className="flex items-center gap-4 py-2 border-b border-[var(--border)] last:border-0"
                 >
                   <div className="w-2 h-2 rounded-full bg-green-500 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-zinc-300 text-xs font-medium truncate">
+                    <p className="text-[var(--text-secondary)] text-xs font-medium truncate">
                       {a.name ?? a.sport}
                     </p>
-                    <p className="text-zinc-600 text-xs">
+                    <p className="text-[var(--text-faint)] text-xs">
                       {new Date(a.date).toLocaleDateString("pt-PT")}
                     </p>
                   </div>
                   <div className="text-right shrink-0">
-                    <p className="text-zinc-300 text-xs">{formatDistance(a.distance)}</p>
+                    <p className="text-[var(--text-secondary)] text-xs">{formatDistance(a.distance)}</p>
                     {a.avgPace && (
-                      <p className="text-zinc-600 text-xs">{formatPace(a.avgPace)}/km</p>
+                      <p className="text-[var(--text-faint)] text-xs">{formatPace(a.avgPace)}/km</p>
                     )}
                   </div>
                 </div>
@@ -298,16 +298,16 @@ export default async function AthleteDetailPage({
         </div>
 
         {/* All training plans */}
-        <div className="bg-[#111] border border-[#1f1f1f] rounded-2xl p-5">
+        <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
           <h2 className="text-sm font-semibold text-white mb-4">Todos os Planos</h2>
           {athlete.trainingPlans.length === 0 ? (
-            <p className="text-zinc-500 text-sm">Sem planos de treino.</p>
+            <p className="text-[var(--text-muted)] text-sm">Sem planos de treino.</p>
           ) : (
             <div className="space-y-3">
               {athlete.trainingPlans.map((p) => (
                 <div
                   key={p.id}
-                  className="flex items-start gap-4 py-3 border-b border-[#1a1a1a] last:border-0"
+                  className="flex items-start gap-4 py-3 border-b border-[var(--border)] last:border-0"
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
@@ -320,8 +320,8 @@ export default async function AthleteDetailPage({
                         {statusLabels[p.status] ?? p.status}
                       </span>
                     </div>
-                    <p className="text-zinc-500 text-xs mt-0.5">{p.event.name}</p>
-                    <p className="text-zinc-600 text-xs mt-0.5">
+                    <p className="text-[var(--text-muted)] text-xs mt-0.5">{p.event.name}</p>
+                    <p className="text-[var(--text-faint)] text-xs mt-0.5">
                       {new Date(p.startDate).toLocaleDateString("pt-PT")} →{" "}
                       {new Date(p.endDate).toLocaleDateString("pt-PT")} ·{" "}
                       {p.totalWeeks} semanas

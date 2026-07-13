@@ -41,14 +41,14 @@ export default function NotificationSettings() {
   const statusColor =
     permission === "granted" ? "text-green-400" :
     permission === "denied" ? "text-red-400" :
-    "text-zinc-400";
+    "text-[var(--text-secondary)]";
 
   return (
     <div className="card">
       <div className="flex items-center justify-between">
         <div>
           <h3 className="font-semibold text-white text-sm">Notificações</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-[var(--text-muted)] mt-0.5">
             Estado: <span className={statusColor}>{statusLabel}</span>
           </p>
         </div>
@@ -61,7 +61,7 @@ export default function NotificationSettings() {
           </button>
         )}
         {permission === "denied" && (
-          <p className="text-xs text-zinc-600">Ativa nas definições do browser</p>
+          <p className="text-xs text-[var(--text-faint)]">Ativa nas definições do browser</p>
         )}
       </div>
     </div>

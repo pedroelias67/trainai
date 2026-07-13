@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { LogoFull } from "@/components/ui/Logo";
 import NotificationSettings from "@/components/dashboard/NotificationSettings";
+import ThemeToggle from "@/components/dashboard/ThemeToggle";
 
 const fitnessLabels: Record<string, string> = {
   BEGINNER: "Iniciante", INTERMEDIATE: "Intermédio", ADVANCED: "Avançado", ELITE: "Elite",
@@ -42,8 +43,8 @@ export default async function ProfilePage() {
     : null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <header className="sticky top-0 z-40 border-b border-[#1a1a1a] backdrop-blur-xl bg-black/60 px-6 py-3">
+    <div className="min-h-screen bg-[var(--bg-base)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
           <nav className="hidden md:flex items-center gap-1">
@@ -54,12 +55,12 @@ export default async function ProfilePage() {
               { href: "/dashboard/profile", label: "Perfil" },
             ].map((item) => (
               <Link key={item.href} href={item.href}
-                className="px-4 py-2 rounded-lg text-sm text-zinc-400 hover:text-white hover:bg-white/5 transition-all">
+                className="px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all">
                 {item.label}
               </Link>
             ))}
           </nav>
-          <Link href="/dashboard" className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors">← Dashboard</Link>
+          <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">← Dashboard</Link>
         </div>
       </header>
 
@@ -73,9 +74,9 @@ export default async function ProfilePage() {
               </div>
               <div>
                 <h1 className="text-lg font-bold text-white">{athlete.user.name}</h1>
-                <p className="text-zinc-500 text-sm">{athlete.user.email}</p>
+                <p className="text-[var(--text-muted)] text-sm">{athlete.user.email}</p>
                 {age && (
-                  <p className="text-zinc-600 text-xs mt-0.5">
+                  <p className="text-[var(--text-faint)] text-xs mt-0.5">
                     {age} anos · {genderLabels[athlete.gender ?? "MALE"]}
                     {athlete.fitnessLevel && ` · ${fitnessLabels[athlete.fitnessLevel]}`}
                   </p>
@@ -92,15 +93,15 @@ export default async function ProfilePage() {
         <div className="grid grid-cols-3 gap-4">
           <div className="card text-center">
             <p className="text-2xl font-bold text-white">{totalKm.toFixed(0)}</p>
-            <p className="text-zinc-500 text-xs mt-1">km totais</p>
+            <p className="text-[var(--text-muted)] text-xs mt-1">km totais</p>
           </div>
           <div className="card text-center">
             <p className="text-2xl font-bold text-white">{totalSessions}</p>
-            <p className="text-zinc-500 text-xs mt-1">atividades</p>
+            <p className="text-[var(--text-muted)] text-xs mt-1">atividades</p>
           </div>
           <div className="card text-center">
             <p className="text-2xl font-bold text-white">{athlete.weeklyHours ?? "—"}</p>
-            <p className="text-zinc-500 text-xs mt-1">h/semana</p>
+            <p className="text-[var(--text-muted)] text-xs mt-1">h/semana</p>
           </div>
         </div>
 
@@ -115,8 +116,8 @@ export default async function ProfilePage() {
               { label: "FTP (ciclismo)", value: athlete.ftp ? `${athlete.ftp} W` : "—" },
               { label: "Pace limiar", value: athlete.ltPace ?? "—" },
             ].map(({ label, value }) => (
-              <div key={label} className="flex justify-between items-center py-2.5 border-b border-[#1a1a1a] last:border-0">
-                <span className="text-zinc-500 text-sm">{label}</span>
+              <div key={label} className="flex justify-between items-center py-2.5 border-b border-[var(--border)] last:border-0">
+                <span className="text-[var(--text-muted)] text-sm">{label}</span>
                 <span className="text-white text-sm font-medium">{value}</span>
               </div>
             ))}
@@ -133,7 +134,7 @@ export default async function ProfilePage() {
               </svg>
               <div>
                 <p className="text-white text-sm font-medium">Strava</p>
-                <p className="text-zinc-500 text-xs">
+                <p className="text-[var(--text-muted)] text-xs">
                   {athlete.stravaConnected ? "Conectado · sincronização automática ativa" : "Não conectado"}
                 </p>
               </div>
@@ -152,10 +153,10 @@ export default async function ProfilePage() {
             <h2 className="font-semibold text-white mb-4">Eventos</h2>
             <div className="space-y-3">
               {athlete.events.map((event) => (
-                <div key={event.id} className="flex items-center justify-between py-2.5 border-b border-[#1a1a1a] last:border-0">
+                <div key={event.id} className="flex items-center justify-between py-2.5 border-b border-[var(--border)] last:border-0">
                   <div>
                     <p className="text-white text-sm font-medium">{event.name}</p>
-                    <p className="text-zinc-500 text-xs capitalize">
+                    <p className="text-[var(--text-muted)] text-xs capitalize">
                       {format(new Date(event.date), "d 'de' MMMM yyyy", { locale: pt })}
                     </p>
                   </div>
@@ -172,10 +173,16 @@ export default async function ProfilePage() {
         <div className="pt-2">
           <form action="/api/auth/logout" method="POST">
             <button type="submit"
-              className="w-full py-3 rounded-xl border border-[#2a2a2a] text-zinc-500 hover:text-white hover:border-[#3a3a3a] text-sm transition-all">
+              className="w-full py-3 rounded-xl border border-[var(--border-hover)] text-[var(--text-muted)] hover:text-white hover:border-[var(--border-strong)] text-sm transition-all">
               Terminar sessão
             </button>
           </form>
+        </div>
+
+        {/* Aparência */}
+        <div className="card">
+          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Aparência</h3>
+          <ThemeToggle />
         </div>
 
         <NotificationSettings />

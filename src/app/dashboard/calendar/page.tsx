@@ -11,7 +11,7 @@ const SESSION_TYPE_COLORS: Record<string, string> = {
   LONG: "bg-blue-500/10 text-blue-400 border-blue-500/20",
   TEMPO: "bg-orange-500/10 text-orange-400 border-orange-500/20",
   INTERVALS: "bg-red-500/10 text-red-400 border-red-500/20",
-  RECOVERY: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+  RECOVERY: "bg-zinc-500/10 text-[var(--text-secondary)] border-zinc-500/20",
   STRENGTH: "bg-purple-500/10 text-purple-400 border-purple-500/20",
   BRICK: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
   SWIM: "bg-cyan-500/10 text-cyan-400 border-cyan-500/20",
@@ -92,8 +92,8 @@ export default async function CalendarPage({
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <header className="sticky top-0 z-40 border-b border-[#1a1a1a] backdrop-blur-xl bg-black/60 px-6 py-3">
+    <div className="min-h-screen bg-[var(--bg-base)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
           <nav className="hidden md:flex items-center gap-1">
@@ -102,13 +102,13 @@ export default async function CalendarPage({
                 className={`px-4 py-2 rounded-lg text-sm transition-all ${
                   item.href === "/dashboard/calendar"
                     ? "text-white bg-white/10"
-                    : "text-zinc-400 hover:text-white hover:bg-white/5"
+                    : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
                 }`}>
                 {item.label}
               </Link>
             ))}
           </nav>
-          <Link href="/dashboard" className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors">← Dashboard</Link>
+          <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">← Dashboard</Link>
         </div>
       </header>
 
@@ -120,15 +120,15 @@ export default async function CalendarPage({
           </h1>
           <div className="flex items-center gap-2">
             <Link href={`/dashboard/calendar${prevMonthParams}`}
-              className="px-3 py-2 rounded-xl border border-[#2a2a2a] text-zinc-400 hover:text-white hover:border-[#3a3a3a] transition-all text-sm">
+              className="px-3 py-2 rounded-xl border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all text-sm">
               ← Anterior
             </Link>
             <Link href={`/dashboard/calendar?month=${today.getMonth() + 1}&year=${today.getFullYear()}`}
-              className="px-3 py-2 rounded-xl border border-[#2a2a2a] text-zinc-400 hover:text-white hover:border-[#3a3a3a] transition-all text-sm">
+              className="px-3 py-2 rounded-xl border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all text-sm">
               Hoje
             </Link>
             <Link href={`/dashboard/calendar${nextMonthParams}`}
-              className="px-3 py-2 rounded-xl border border-[#2a2a2a] text-zinc-400 hover:text-white hover:border-[#3a3a3a] transition-all text-sm">
+              className="px-3 py-2 rounded-xl border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all text-sm">
               Próximo →
             </Link>
           </div>
@@ -137,7 +137,7 @@ export default async function CalendarPage({
         {/* Day of week headers */}
         <div className="grid grid-cols-7 mb-2">
           {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((day) => (
-            <div key={day} className="text-center text-xs font-medium text-zinc-500 py-2">
+            <div key={day} className="text-center text-xs font-medium text-[var(--text-muted)] py-2">
               {day}
             </div>
           ))}
@@ -158,11 +158,11 @@ export default async function CalendarPage({
                   isToday
                     ? "border-green-500 bg-green-500/5"
                     : isCurrentMonth
-                    ? "border-[#1f1f1f] bg-[#111]"
+                    ? "border-[var(--border)] bg-[var(--bg-card)]"
                     : "border-[#181818] bg-[#0d0d0d] opacity-40"
                 }`}>
                 <p className={`text-xs font-medium mb-1 ${
-                  isToday ? "text-green-400" : isCurrentMonth ? "text-zinc-300" : "text-zinc-600"
+                  isToday ? "text-green-400" : isCurrentMonth ? "text-[var(--text-secondary)]" : "text-[var(--text-faint)]"
                 }`}>
                   {format(day, "d")}
                 </p>
@@ -171,7 +171,7 @@ export default async function CalendarPage({
                   {daySessions.map((session) => (
                     <Link key={session.id} href={`/dashboard/session/${session.id}`}
                       className={`block text-xs px-1.5 py-1 rounded border truncate transition-all hover:opacity-80 ${
-                        SESSION_TYPE_COLORS[session.sessionType] ?? "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"
+                        SESSION_TYPE_COLORS[session.sessionType] ?? "bg-zinc-500/10 text-[var(--text-secondary)] border-zinc-500/20"
                       }`}>
                       <span className="mr-1">{SPORT_ICON[session.sport] ?? "🏃"}</span>
                       {session.completed && <span className="text-green-400 mr-1">✓</span>}
@@ -180,7 +180,7 @@ export default async function CalendarPage({
                   ))}
 
                   {hasActivityWithoutSession && (
-                    <div className="text-xs px-1.5 py-1 rounded border bg-zinc-800/30 text-zinc-500 border-zinc-700/30 truncate">
+                    <div className="text-xs px-1.5 py-1 rounded border bg-zinc-800/30 text-[var(--text-muted)] border-zinc-700/30 truncate">
                       {SPORT_ICON[dayActivities[0].sport] ?? "🏃"} {dayActivities[0].name ?? "Atividade"}
                     </div>
                   )}

@@ -53,7 +53,7 @@ export default function NutritionPlan({ sessionId }: Props) {
         {plan && (
           <button
             onClick={() => { setPlan(null); localStorage.removeItem(`nutrition_${sessionId}`); }}
-            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors"
+            className="text-xs text-[var(--text-faint)] hover:text-[var(--text-secondary)] transition-colors"
           >
             Regenerar
           </button>
@@ -61,7 +61,7 @@ export default function NutritionPlan({ sessionId }: Props) {
       </div>
 
       {!plan && !loading && (
-        <p className="text-sm text-zinc-600">
+        <p className="text-sm text-[var(--text-faint)]">
           Gera um plano personalizado de nutrição e hidratação para este treino.
         </p>
       )}
@@ -69,12 +69,12 @@ export default function NutritionPlan({ sessionId }: Props) {
       {loading && (
         <div className="flex items-center gap-2 py-4">
           <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-          <p className="text-sm text-zinc-500">A criar o teu plano…</p>
+          <p className="text-sm text-[var(--text-muted)]">A criar o teu plano…</p>
         </div>
       )}
 
       {plan && (
-        <div className="text-sm text-zinc-300 leading-relaxed whitespace-pre-wrap">
+        <div className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
           {plan}
         </div>
       )}

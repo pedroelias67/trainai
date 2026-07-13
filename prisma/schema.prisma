@@ -76,6 +76,7 @@ model Athlete {
   stravaRefreshToken String?
   stravaTokenExpiry  DateTime?
   pushSubscription Json?
+  theme           String    @default("dark")
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

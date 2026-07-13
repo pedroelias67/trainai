@@ -37,14 +37,14 @@ function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center px-4">
+    <div className="min-h-screen bg-[var(--bg-base)] flex items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6">
             <LogoFull size={36} />
           </div>
           <h1 className="text-2xl font-bold text-white">Bem-vindo de volta</h1>
-          <p className="text-zinc-500 text-sm mt-1">Entra para continuar o teu treino</p>
+          <p className="text-[var(--text-muted)] text-sm mt-1">Entra para continuar o teu treino</p>
         </div>
 
         {resetSuccess && (
@@ -65,7 +65,7 @@ function LoginForm() {
         {/* Google OAuth button */}
         <a
           href="/api/auth/google"
-          className="flex items-center justify-center gap-3 w-full py-3 px-4 mb-4 rounded-xl border border-[#2a2a2a] bg-[#111] hover:bg-[#1a1a1a] hover:border-[#3a3a3a] transition-all text-white text-sm font-medium"
+          className="flex items-center justify-center gap-3 w-full py-3 px-4 mb-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)] transition-all text-white text-sm font-medium"
         >
           <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M17.64 9.2045C17.64 8.5664 17.5827 7.9527 17.4764 7.3636H9V10.845H13.8436C13.635 11.9700 13.0009 12.9232 12.0477 13.5613V15.8195H14.9564C16.6582 14.2527 17.64 11.9455 17.64 9.2045Z" fill="#4285F4"/>
@@ -78,7 +78,7 @@ function LoginForm() {
 
         <div className="flex items-center gap-3 mb-4">
           <div className="flex-1 h-px bg-[#1f1f1f]" />
-          <span className="text-zinc-600 text-xs">ou</span>
+          <span className="text-[var(--text-faint)] text-xs">ou</span>
           <div className="flex-1 h-px bg-[#1f1f1f]" />
         </div>
 
@@ -98,7 +98,7 @@ function LoginForm() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <label className="label mb-0">Password</label>
-                <Link href="/auth/forgot-password" className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors">
+                <Link href="/auth/forgot-password" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
                   Esqueceste a password?
                 </Link>
               </div>
@@ -112,7 +112,7 @@ function LoginForm() {
           </form>
         </div>
 
-        <p className="text-center text-sm text-zinc-600 mt-6">
+        <p className="text-center text-sm text-[var(--text-faint)] mt-6">
           Não tens conta?{" "}
           <Link href="/auth/register" className="text-green-400 hover:text-green-300 font-medium">
             Criar conta
@@ -125,7 +125,7 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#0a0a0a]" />}>
+    <Suspense fallback={<div className="min-h-screen bg-[var(--bg-base)]" />}>
       <LoginForm />
     </Suspense>
   );

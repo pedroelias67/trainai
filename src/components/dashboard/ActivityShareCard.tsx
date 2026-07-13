@@ -50,14 +50,14 @@ export default function ActivityShareCard({ name, distance, duration, avgPace, a
         <h2 className="font-semibold text-white text-sm">Partilhar</h2>
         <button
           onClick={handleShare}
-          className="px-3 py-1.5 bg-[#1a1a1a] hover:bg-[#252525] border border-[#2a2a2a] text-zinc-300 hover:text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
+          className="px-3 py-1.5 bg-[var(--bg-hover)] hover:bg-[#252525] border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
         >
           {copied ? "✓ Link copiado!" : "↗ Partilhar"}
         </button>
       </div>
 
       {/* Share card visual */}
-      <div className="rounded-xl overflow-hidden border border-[#2a2a2a]" style={{ background: "#0a0a0a" }}>
+      <div className="rounded-xl overflow-hidden border border-[var(--border-hover)]" style={{ background: "#0a0a0a" }}>
         {/* Green accent bar */}
         <div className="h-1 bg-green-500" />
 
@@ -65,14 +65,14 @@ export default function ActivityShareCard({ name, distance, duration, avgPace, a
           {/* Header */}
           <div className="flex items-center justify-between mb-4">
             <span className="text-green-500 font-bold text-sm tracking-tight">TrainAI</span>
-            <span className="text-zinc-600 text-xs">{formattedDate}</span>
+            <span className="text-[var(--text-faint)] text-xs">{formattedDate}</span>
           </div>
 
           {/* Distance — big number */}
           {distance && (
             <div className="mb-4">
               <span className="text-4xl font-black text-white">{distance}</span>
-              <span className="text-zinc-500 text-lg ml-1">km</span>
+              <span className="text-[var(--text-muted)] text-lg ml-1">km</span>
             </div>
           )}
 
@@ -81,27 +81,27 @@ export default function ActivityShareCard({ name, distance, duration, avgPace, a
             {duration && (
               <div>
                 <p className="text-white font-semibold text-sm">{duration}</p>
-                <p className="text-zinc-600 text-xs">Duração</p>
+                <p className="text-[var(--text-faint)] text-xs">Duração</p>
               </div>
             )}
             {avgPace && (
               <div>
                 <p className="text-white font-semibold text-sm">{avgPace}</p>
-                <p className="text-zinc-600 text-xs">Pace</p>
+                <p className="text-[var(--text-faint)] text-xs">Pace</p>
               </div>
             )}
             {avgHR && (
               <div>
                 <p className="text-white font-semibold text-sm">{avgHR} bpm</p>
-                <p className="text-zinc-600 text-xs">FC Média</p>
+                <p className="text-[var(--text-faint)] text-xs">FC Média</p>
               </div>
             )}
           </div>
 
           {/* Footer */}
-          <div className="flex items-center gap-2 pt-3 border-t border-[#1a1a1a]">
+          <div className="flex items-center gap-2 pt-3 border-t border-[var(--border)]">
             <span className="text-lg">{sportEmojis[sport] ?? "🏅"}</span>
-            <span className="text-zinc-400 text-xs">{sportLabels[sport] ?? sport} · {name}</span>
+            <span className="text-[var(--text-secondary)] text-xs">{sportLabels[sport] ?? sport} · {name}</span>
           </div>
         </div>
       </div>

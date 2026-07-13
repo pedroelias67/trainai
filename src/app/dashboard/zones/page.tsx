@@ -33,8 +33,8 @@ export default async function ZonesPage() {
   const powerZones = athlete.ftp ? calculatePowerZones(athlete.ftp) : null;
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
-      <header className="sticky top-0 z-40 border-b border-[#1a1a1a] backdrop-blur-xl bg-black/60 px-6 py-3">
+    <div className="min-h-screen bg-[var(--bg-base)]">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
           <nav className="hidden md:flex items-center gap-1">
@@ -45,14 +45,14 @@ export default async function ZonesPage() {
                 className={`px-4 py-2 rounded-lg text-sm transition-all ${
                   item.href === "/dashboard/zones"
                     ? "text-white bg-white/10"
-                    : "text-zinc-400 hover:text-white hover:bg-white/5"
+                    : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
                 }`}
               >
                 {item.label}
               </Link>
             ))}
           </nav>
-          <Link href="/dashboard" className="text-zinc-500 hover:text-zinc-300 text-sm transition-colors">
+          <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">
             ← Dashboard
           </Link>
         </div>
@@ -62,11 +62,11 @@ export default async function ZonesPage() {
         <div className="flex items-start justify-between">
           <div>
             <h1 className="text-2xl font-bold text-white">Zonas de Treino</h1>
-            <p className="text-zinc-500 text-sm mt-1">Zonas personalizadas com base no teu perfil fisiológico</p>
+            <p className="text-[var(--text-muted)] text-sm mt-1">Zonas personalizadas com base no teu perfil fisiológico</p>
           </div>
           <Link
             href="/dashboard/profile"
-            className="text-xs text-zinc-400 hover:text-zinc-200 border border-[#2a2a2a] px-3 py-1.5 rounded-lg transition-colors"
+            className="text-xs text-[var(--text-secondary)] hover:text-zinc-200 border border-[var(--border-hover)] px-3 py-1.5 rounded-lg transition-colors"
           >
             Atualizar perfil →
           </Link>
@@ -76,7 +76,7 @@ export default async function ZonesPage() {
           <div className="card text-center py-12">
             <div className="text-4xl mb-4">❤️</div>
             <h2 className="text-lg font-bold text-white mb-2">FC Máxima não configurada</h2>
-            <p className="text-zinc-500 text-sm mb-6">
+            <p className="text-[var(--text-muted)] text-sm mb-6">
               Define a tua frequência cardíaca máxima no perfil para calcular as zonas de treino.
             </p>
             <Link href="/dashboard/profile" className="inline-block px-4 py-2 bg-green-500 text-black font-medium rounded-xl text-sm hover:bg-green-400 transition-colors">
@@ -89,9 +89,9 @@ export default async function ZonesPage() {
             <div className="card">
               <div className="flex items-center justify-between mb-1">
                 <h2 className="font-bold text-white">Zonas de FC</h2>
-                <span className="text-xs text-zinc-500">FC Máx: {athlete.maxHR} bpm</span>
+                <span className="text-xs text-[var(--text-muted)]">FC Máx: {athlete.maxHR} bpm</span>
               </div>
-              <p className="text-xs text-zinc-600 mb-4">
+              <p className="text-xs text-[var(--text-faint)] mb-4">
                 {athlete.restingHR
                   ? `Método Karvonen (reserva de FC) · FC repouso: ${athlete.restingHR} bpm`
                   : "Baseado na FC Máxima (adiciona FC repouso para método Karvonen mais preciso)"}
@@ -103,11 +103,11 @@ export default async function ZonesPage() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <p className="text-sm font-medium text-white">{zone.name}</p>
-                        <p className="text-sm font-mono text-zinc-300 shrink-0 ml-4">
+                        <p className="text-sm font-mono text-[var(--text-secondary)] shrink-0 ml-4">
                           {zone.low}–{zone.high} bpm
                         </p>
                       </div>
-                      <p className="text-xs text-zinc-500 mt-0.5">{zone.description}</p>
+                      <p className="text-xs text-[var(--text-muted)] mt-0.5">{zone.description}</p>
                     </div>
                   </div>
                 ))}
@@ -119,9 +119,9 @@ export default async function ZonesPage() {
               <div className="card">
                 <div className="flex items-center justify-between mb-1">
                   <h2 className="font-bold text-white">Zonas de Pace</h2>
-                  <span className="text-xs text-zinc-500">Limiar: {athlete.ltPace}</span>
+                  <span className="text-xs text-[var(--text-muted)]">Limiar: {athlete.ltPace}</span>
                 </div>
-                <p className="text-xs text-zinc-600 mb-4">Baseado no pace de limiar anaeróbico</p>
+                <p className="text-xs text-[var(--text-faint)] mb-4">Baseado no pace de limiar anaeróbico</p>
                 <div className="space-y-3">
                   {paceZones.map((zone, i) => (
                     <div key={i} className="flex items-center gap-4">
@@ -131,19 +131,19 @@ export default async function ZonesPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-white">{zone.name}</p>
-                          <p className="text-sm font-mono text-zinc-300 shrink-0 ml-4">
+                          <p className="text-sm font-mono text-[var(--text-secondary)] shrink-0 ml-4">
                             {zone.low}{zone.high !== "—" ? `–${zone.high}` : "+"}
                           </p>
                         </div>
-                        <p className="text-xs text-zinc-500 mt-0.5">{zone.description}</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">{zone.description}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl border border-[#1f1f1f] bg-[#111]">
-                <p className="text-sm text-zinc-400">
+              <div className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
+                <p className="text-sm text-[var(--text-secondary)]">
                   <span className="text-white font-medium">Pace de limiar não configurado.</span>{" "}
                   Adiciona o teu pace de limiar anaeróbico no{" "}
                   <Link href="/dashboard/profile" className="text-green-400 hover:text-green-300 underline">
@@ -159,9 +159,9 @@ export default async function ZonesPage() {
               <div className="card">
                 <div className="flex items-center justify-between mb-1">
                   <h2 className="font-bold text-white">Zonas de Potência</h2>
-                  <span className="text-xs text-zinc-500">FTP: {athlete.ftp}W</span>
+                  <span className="text-xs text-[var(--text-muted)]">FTP: {athlete.ftp}W</span>
                 </div>
-                <p className="text-xs text-zinc-600 mb-4">Baseado no FTP (Functional Threshold Power) — ciclismo e triatlo</p>
+                <p className="text-xs text-[var(--text-faint)] mb-4">Baseado no FTP (Functional Threshold Power) — ciclismo e triatlo</p>
                 <div className="space-y-3">
                   {powerZones.map((zone, i) => (
                     <div key={i} className="flex items-center gap-4">
@@ -169,19 +169,19 @@ export default async function ZonesPage() {
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <p className="text-sm font-medium text-white">{zone.name}</p>
-                          <p className="text-sm font-mono text-zinc-300 shrink-0 ml-4">
+                          <p className="text-sm font-mono text-[var(--text-secondary)] shrink-0 ml-4">
                             {zone.low}–{zone.high}W
                           </p>
                         </div>
-                        <p className="text-xs text-zinc-500 mt-0.5">{zone.description}</p>
+                        <p className="text-xs text-[var(--text-muted)] mt-0.5">{zone.description}</p>
                       </div>
                     </div>
                   ))}
                 </div>
               </div>
             ) : (
-              <div className="p-4 rounded-2xl border border-[#1f1f1f] bg-[#111]">
-                <p className="text-sm text-zinc-400">
+              <div className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
+                <p className="text-sm text-[var(--text-secondary)]">
                   <span className="text-white font-medium">FTP não configurado.</span>{" "}
                   Adiciona o teu FTP (Potência de Limiar Funcional) no{" "}
                   <Link href="/dashboard/profile" className="text-green-400 hover:text-green-300 underline">
@@ -192,7 +192,7 @@ export default async function ZonesPage() {
               </div>
             )}
 
-            <p className="text-xs text-zinc-600 text-center">
+            <p className="text-xs text-[var(--text-faint)] text-center">
               As tuas zonas são calculadas com o método Karvonen (reserva de FC) quando a FC de repouso está disponível.
             </p>
           </>

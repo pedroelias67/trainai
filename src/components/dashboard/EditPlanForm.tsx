@@ -85,7 +85,7 @@ export function EditPlanForm({
         <div className="card flex items-center gap-3">
           <div className="w-8 h-8 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center justify-center text-sm">🎯</div>
           <div>
-            <p className="text-xs text-zinc-500 uppercase tracking-widest">Evento alvo</p>
+            <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest">Evento alvo</p>
             <p className="text-white font-medium text-sm">{eventName}</p>
           </div>
         </div>
@@ -104,7 +104,7 @@ export function EditPlanForm({
               className={`flex-1 py-3 rounded-xl text-sm font-medium border transition-all ${
                 days === d
                   ? "bg-green-500 text-black border-green-500"
-                  : "bg-[#1a1a1a] text-zinc-400 border-[#2a2a2a] hover:border-[#3a3a3a]"
+                  : "bg-[var(--bg-hover)] text-[var(--text-secondary)] border-[var(--border-hover)] hover:border-[var(--border-strong)]"
               }`}>
               {d}
             </button>
@@ -124,14 +124,14 @@ export function EditPlanForm({
                 className={`py-3 rounded-xl text-xs font-medium border transition-all ${
                   longRunDay === val
                     ? "bg-green-500 text-black border-green-500"
-                    : "bg-[#1a1a1a] text-zinc-400 border-[#2a2a2a] hover:border-[#3a3a3a]"
+                    : "bg-[var(--bg-hover)] text-[var(--text-secondary)] border-[var(--border-hover)] hover:border-[var(--border-strong)]"
                 }`}>
                 {day.slice(0, 3)}
               </button>
             );
           })}
         </div>
-        <p className="text-xs text-zinc-600 mt-2">
+        <p className="text-xs text-[var(--text-faint)] mt-2">
           O treino longo ficará sempre agendado para {DAYS_OF_WEEK[(longRunDay - 1) % 7]}
         </p>
       </div>
@@ -145,7 +145,7 @@ export function EditPlanForm({
         <input type="range" min="3" max="20" value={weeklyHours}
           onChange={(e) => setWeeklyHours(Number(e.target.value))}
           className="w-full accent-green-500 mt-3" />
-        <div className="flex justify-between text-xs text-zinc-600 mt-1">
+        <div className="flex justify-between text-xs text-[var(--text-faint)] mt-1">
           <span>3h</span><span>20h</span>
         </div>
       </div>
@@ -160,7 +160,7 @@ export function EditPlanForm({
               className={`py-3 px-4 rounded-xl text-sm font-medium border text-left transition-all ${
                 fitnessLevel === level.value
                   ? "bg-green-500/10 text-green-400 border-green-500/30"
-                  : "bg-[#1a1a1a] text-zinc-400 border-[#2a2a2a] hover:border-[#3a3a3a]"
+                  : "bg-[var(--bg-hover)] text-[var(--text-secondary)] border-[var(--border-hover)] hover:border-[var(--border-strong)]"
               }`}>
               {level.label}
             </button>

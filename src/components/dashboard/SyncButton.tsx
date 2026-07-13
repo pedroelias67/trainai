@@ -27,7 +27,7 @@ export function SyncButton() {
   return (
     <div className="flex items-center gap-3">
       {result && (
-        <span className="text-xs text-zinc-500">{result}</span>
+        <span className="text-xs text-[var(--text-muted)]">{result}</span>
       )}
       <button onClick={handleSync} disabled={loading}
         className="flex items-center gap-2 btn-secondary text-sm py-2">

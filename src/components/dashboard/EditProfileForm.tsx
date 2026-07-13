@@ -113,7 +113,7 @@ export function EditProfileForm({ initial }: Props) {
                 className={`py-2.5 px-3 rounded-xl text-sm font-medium border text-left transition-all ${
                   form.fitnessLevel === l.value
                     ? "bg-green-500/10 text-green-400 border-green-500/30"
-                    : "bg-[#1a1a1a] text-zinc-400 border-[#2a2a2a] hover:border-[#3a3a3a]"
+                    : "bg-[var(--bg-hover)] text-[var(--text-secondary)] border-[var(--border-hover)] hover:border-[var(--border-strong)]"
                 }`}>
                 {l.label}
               </button>
@@ -129,18 +129,18 @@ export function EditProfileForm({ initial }: Props) {
           <input type="range" min="3" max="20" value={form.weeklyHours}
             onChange={(e) => set("weeklyHours", Number(e.target.value))}
             className="w-full accent-green-500 mt-2" />
-          <div className="flex justify-between text-xs text-zinc-600 mt-1"><span>3h</span><span>20h</span></div>
+          <div className="flex justify-between text-xs text-[var(--text-faint)] mt-1"><span>3h</span><span>20h</span></div>
         </div>
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label">FC Máxima <span className="normal-case text-zinc-600">bpm</span></label>
+            <label className="label">FC Máxima <span className="normal-case text-[var(--text-faint)]">bpm</span></label>
             <input type="number" className="input" value={form.maxHR ?? ""}
               onChange={(e) => set("maxHR", e.target.value ? Number(e.target.value) : null)}
               placeholder="ex: 185" min="100" max="220" />
           </div>
           <div>
-            <label className="label">FC Repouso <span className="normal-case text-zinc-600">bpm</span></label>
+            <label className="label">FC Repouso <span className="normal-case text-[var(--text-faint)]">bpm</span></label>
             <input type="number" className="input" value={form.restingHR ?? ""}
               onChange={(e) => set("restingHR", e.target.value ? Number(e.target.value) : null)}
               placeholder="ex: 48" min="30" max="100" />
@@ -149,19 +149,19 @@ export function EditProfileForm({ initial }: Props) {
 
         <div className="grid grid-cols-2 gap-3">
           <div>
-            <label className="label">Pace de Limiar <span className="normal-case text-zinc-600">min/km</span></label>
+            <label className="label">Pace de Limiar <span className="normal-case text-[var(--text-faint)]">min/km</span></label>
             <input type="text" className="input" value={form.ltPace ?? ""}
               onChange={(e) => set("ltPace", e.target.value)}
               placeholder="ex: 4:45/km" />
           </div>
           <div>
-            <label className="label">FTP <span className="normal-case text-zinc-600">watts</span></label>
+            <label className="label">FTP <span className="normal-case text-[var(--text-faint)]">watts</span></label>
             <input type="number" className="input" value={form.ftp ?? ""}
               onChange={(e) => set("ftp", e.target.value ? Number(e.target.value) : null)}
               placeholder="ex: 230" min="50" max="500" />
           </div>
         </div>
-        <p className="text-xs text-zinc-600">FC Máxima e Pace de Limiar são usados para calcular zonas de treino precisas nos planos gerados por IA.</p>
+        <p className="text-xs text-[var(--text-faint)]">FC Máxima e Pace de Limiar são usados para calcular zonas de treino precisas nos planos gerados por IA.</p>
       </div>
 
       <button type="submit" disabled={loading} className="btn-primary w-full py-3">

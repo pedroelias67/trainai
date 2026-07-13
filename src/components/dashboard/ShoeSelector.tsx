@@ -43,7 +43,7 @@ export function ShoeSelector({ activityId, currentShoeId, shoes }: Props) {
     <div className="card">
       <h2 className="font-semibold text-white mb-4">Sapatilhas</h2>
       {activeShoes.length === 0 ? (
-        <p className="text-sm text-zinc-500">
+        <p className="text-sm text-[var(--text-muted)]">
           Sem sapatilhas ativas.{" "}
           <a href="/dashboard/shoes" className="text-green-400 hover:text-green-300 underline">
             Adiciona uma sapatilha
@@ -54,7 +54,7 @@ export function ShoeSelector({ activityId, currentShoeId, shoes }: Props) {
           <select
             value={selectedShoeId}
             onChange={(e) => setSelectedShoeId(e.target.value)}
-            className="flex-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[#3a3a3a]"
+            className="flex-1 bg-[var(--bg-hover)] border border-[var(--border-hover)] rounded-xl px-3 py-2.5 text-sm text-white focus:outline-none focus:border-[var(--border-strong)]"
           >
             <option value="">Sem sapatilha</option>
             {activeShoes.map((shoe) => (

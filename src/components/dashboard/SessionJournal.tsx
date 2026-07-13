@@ -48,12 +48,12 @@ export function SessionJournal({ sessionId, initialNote }: Props) {
       <div className="flex items-center justify-between mb-3">
         <h2 className="font-semibold text-yellow-400 text-sm">📝 A tua nota</h2>
         <div className="flex items-center gap-2">
-          {saving && <span className="text-xs text-zinc-500">A guardar...</span>}
+          {saving && <span className="text-xs text-[var(--text-muted)]">A guardar...</span>}
           {saved && <span className="text-xs text-green-400">✓ Guardado</span>}
           {!editing && (
             <button
               onClick={() => setEditing(true)}
-              className="p-1.5 rounded-lg hover:bg-[#1f1f1f] transition-colors text-zinc-500 hover:text-white"
+              className="p-1.5 rounded-lg hover:bg-[#1f1f1f] transition-colors text-[var(--text-muted)] hover:text-white"
               title="Editar nota"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -73,12 +73,12 @@ export function SessionJournal({ sessionId, initialNote }: Props) {
             onBlur={() => { handleBlur(); if (note) setEditing(false); }}
             placeholder="Como correu o treino? Como te sentiste? Notas para o futuro..."
             rows={4}
-            className="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-zinc-600 focus:outline-none focus:border-[#3a3a3a] resize-none"
+            className="w-full bg-[var(--bg-hover)] border border-[var(--border-hover)] rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--border-strong)] resize-none"
           />
           {!note && (
             <button
               onClick={() => setEditing(true)}
-              className="mt-2 text-xs text-zinc-500 hover:text-zinc-300 transition-colors"
+              className="mt-2 text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors"
             >
               + Adicionar nota
             </button>
@@ -86,7 +86,7 @@ export function SessionJournal({ sessionId, initialNote }: Props) {
         </div>
       ) : (
         <p
-          className="text-sm text-zinc-300 leading-relaxed cursor-pointer hover:text-white transition-colors"
+          className="text-sm text-[var(--text-secondary)] leading-relaxed cursor-pointer hover:text-white transition-colors"
           onClick={() => setEditing(true)}
         >
           {note}
