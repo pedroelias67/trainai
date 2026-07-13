@@ -2,25 +2,43 @@
 
 import { useState } from "react";
 
-export function GarminExportButton({ sessionId }: { sessionId: string }) {
+const DownloadIcon = () => (
+  <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-none stroke-current" strokeWidth={2}>
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round"/>
+    <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round"/>
+    <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round"/>
+  </svg>
+);
+
+export function GarminExportButton({ sessionId, weekId }: { sessionId: string; weekId: string }) {
   const [showHelp, setShowHelp] = useState(false);
 
   return (
     <>
       <div className="flex items-center gap-2">
+        {/* Single session */}
         <a
           href={`/api/sessions/${sessionId}/export-tcx`}
           download
-          onClick={() => setShowHelp(true)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all text-xs font-medium"
+          title="Exportar este treino para o Garmin"
         >
-          <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-none stroke-current" strokeWidth={2}>
-            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round"/>
-            <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round"/>
-            <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round"/>
-          </svg>
-          Garmin
+          <DownloadIcon />
+          Este treino
         </a>
+
+        {/* Full week */}
+        <a
+          href={`/api/weeks/${weekId}/export-tcx-zip`}
+          download
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all text-xs font-medium"
+          title="Exportar todos os treinos da semana (ZIP)"
+        >
+          <DownloadIcon />
+          Semana inteira
+        </a>
+
+        {/* Help */}
         <button
           onClick={() => setShowHelp(true)}
           title="Como importar para o Garmin"
@@ -43,6 +61,24 @@ export function GarminExportButton({ sessionId }: { sessionId: string }) {
               </button>
             </div>
 
+            {/* Export options */}
+            <div className="grid grid-cols-2 gap-3">
+              <a href={`/api/sessions/${sessionId}/export-tcx`} download
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] hover:bg-green-500/5 transition-all text-center">
+                <span className="text-2xl">🏃</span>
+                <span className="text-sm font-semibold text-white">Este treino</span>
+                <span className="text-xs text-[var(--text-muted)]">1 ficheiro .tcx</span>
+              </a>
+              <a href={`/api/weeks/${weekId}/export-tcx-zip`} download
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] hover:bg-green-500/5 transition-all text-center">
+                <span className="text-2xl">📅</span>
+                <span className="text-sm font-semibold text-white">Semana inteira</span>
+                <span className="text-xs text-[var(--text-muted)]">ZIP com todos os treinos</span>
+              </a>
+            </div>
+
+            <div className="border-t border-[var(--border)]" />
+
             {/* Phone */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
@@ -50,8 +86,8 @@ export function GarminExportButton({ sessionId }: { sessionId: string }) {
                 <p className="text-sm font-semibold text-white">No telemóvel</p>
               </div>
               {[
-                { n: 1, text: 'Clica em "Garmin" para descarregar o ficheiro .tcx' },
-                { n: 2, text: 'Abre o ficheiro com a app Garmin Connect' },
+                { n: 1, text: 'Descarrega "Este treino" ou "Semana inteira"' },
+                { n: 2, text: 'Abre o ficheiro .tcx com a app Garmin Connect' },
                 { n: 3, text: 'O treino é importado automaticamente como workout' },
                 { n: 4, text: 'Sincroniza o relógio — o treino aparece em "Treinos"' },
               ].map(({ n, text }) => (
@@ -71,10 +107,10 @@ export function GarminExportButton({ sessionId }: { sessionId: string }) {
                 <p className="text-sm font-semibold text-white">No computador</p>
               </div>
               {[
-                { n: 1, text: 'Clica em "Garmin" para descarregar o ficheiro .tcx' },
+                { n: 1, text: 'Descarrega "Este treino" ou extrai o ZIP da semana' },
                 { n: 2, text: 'Vai a connect.garmin.com e faz login' },
                 { n: 3, text: 'Menu "Treino" → "Workouts" → "Importar"' },
-                { n: 4, text: 'Seleciona o ficheiro .tcx descarregado' },
+                { n: 4, text: 'Seleciona um ou vários ficheiros .tcx de uma vez' },
                 { n: 5, text: 'Sincroniza o relógio via cabo ou app' },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">

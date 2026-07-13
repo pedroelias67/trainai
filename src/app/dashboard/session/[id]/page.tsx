@@ -79,7 +79,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <GarminExportButton sessionId={session.id} />
+              <GarminExportButton sessionId={session.id} weekId={session.weekId} />
               <span className={`px-3 py-1 rounded-full text-xs font-medium border ${sessionTypeColors[session.sessionType] ?? "bg-zinc-500/10 text-[var(--text-secondary)] border-zinc-500/20"}`}>
                 {sessionTypeLabels[session.sessionType]}
               </span>
