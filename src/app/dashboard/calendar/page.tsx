@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LogoFull } from "@/components/ui/Logo";
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameMonth, isSameDay, addMonths, subMonths } from "date-fns";
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths } from "date-fns";
 import { pt } from "date-fns/locale";
+import CalendarGrid from "@/components/dashboard/CalendarGrid";
 
 const SESSION_TYPE_COLORS: Record<string, string> = {
   EASY: "bg-green-500/10 text-green-400 border-green-500/20",
@@ -21,10 +22,6 @@ const SESSION_TYPE_COLORS: Record<string, string> = {
 const SESSION_TYPE_LABELS: Record<string, string> = {
   EASY: "Fácil", TEMPO: "Tempo", INTERVALS: "Intervalos", LONG: "Longo",
   RECOVERY: "Recuperação", STRENGTH: "Força", BRICK: "Brick", SWIM: "Natação", RACE: "Corrida",
-};
-
-const SPORT_ICON: Record<string, string> = {
-  RUNNING: "🏃", CYCLING: "🚴", SWIMMING: "🏊",
 };
 
 const NAV_ITEMS = [
@@ -53,7 +50,15 @@ export default async function CalendarPage({
         where: { status: "ACTIVE" },
         include: {
           weeks: {
-            include: { sessions: { orderBy: { date: "asc" } } },
+            include: {
+              sessions: {
+                orderBy: { date: "asc" },
+                select: {
+                  id: true, date: true, sport: true, sessionType: true,
+                  name: true, completed: true, isPriority: true, cancelled: true,
+                },
+              },
+            },
           },
         },
         take: 1,
@@ -143,52 +148,13 @@ export default async function CalendarPage({
           ))}
         </div>
 
-        {/* Calendar grid */}
-        <div className="grid grid-cols-7 gap-1">
-          {days.map((day) => {
-            const isCurrentMonth = isSameMonth(day, currentMonth);
-            const isToday = isSameDay(day, today);
-            const daySessions = allSessions.filter((s) => isSameDay(new Date(s.date), day));
-            const dayActivities = athlete.activities.filter((a) => isSameDay(new Date(a.date), day));
-            const hasActivityWithoutSession = dayActivities.length > 0 && daySessions.length === 0;
-
-            return (
-              <div key={day.toISOString()}
-                className={`min-h-[100px] p-2 rounded-xl border transition-all ${
-                  isToday
-                    ? "border-green-500 bg-green-500/5"
-                    : isCurrentMonth
-                    ? "border-[var(--border)] bg-[var(--bg-card)]"
-                    : "border-[#181818] bg-[#0d0d0d] opacity-40"
-                }`}>
-                <p className={`text-xs font-medium mb-1 ${
-                  isToday ? "text-green-400" : isCurrentMonth ? "text-[var(--text-secondary)]" : "text-[var(--text-faint)]"
-                }`}>
-                  {format(day, "d")}
-                </p>
-
-                <div className="space-y-1">
-                  {daySessions.map((session) => (
-                    <Link key={session.id} href={`/dashboard/session/${session.id}`}
-                      className={`block text-xs px-1.5 py-1 rounded border truncate transition-all hover:opacity-80 ${
-                        SESSION_TYPE_COLORS[session.sessionType] ?? "bg-zinc-500/10 text-[var(--text-secondary)] border-zinc-500/20"
-                      }`}>
-                      <span className="mr-1">{SPORT_ICON[session.sport] ?? "🏃"}</span>
-                      {session.completed && <span className="text-green-400 mr-1">✓</span>}
-                      {SESSION_TYPE_LABELS[session.sessionType] ?? session.name}
-                    </Link>
-                  ))}
-
-                  {hasActivityWithoutSession && (
-                    <div className="text-xs px-1.5 py-1 rounded border bg-zinc-800/30 text-[var(--text-muted)] border-zinc-700/30 truncate">
-                      {SPORT_ICON[dayActivities[0].sport] ?? "🏃"} {dayActivities[0].name ?? "Atividade"}
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
+        {/* Calendar grid — drag & drop enabled */}
+        <CalendarGrid
+          days={days.map((d) => d.toISOString())}
+          sessions={allSessions.map((s) => ({ ...s, date: new Date(s.date).toISOString() }))}
+          activities={athlete.activities.map((a) => ({ ...a, date: new Date(a.date).toISOString() }))}
+          currentMonth={currentMonth.toISOString()}
+        />
 
         {/* Legend */}
         <div className="mt-6 flex flex-wrap gap-3">
