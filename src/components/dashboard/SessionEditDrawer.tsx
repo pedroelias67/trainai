@@ -13,6 +13,8 @@ type Session = {
   plannedDistance: number | null;
   plannedDuration: number | null;
   completed: boolean;
+  isPriority: boolean;
+  cancelled: boolean;
   shortDescription: string | null;
   coachTip: string | null;
 };

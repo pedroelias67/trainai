@@ -135,6 +135,8 @@ export default async function PlanPage() {
                       plannedDistance: s.plannedDistance ?? null,
                       plannedDuration: s.plannedDuration ?? null,
                       completed: s.completed,
+                      isPriority: s.isPriority,
+                      cancelled: s.cancelled,
                       shortDescription: s.shortDescription ?? null,
                       coachTip: s.coachTip ?? null,
                     }))} />

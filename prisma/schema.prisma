@@ -166,6 +166,8 @@ model TrainingSession {
   plannedPace     String?
   plannedZones    Json?
   completed       Boolean   @default(false)
+  isPriority      Boolean   @default(false)
+  cancelled       Boolean   @default(false)
   activityId      String?
   athleteNote     String?
   createdAt       DateTime  @default(now())

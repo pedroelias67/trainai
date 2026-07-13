@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format, isToday, isPast } from "date-fns";
 import { pt } from "date-fns/locale";
 import { SessionEditDrawer } from "./SessionEditDrawer";
+import { SessionActions } from "./SessionActions";
 
 type Session = {
   id: string;
@@ -17,6 +17,8 @@ type Session = {
   plannedDistance: number | null;
   plannedDuration: number | null;
   completed: boolean;
+  isPriority: boolean;
+  cancelled: boolean;
   shortDescription: string | null;
   coachTip: string | null;
 };
@@ -53,51 +55,81 @@ export function PlanWeekGrid({ sessions }: Props) {
         {sessions.map((session) => {
           const sessionDate = new Date(session.date);
           const isSessionToday = isToday(sessionDate);
-          const isPastSession = isPast(sessionDate) && !isSessionToday;
 
           return (
             <div key={session.id} className="group relative">
+              {/* Priority left border indicator */}
+              {session.isPriority && !session.cancelled && (
+                <div className="absolute left-0 top-1 bottom-1 w-0.5 rounded-full bg-yellow-400 z-10" />
+              )}
+
               {/* Main card — click to view detail */}
               <Link href={`/dashboard/session/${session.id}`}
                 className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${
-                  session.completed
+                  session.cancelled
+                    ? "border-[#2a2a2a] bg-[#111] opacity-50"
+                    : session.completed
                     ? "border-green-500/20 bg-green-500/5 opacity-70"
+                    : session.isPriority
+                    ? "border-yellow-500/30 bg-yellow-500/5 hover:border-yellow-500/50"
                     : isSessionToday
                     ? "border-green-500/30 bg-green-500/5 hover:border-green-500/50"
                     : "border-[#2a2a2a] hover:border-[#3a3a3a] hover:bg-[#161616]"
                 }`}>
-                <span className="text-lg shrink-0 mt-0.5">{SPORT_ICON[session.sport] ?? "🏃"}</span>
+                <span className={`text-lg shrink-0 mt-0.5 ${session.cancelled ? "grayscale" : ""}`}>
+                  {SPORT_ICON[session.sport] ?? "🏃"}
+                </span>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs text-zinc-500 mb-0.5 capitalize">
                     {format(sessionDate, "EEE d MMM", { locale: pt })}
-                    {isSessionToday && <span className="text-green-400 ml-1">· Hoje</span>}
+                    {isSessionToday && !session.cancelled && <span className="text-green-400 ml-1">· Hoje</span>}
                   </p>
-                  <p className="text-sm font-medium text-white truncate">{session.name}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span className={`text-xs px-1.5 py-0.5 rounded border ${SESSION_TYPE_COLORS[session.sessionType] ?? "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"}`}>
-                      {SESSION_TYPE_LABELS[session.sessionType]}
-                    </span>
-                    {session.plannedDistance && (
-                      <span className="text-xs text-zinc-600">{session.plannedDistance}km</span>
+                  <p className={`text-sm font-medium truncate ${session.cancelled ? "line-through text-zinc-500" : "text-white"}`}>
+                    {session.name}
+                  </p>
+                  <div className="flex items-center gap-2 mt-1 flex-wrap">
+                    {session.cancelled ? (
+                      <span className="text-xs px-1.5 py-0.5 rounded border bg-zinc-800 text-zinc-500 border-zinc-700">
+                        Cancelado
+                      </span>
+                    ) : (
+                      <>
+                        <span className={`text-xs px-1.5 py-0.5 rounded border ${SESSION_TYPE_COLORS[session.sessionType] ?? "bg-zinc-500/10 text-zinc-400 border-zinc-500/20"}`}>
+                          {SESSION_TYPE_LABELS[session.sessionType]}
+                        </span>
+                        {session.plannedDistance && (
+                          <span className="text-xs text-zinc-600">{session.plannedDistance}km</span>
+                        )}
+                        {session.isPriority && (
+                          <span className="text-xs text-yellow-400">⭐</span>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
-                {session.completed && <span className="text-green-400 text-xs shrink-0">✓</span>}
+                {session.completed && !session.cancelled && <span className="text-green-400 text-xs shrink-0">✓</span>}
               </Link>
 
-              {/* Edit button — only for non-completed sessions */}
+              {/* Actions row — visible on hover for non-completed sessions */}
               {!session.completed && (
-                <button
-                  onClick={() => setEditingSession(session)}
-                  title="Editar sessão"
-                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity
-                    w-6 h-6 rounded-md bg-[#1a1a1a] border border-[#333] flex items-center justify-center
-                    text-zinc-500 hover:text-white hover:border-[#444]">
-                  <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current" strokeWidth={2}>
-                    <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round" />
-                    <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                </button>
+                <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <SessionActions
+                    sessionId={session.id}
+                    sessionDate={session.date}
+                    isPriority={session.isPriority}
+                    cancelled={session.cancelled}
+                  />
+                  <button
+                    onClick={(e) => { e.preventDefault(); setEditingSession(session); }}
+                    title="Editar sessão"
+                    className="w-6 h-6 rounded-md bg-[#1a1a1a] border border-[#333] flex items-center justify-center
+                      text-zinc-500 hover:text-white hover:border-[#444] transition-all">
+                    <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current" strokeWidth={2}>
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </button>
+                </div>
               )}
             </div>
           );
