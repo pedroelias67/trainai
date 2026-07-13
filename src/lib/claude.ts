@@ -157,12 +157,14 @@ REGRAS ESTRITAS para os valores:
 - sessionType: APENAS um destes valores exatos: EASY, TEMPO, INTERVALS, LONG, RECOVERY, STRENGTH, BRICK, SWIM, RACE
 - sport: APENAS um destes valores exatos: RUNNING, CYCLING, SWIMMING
 
+INSTRUÇÃO SOBRE TERMINOLOGIA: Nos campos de texto (warmup, mainSet, cooldown, coachTip, keyFocus, coachMessage, coachNotes, periodization), quando usares termos técnicos desportivos pela primeira vez (ex: drills, strides, fartlek, brick, taper, VO2max, LT, RPE, cadência, MAF, intervalos, repetiçoes, Z1/Z2/Z3/Z4/Z5, etc.), adiciona sempre uma breve explicação entre parênteses. Exemplo: "strides (acelerações curtas de 20-30 segundos para trabalhar a mecânica de corrida a ritmo rápido)".
+
 Responde APENAS com JSON válido, sem texto antes ou depois, sem markdown:
 
 {
   "planName": "nome do plano",
   "periodization": "descrição da periodização em 2-3 frases explicando a filosofia e fases do plano",
-  "coachNotes": "nota pessoal do treinador ao atleta sobre a abordagem e o que esperar",
+  "coachNotes": "nota pessoal do treinador ao atleta sobre a abordagem e o que esperar. Quando usares termos técnicos (drills, strides, fartlek, taper, VO2max, LT, RPE, brick, etc.), explica-os brevemente entre parênteses na primeira vez que os uses.",
   "weeks": [
     {
       "weekNumber": 1,
@@ -177,7 +179,7 @@ Responde APENAS com JSON válido, sem texto antes ou depois, sem markdown:
           "sessionType": "EASY",
           "name": "Corrida Base Z2",
           "shortDescription": "Corrida aeróbica fácil para construir base",
-          "warmup": "10min caminhada/corrida muito leve Z1. 4x30s aceleração progressiva com 1min recuperação.",
+          "warmup": "10min caminhada/corrida muito leve Z1 (zona 1 — esforço muito fácil, conversação fluida). 4x30s aceleração progressiva com 1min recuperação.",
           "mainSet": "35min corrida contínua Z2 (conversa confortável, consegues falar em frases completas). Pace: 6:30-7:00/km ou FC 130-140bpm.",
           "cooldown": "5min caminhada, 5min alongamentos dinâmicos: quadriceps, gémeos, iliotibial.",
           "coachTip": "O teu ego vai querer ir mais rápido — não o faças. Estes treinos lentos constroem o motor aeróbico que te vai fazer voar na corrida.",
@@ -229,6 +231,8 @@ Analisa:
 3. Tendências de progressão (FC a baixar para o mesmo pace = boa forma)
 4. Risco de lesão ou overtraining
 5. Ajustes necessários para a semana seguinte
+
+Quando usares termos técnicos (VO2max, LT, overtraining, carga de treino, TSS, CTL, ATL, etc.), explica-os brevemente entre parênteses na primeira vez que os uses.
 
 Responde em JSON com EXATAMENTE esta estrutura:
 {

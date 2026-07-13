@@ -49,6 +49,7 @@ Inclui:
 🍗 **Refeição de recuperação** — refeição completa de recuperação
 
 Formato: secções claras com emoji, quantidades específicas, dicas práticas.
+Quando usares termos técnicos (ex: janela anabólica, glicogénio, eletrólitos, isotónico, etc.), adiciona uma breve explicação entre parênteses na primeira vez que os uses.
 Responde em português europeu.`;
 
   const response = await client.messages.create({

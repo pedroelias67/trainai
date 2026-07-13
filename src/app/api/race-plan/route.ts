@@ -68,6 +68,7 @@ Secções obrigatórias:
 🔟 **Gestão mental** — como lidar com os momentos difíceis em cada disciplina
 🏁 **Pós-prova** — recuperação imediata, refeição, cuidados
 
+Quando usares termos técnicos (ex: drafting, T1, T2, brick, taper, pace, cadência, watt, FTP, etc.), adiciona uma breve explicação entre parênteses na primeira vez que os uses.
 Responde em português europeu, com emojis nas secções e dicas práticas específicas para este triatlo.`
     : `Cria uma estratégia detalhada para o dia da corrida:
 Evento: ${event.name}
@@ -84,6 +85,7 @@ Secções obrigatórias:
 6️⃣ **Gestão mental** — o que fazer nos km difíceis, como manter o foco
 7️⃣ **Pós-corrida** — recuperação imediata, refeição, cuidados
 
+Quando usares termos técnicos (ex: pace, taper, strides, fartlek, VO2max, RPE, etc.), adiciona uma breve explicação entre parênteses na primeira vez que os uses.
 Responde em português europeu, com emojis nas secções e dicas práticas específicas para este evento.`;
 
   const response = await client.messages.create({
