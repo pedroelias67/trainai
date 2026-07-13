@@ -38,6 +38,17 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   if (body.plannedDistance != null) data.plannedDistance = Number(body.plannedDistance);
   if (body.athleteNote !== undefined) data.athleteNote = body.athleteNote;
+  if (body.cancelled !== undefined) data.cancelled = Boolean(body.cancelled);
+  if (body.isPriority !== undefined) data.isPriority = Boolean(body.isPriority);
+
+  // Reschedule to an arbitrary date
+  if (body.date != null && body.dayOfWeek == null) {
+    const newDate = new Date(body.date);
+    const jsDay = newDate.getDay(); // 0=Sun … 6=Sat
+    const newDayOfWeek = jsDay === 0 ? 7 : jsDay; // map Sun→7, Mon→1…Sat→6
+    data.date = newDate;
+    data.dayOfWeek = newDayOfWeek;
+  }
 
   const updated = await prisma.trainingSession.update({ where: { id }, data });
   return NextResponse.json(updated);
