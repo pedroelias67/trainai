@@ -44,7 +44,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-[var(--bg-base)]/60 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
           <nav className="hidden md:flex items-center gap-1">
@@ -55,7 +55,7 @@ export default async function ProfilePage() {
               { href: "/dashboard/profile", label: "Perfil" },
             ].map((item) => (
               <Link key={item.href} href={item.href}
-                className="px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all">
+                className="px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-white/5 transition-all">
                 {item.label}
               </Link>
             ))}
@@ -73,7 +73,7 @@ export default async function ProfilePage() {
                 {athlete.user.name?.[0]?.toUpperCase() ?? "A"}
               </div>
               <div>
-                <h1 className="text-lg font-bold text-white">{athlete.user.name}</h1>
+                <h1 className="text-lg font-bold text-[var(--text-primary)]">{athlete.user.name}</h1>
                 <p className="text-[var(--text-muted)] text-sm">{athlete.user.email}</p>
                 {age && (
                   <p className="text-[var(--text-faint)] text-xs mt-0.5">
@@ -92,22 +92,28 @@ export default async function ProfilePage() {
         {/* Stats */}
         <div className="grid grid-cols-3 gap-4">
           <div className="card text-center">
-            <p className="text-2xl font-bold text-white">{totalKm.toFixed(0)}</p>
+            <p className="text-2xl font-bold text-[var(--text-primary)]">{totalKm.toFixed(0)}</p>
             <p className="text-[var(--text-muted)] text-xs mt-1">km totais</p>
           </div>
           <div className="card text-center">
-            <p className="text-2xl font-bold text-white">{totalSessions}</p>
+            <p className="text-2xl font-bold text-[var(--text-primary)]">{totalSessions}</p>
             <p className="text-[var(--text-muted)] text-xs mt-1">atividades</p>
           </div>
           <div className="card text-center">
-            <p className="text-2xl font-bold text-white">{athlete.weeklyHours ?? "—"}</p>
+            <p className="text-2xl font-bold text-[var(--text-primary)]">{athlete.weeklyHours ?? "—"}</p>
             <p className="text-[var(--text-muted)] text-xs mt-1">h/semana</p>
           </div>
         </div>
 
+        {/* Appearance */}
+        <div className="card">
+          <h2 className="font-semibold text-[var(--text-primary)] mb-4">Aparência</h2>
+          <ThemeToggle />
+        </div>
+
         {/* Athlete details */}
         <div className="card">
-          <h2 className="font-semibold text-white mb-4">Dados do atleta</h2>
+          <h2 className="font-semibold text-[var(--text-primary)] mb-4">Dados do atleta</h2>
           <div className="space-y-3">
             {[
               { label: "Nível", value: fitnessLabels[athlete.fitnessLevel ?? ""] ?? "—" },
@@ -118,7 +124,7 @@ export default async function ProfilePage() {
             ].map(({ label, value }) => (
               <div key={label} className="flex justify-between items-center py-2.5 border-b border-[var(--border)] last:border-0">
                 <span className="text-[var(--text-muted)] text-sm">{label}</span>
-                <span className="text-white text-sm font-medium">{value}</span>
+                <span className="text-[var(--text-primary)] text-sm font-medium">{value}</span>
               </div>
             ))}
           </div>
@@ -126,14 +132,14 @@ export default async function ProfilePage() {
 
         {/* Strava */}
         <div className="card">
-          <h2 className="font-semibold text-white mb-4">Integrações</h2>
+          <h2 className="font-semibold text-[var(--text-primary)] mb-4">Integrações</h2>
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <svg viewBox="0 0 24 24" className="w-8 h-8 fill-orange-400 shrink-0">
                 <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
               </svg>
               <div>
-                <p className="text-white text-sm font-medium">Strava</p>
+                <p className="text-[var(--text-primary)] text-sm font-medium">Strava</p>
                 <p className="text-[var(--text-muted)] text-xs">
                   {athlete.stravaConnected ? "Conectado · sincronização automática ativa" : "Não conectado"}
                 </p>
@@ -150,12 +156,12 @@ export default async function ProfilePage() {
         {/* Events */}
         {athlete.events.length > 0 && (
           <div className="card">
-            <h2 className="font-semibold text-white mb-4">Eventos</h2>
+            <h2 className="font-semibold text-[var(--text-primary)] mb-4">Eventos</h2>
             <div className="space-y-3">
               {athlete.events.map((event) => (
                 <div key={event.id} className="flex items-center justify-between py-2.5 border-b border-[var(--border)] last:border-0">
                   <div>
-                    <p className="text-white text-sm font-medium">{event.name}</p>
+                    <p className="text-[var(--text-primary)] text-sm font-medium">{event.name}</p>
                     <p className="text-[var(--text-muted)] text-xs capitalize">
                       {format(new Date(event.date), "d 'de' MMMM yyyy", { locale: pt })}
                     </p>
@@ -173,16 +179,10 @@ export default async function ProfilePage() {
         <div className="pt-2">
           <form action="/api/auth/logout" method="POST">
             <button type="submit"
-              className="w-full py-3 rounded-xl border border-[var(--border-hover)] text-[var(--text-muted)] hover:text-white hover:border-[var(--border-strong)] text-sm transition-all">
+              className="w-full py-3 rounded-xl border border-[var(--border-hover)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-sm transition-all">
               Terminar sessão
             </button>
           </form>
-        </div>
-
-        {/* Aparência */}
-        <div className="card">
-          <h3 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Aparência</h3>
-          <ThemeToggle />
         </div>
 
         <NotificationSettings />
