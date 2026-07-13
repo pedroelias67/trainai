@@ -10,33 +10,59 @@ const DownloadIcon = () => (
   </svg>
 );
 
+async function triggerDownload(url: string, filename: string) {
+  const res = await fetch(url, { credentials: "include" });
+  const blob = await res.blob();
+  const href = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = href;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(href);
+}
+
 export function GarminExportButton({ sessionId, weekId }: { sessionId: string; weekId: string }) {
   const [showHelp, setShowHelp] = useState(false);
+  const [loading, setLoading] = useState<"session" | "week" | null>(null);
+
+  async function downloadSession() {
+    setLoading("session");
+    await triggerDownload(`/api/sessions/${sessionId}/export-tcx`, `trainai-treino.tcx`);
+    setLoading(null);
+  }
+
+  async function downloadWeek() {
+    setLoading("week");
+    await triggerDownload(`/api/weeks/${weekId}/export-tcx-zip`, `trainai-semana.zip`);
+    setLoading(null);
+  }
 
   return (
     <>
       <div className="flex items-center gap-2">
         {/* Single session */}
-        <a
-          href={`/api/sessions/${sessionId}/export-tcx`}
-          download
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all text-xs font-medium"
+        <button
+          onClick={downloadSession}
+          disabled={loading !== null}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all text-xs font-medium disabled:opacity-50"
           title="Exportar este treino para o Garmin"
         >
           <DownloadIcon />
-          Este treino
-        </a>
+          {loading === "session" ? "A descarregar..." : "Este treino"}
+        </button>
 
         {/* Full week */}
-        <a
-          href={`/api/weeks/${weekId}/export-tcx-zip`}
-          download
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all text-xs font-medium"
+        <button
+          onClick={downloadWeek}
+          disabled={loading !== null}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all text-xs font-medium disabled:opacity-50"
           title="Exportar todos os treinos da semana (ZIP)"
         >
           <DownloadIcon />
-          Semana inteira
-        </a>
+          {loading === "week" ? "A descarregar..." : "Semana inteira"}
+        </button>
 
         {/* Help */}
         <button
@@ -63,18 +89,18 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
 
             {/* Export options */}
             <div className="grid grid-cols-2 gap-3">
-              <a href={`/api/sessions/${sessionId}/export-tcx`} download
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] hover:bg-green-500/5 transition-all text-center">
+              <button onClick={downloadSession} disabled={loading !== null}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] hover:bg-green-500/5 transition-all text-center disabled:opacity-50">
                 <span className="text-2xl">🏃</span>
                 <span className="text-sm font-semibold text-white">Este treino</span>
                 <span className="text-xs text-[var(--text-muted)]">1 ficheiro .tcx</span>
-              </a>
-              <a href={`/api/weeks/${weekId}/export-tcx-zip`} download
-                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] hover:bg-green-500/5 transition-all text-center">
+              </button>
+              <button onClick={downloadWeek} disabled={loading !== null}
+                className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] hover:bg-green-500/5 transition-all text-center disabled:opacity-50">
                 <span className="text-2xl">📅</span>
                 <span className="text-sm font-semibold text-white">Semana inteira</span>
                 <span className="text-xs text-[var(--text-muted)]">ZIP com todos os treinos</span>
-              </a>
+              </button>
             </div>
 
             <div className="border-t border-[var(--border)]" />
