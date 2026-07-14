@@ -98,17 +98,23 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
 
             <div className="border-t border-[var(--border)]" />
 
+            <div className="flex gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/15 text-xs text-[var(--text-secondary)] leading-relaxed">
+              <span className="text-lg shrink-0">⚠️</span>
+              <p>Não uses <strong className="text-[var(--text-primary)]">Atividades → Importar dados</strong> — essa secção é só para atividades já realizadas. Os treinos do TrainAI são <em>workouts planeados</em> e têm uma secção própria.</p>
+            </div>
+
             {/* Phone */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">📱</span>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">No telemóvel</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">No telemóvel (app Garmin Connect)</p>
               </div>
               {[
-                { n: 1, text: 'Descarrega "Este treino" ou "Semana inteira"' },
-                { n: 2, text: 'Abre o ficheiro .tcx com a app Garmin Connect' },
-                { n: 3, text: 'O treino é importado automaticamente como workout' },
-                { n: 4, text: 'Sincroniza o relógio — o treino aparece em "Treinos"' },
+                { n: 1, text: 'Descarrega o ficheiro .tcx para o telemóvel' },
+                { n: 2, text: 'Abre a app Garmin Connect' },
+                { n: 3, text: 'Menu (☰) → Treino e planeamento → Treinos' },
+                { n: 4, text: 'Toca no ícone de importar (↑) e seleciona o ficheiro .tcx' },
+                { n: 5, text: 'Sincroniza o relógio — aparece em "Treinos guardados"' },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">
                   <span className="shrink-0 w-6 h-6 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
@@ -123,29 +129,21 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">💻</span>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">No computador</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">No computador (Garmin Connect web)</p>
               </div>
               {[
-                { n: 1, text: 'Descarrega "Este treino" ou extrai o ZIP da semana' },
+                { n: 1, text: 'Descarrega o ficheiro .tcx (ou extrai o ZIP da semana)' },
                 { n: 2, text: 'Vai a connect.garmin.com e faz login' },
-                { n: 3, text: 'Menu "Treino" → "Workouts" → "Importar"' },
-                { n: 4, text: 'Seleciona um ou vários ficheiros .tcx de uma vez' },
-                { n: 5, text: 'Sincroniza o relógio via cabo ou app' },
+                { n: 3, text: 'Menu "Treino e planeamento" → "Treinos"' },
+                { n: 4, text: 'Clica em "Importar" e seleciona o(s) ficheiro(s) .tcx' },
+                { n: 5, text: 'Sincroniza o relógio via cabo USB ou app' },
+                { n: 6, text: 'No relógio: Treino → Treinos guardados' },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">
                   <span className="shrink-0 w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
                   <p className="text-sm text-[var(--text-secondary)]">{text}</p>
                 </div>
               ))}
-            </div>
-
-            <div className="border-t border-[var(--border)]" />
-
-            <div className="flex gap-3 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/15">
-              <span className="text-lg shrink-0">💡</span>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                No relógio, vai a <span className="text-[var(--text-primary)] font-medium">Treino → Treinos Guardados</span> para iniciar o workout estruturado com os alvos de pace.
-              </p>
             </div>
 
             </div>{/* end scrollable */}
