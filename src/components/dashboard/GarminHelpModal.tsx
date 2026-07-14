@@ -98,23 +98,17 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
 
             <div className="border-t border-[var(--border)]" />
 
-            <div className="flex gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/15 text-xs text-[var(--text-secondary)] leading-relaxed">
-              <span className="text-lg shrink-0">⚠️</span>
-              <p>Não uses <strong className="text-[var(--text-primary)]">Atividades → Importar dados</strong> — essa secção é só para atividades já realizadas. Os treinos do TrainAI são <em>workouts planeados</em> e têm uma secção própria.</p>
-            </div>
-
             {/* Phone */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">📱</span>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">No telemóvel (app Garmin Connect)</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">No telemóvel</p>
               </div>
               {[
-                { n: 1, text: 'Descarrega o ficheiro .tcx para o telemóvel' },
-                { n: 2, text: 'Abre a app Garmin Connect' },
-                { n: 3, text: 'Menu (☰) → Treino e planeamento → Treinos' },
-                { n: 4, text: 'Toca no ícone de importar (↑) e seleciona o ficheiro .tcx' },
-                { n: 5, text: 'Sincroniza o relógio — aparece em "Treinos guardados"' },
+                { n: 1, text: 'Descarrega "Este treino" ou "Semana inteira"' },
+                { n: 2, text: 'Abre o ficheiro .tcx com a app Garmin Connect' },
+                { n: 3, text: 'O treino é importado como atividade manual no calendário' },
+                { n: 4, text: 'Sincroniza o relógio — o treino aparece no calendário do Garmin' },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">
                   <span className="shrink-0 w-6 h-6 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
@@ -129,15 +123,13 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">💻</span>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">No computador (Garmin Connect web)</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">No computador</p>
               </div>
               {[
-                { n: 1, text: 'Descarrega o ficheiro .tcx (ou extrai o ZIP da semana)' },
-                { n: 2, text: 'Vai a connect.garmin.com e faz login' },
-                { n: 3, text: 'Menu "Treino e planeamento" → "Treinos"' },
-                { n: 4, text: 'Clica em "Importar" e seleciona o(s) ficheiro(s) .tcx' },
-                { n: 5, text: 'Sincroniza o relógio via cabo USB ou app' },
-                { n: 6, text: 'No relógio: Treino → Treinos guardados' },
+                { n: 1, text: 'Descarrega "Este treino" ou extrai o ZIP da semana' },
+                { n: 2, text: 'Vai a connect.garmin.com → Atividades → Importar dados' },
+                { n: 3, text: 'Larga o(s) ficheiro(s) .tcx na área de importação' },
+                { n: 4, text: 'Os treinos aparecem no calendário do Garmin Connect' },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">
                   <span className="shrink-0 w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>

@@ -11,39 +11,8 @@ function sportToTcx(sport: string): string {
   return "Running";
 }
 
-function paceToMetersPerSecond(pace: string | null): number | null {
-  if (!pace) return null;
-  const match = pace.match(/^(\d+):(\d+)$/);
-  if (!match) return null;
-  const totalSeconds = parseInt(match[1]) * 60 + parseInt(match[2]);
-  return 1000 / totalSeconds;
-}
-
-function buildStep(
-  id: number,
-  name: string,
-  durationSecs: number,
-  intensity: "Warmup" | "Active" | "Cooldown",
-  speedLow?: number,
-  speedHigh?: number
-): string {
-  const target =
-    speedLow && speedHigh
-      ? `<Target xsi:type="Speed_t">
-          <LowInMetersPerSecond>${speedLow.toFixed(3)}</LowInMetersPerSecond>
-          <HighInMetersPerSecond>${speedHigh.toFixed(3)}</HighInMetersPerSecond>
-        </Target>`
-      : `<Target xsi:type="NullTarget_t"/>`;
-
-  return `    <Step xsi:type="Step_t">
-      <StepId>${id}</StepId>
-      <Name>${name}</Name>
-      <Duration xsi:type="Time_t">
-        <Seconds>${Math.round(durationSecs)}</Seconds>
-      </Duration>
-      <Intensity>${intensity}</Intensity>
-      ${target}
-    </Step>`;
+function escapeXml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
 function sessionToTcx(session: {
@@ -51,41 +20,40 @@ function sessionToTcx(session: {
   sport: string;
   date: Date;
   plannedDuration: number | null;
-  plannedPace: string | null;
-  warmup: string | null;
-  cooldown: string | null;
+  plannedDistance: number | null;
   shortDescription: string | null;
-  mainSet: string | null;
   coachTip: string | null;
 }): string {
-  const totalDuration = (session.plannedDuration ?? 45) * 60;
-  const warmupSecs = totalDuration * 0.15;
-  const cooldownSecs = totalDuration * 0.1;
-  const mainSecs = totalDuration - warmupSecs - cooldownSecs;
-
-  const speedMs = paceToMetersPerSecond(session.plannedPace);
-  const speedLow = speedMs ? speedMs * 0.95 : undefined;
-  const speedHigh = speedMs ? speedMs * 1.05 : undefined;
-
-  const steps: string[] = [];
-  let stepId = 1;
-  if (session.warmup) steps.push(buildStep(stepId++, "Aquecimento", warmupSecs, "Warmup"));
-  steps.push(buildStep(stepId++, session.name, mainSecs, "Active", speedLow, speedHigh));
-  if (session.cooldown) steps.push(buildStep(stepId++, "Arrefecimento", cooldownSecs, "Cooldown"));
+  const totalDurationSecs = (session.plannedDuration ?? 45) * 60;
+  const distanceMeters = session.plannedDistance ? session.plannedDistance * 1000 : 0;
+  const startTime = new Date(session.date);
+  startTime.setHours(8, 0, 0, 0);
+  const startIso = startTime.toISOString();
+  const notes = escapeXml([session.name, session.shortDescription, session.coachTip].filter(Boolean).join(" — "));
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <TrainingCenterDatabase
   xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd">
-  <Workouts>
-    <Workout Sport="${sportToTcx(session.sport)}">
-      <Name>${session.name}</Name>
-${steps.join("\n")}
-      <ScheduledOn>${session.date.toISOString().split("T")[0]}</ScheduledOn>
-      <Notes>${[session.shortDescription, session.mainSet, session.coachTip].filter(Boolean).join(" | ")}</Notes>
-    </Workout>
-  </Workouts>
+  <Activities>
+    <Activity Sport="${sportToTcx(session.sport)}">
+      <Id>${startIso}</Id>
+      <Lap StartTime="${startIso}">
+        <TotalTimeSeconds>${Math.round(totalDurationSecs)}</TotalTimeSeconds>
+        <DistanceMeters>${Math.round(distanceMeters)}</DistanceMeters>
+        <Calories>0</Calories>
+        <Intensity>Active</Intensity>
+        <TriggerMethod>Manual</TriggerMethod>
+        <Track>
+          <Trackpoint>
+            <Time>${startIso}</Time>
+          </Trackpoint>
+        </Track>
+      </Lap>
+      <Notes>${notes}</Notes>
+    </Activity>
+  </Activities>
 </TrainingCenterDatabase>`;
 }
 
@@ -108,6 +76,15 @@ export async function GET(
       sessions: {
         where: { cancelled: false },
         orderBy: { date: "asc" },
+        select: {
+          name: true,
+          sport: true,
+          date: true,
+          plannedDuration: true,
+          plannedDistance: true,
+          shortDescription: true,
+          coachTip: true,
+        },
       },
     },
   });
