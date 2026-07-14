@@ -112,8 +112,9 @@ ${steps.join("\n")}
 
   return new NextResponse(bytes, {
     headers: {
-      "Content-Type": "application/vnd.garmin.tcx+xml",
+      "Content-Type": "application/octet-stream",
       "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Length": bytes.byteLength.toString(),
     },
   });
 }

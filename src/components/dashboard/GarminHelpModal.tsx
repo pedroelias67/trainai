@@ -12,6 +12,7 @@ const DownloadIcon = () => (
 
 async function triggerDownload(url: string, filename: string) {
   const res = await fetch(url, { credentials: "include" });
+  if (!res.ok) throw new Error(`Erro ${res.status}`);
   const blob = await res.blob();
   const href = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -20,57 +21,50 @@ async function triggerDownload(url: string, filename: string) {
   document.body.appendChild(a);
   a.click();
   a.remove();
-  URL.revokeObjectURL(href);
+  setTimeout(() => URL.revokeObjectURL(href), 2000);
 }
 
 export function GarminExportButton({ sessionId, weekId }: { sessionId: string; weekId: string }) {
   const [showHelp, setShowHelp] = useState(false);
   const [loading, setLoading] = useState<"session" | "week" | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   async function downloadSession() {
+    setError(null);
     setLoading("session");
-    await triggerDownload(`/api/sessions/${sessionId}/export-tcx`, `trainai-treino.tcx`);
+    try {
+      await triggerDownload(`/api/sessions/${sessionId}/export-tcx`, `trainai-treino.tcx`);
+    } catch (e: any) {
+      setError(e.message ?? "Erro ao descarregar");
+    }
     setLoading(null);
   }
 
   async function downloadWeek() {
+    setError(null);
     setLoading("week");
-    await triggerDownload(`/api/weeks/${weekId}/export-tcx-zip`, `trainai-semana.zip`);
+    try {
+      await triggerDownload(`/api/weeks/${weekId}/export-tcx-zip`, `trainai-semana.zip`);
+    } catch (e: any) {
+      setError(e.message ?? "Erro ao descarregar");
+    }
     setLoading(null);
   }
 
   return (
     <>
+      {error && (
+        <p className="text-xs text-red-400 mb-1">{error}</p>
+      )}
       <div className="flex items-center gap-2">
-        {/* Single session */}
-        <button
-          onClick={downloadSession}
-          disabled={loading !== null}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all text-xs font-medium disabled:opacity-50"
-          title="Exportar este treino para o Garmin"
-        >
-          <DownloadIcon />
-          {loading === "session" ? "A descarregar..." : "Este treino"}
-        </button>
-
-        {/* Full week */}
-        <button
-          onClick={downloadWeek}
-          disabled={loading !== null}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all text-xs font-medium disabled:opacity-50"
-          title="Exportar todos os treinos da semana (ZIP)"
-        >
-          <DownloadIcon />
-          {loading === "week" ? "A descarregar..." : "Semana inteira"}
-        </button>
-
-        {/* Help */}
         <button
           onClick={() => setShowHelp(true)}
-          title="Como importar para o Garmin"
-          className="w-7 h-7 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all text-xs font-bold flex items-center justify-center"
+          disabled={loading !== null}
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all text-xs font-medium disabled:opacity-50"
+          title="Exportar para o Garmin"
         >
-          ?
+          <DownloadIcon />
+          {loading ? "A descarregar..." : "Garmin"}
         </button>
       </div>
 
