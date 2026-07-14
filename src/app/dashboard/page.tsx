@@ -84,7 +84,7 @@ export default async function DashboardPage() {
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
       {/* Nav */}
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-[var(--bg-base)]/80 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
           <nav className="hidden md:flex items-center gap-1">
@@ -100,7 +100,7 @@ export default async function DashboardPage() {
               { href: "/dashboard/profile", label: "Perfil" },
             ].map((item) => (
               <Link key={item.href} href={item.href}
-                className="px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all">
+                className="px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
                 {item.label}
               </Link>
             ))}
@@ -315,7 +315,7 @@ export default async function DashboardPage() {
 
               <Link href="/dashboard/plan"
                 className="flex items-center justify-between p-4 rounded-2xl border border-[var(--border)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-card)] transition-all group">
-                <span className="text-sm font-medium text-[var(--text-secondary)] group-hover:text-white">Ver plano completo</span>
+                <span className="text-sm font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]">Ver plano completo</span>
                 <svg className="w-4 h-4 text-[var(--text-faint)] group-hover:text-[var(--text-secondary)]" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
                 </svg>

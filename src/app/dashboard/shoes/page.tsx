@@ -127,7 +127,7 @@ function ShoeModal({ shoe, onClose, onSave }: ModalProps) {
         <div className="flex gap-3 pt-2">
           <button
             onClick={onClose}
-            className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white text-sm transition-colors"
+            className="flex-1 px-4 py-2.5 rounded-xl border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm transition-colors"
           >
             Cancelar
           </button>
@@ -176,7 +176,7 @@ export default function ShoesPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-[var(--bg-base)]/80 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
           <nav className="hidden md:flex items-center gap-1">
@@ -187,7 +187,7 @@ export default function ShoesPage() {
                 className={`px-4 py-2 rounded-lg text-sm transition-all ${
                   item.href === "/dashboard/shoes"
                     ? "text-white bg-white/10"
-                    : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
                 }`}
               >
                 {item.label}
@@ -243,7 +243,7 @@ export default function ShoesPage() {
                     <div className="flex items-center gap-2">
                       <button
                         onClick={() => { setEditShoe(shoe); setShowModal(true); }}
-                        className="p-1.5 rounded-lg hover:bg-[#1f1f1f] transition-colors text-[var(--text-muted)] hover:text-white"
+                        className="p-1.5 rounded-lg hover:bg-[var(--bg-hover)] transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)]"
                         title="Editar"
                       >
                         <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

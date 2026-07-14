@@ -36,7 +36,7 @@ export default async function ActivitiesPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-[var(--bg-base)]/80 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
           <nav className="hidden md:flex items-center gap-1">
@@ -47,7 +47,7 @@ export default async function ActivitiesPage() {
               { href: "/dashboard/profile", label: "Perfil" },
             ].map((item) => (
               <Link key={item.href} href={item.href}
-                className="px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-white hover:bg-white/5 transition-all">
+                className="px-4 py-2 rounded-lg text-sm text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)] transition-all">
                 {item.label}
               </Link>
             ))}

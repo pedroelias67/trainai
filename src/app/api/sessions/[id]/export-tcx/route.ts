@@ -108,8 +108,9 @@ ${steps.join("\n")}
 </TrainingCenterDatabase>`;
 
   const filename = `trainai-${session.name.toLowerCase().replace(/\s+/g, "-")}.tcx`;
+  const bytes = new TextEncoder().encode(tcx);
 
-  return new NextResponse(tcx, {
+  return new NextResponse(bytes, {
     headers: {
       "Content-Type": "application/vnd.garmin.tcx+xml",
       "Content-Disposition": `attachment; filename="${filename}"`,

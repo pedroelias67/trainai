@@ -65,7 +65,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-[var(--bg-base)]/80 px-6 py-3">
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
           <Link href="/dashboard/activities" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">← Atividades</Link>

@@ -78,7 +78,7 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)] flex flex-col">
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-[var(--bg-base)]/80 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <LogoFull size={30} />
           <nav className="hidden md:flex items-center gap-1">
@@ -87,7 +87,7 @@ export default function ChatPage() {
                 className={`px-4 py-2 rounded-lg text-sm transition-all ${
                   item.href === "/dashboard/chat"
                     ? "text-white bg-white/10"
-                    : "text-[var(--text-secondary)] hover:text-white hover:bg-white/5"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
                 }`}>
                 {item.label}
               </Link>
@@ -125,7 +125,7 @@ export default function ChatPage() {
                     <button
                       key={q}
                       onClick={() => sendMessage(q)}
-                      className="text-xs px-3 py-1.5 rounded-xl border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all">
+                      className="text-xs px-3 py-1.5 rounded-xl border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all">
                       {q}
                     </button>
                   ))}

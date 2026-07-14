@@ -108,7 +108,7 @@ export function SessionEditDrawer({ session, onClose }: Props) {
             </div>
             <h2 className="text-white font-semibold">{session.name}</h2>
           </div>
-          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-white transition-colors ml-4 mt-1">
+          <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors ml-4 mt-1">
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth={2}>
               <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" />
             </svg>
@@ -143,7 +143,7 @@ export function SessionEditDrawer({ session, onClose }: Props) {
                     className={`py-2 rounded-lg text-xs font-medium transition-all ${
                       isSelected
                         ? "bg-green-500 text-black"
-                        : "bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[#222] hover:text-white border border-[var(--border-hover)]"
+                        : "bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] border border-[var(--border-hover)]"
                     }`}>
                     {name}
                   </button>

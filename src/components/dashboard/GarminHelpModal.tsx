@@ -46,7 +46,7 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
         <button
           onClick={downloadSession}
           disabled={loading !== null}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all text-xs font-medium disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all text-xs font-medium disabled:opacity-50"
           title="Exportar este treino para o Garmin"
         >
           <DownloadIcon />
@@ -57,7 +57,7 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
         <button
           onClick={downloadWeek}
           disabled={loading !== null}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] transition-all text-xs font-medium disabled:opacity-50"
+          className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all text-xs font-medium disabled:opacity-50"
           title="Exportar todos os treinos da semana (ZIP)"
         >
           <DownloadIcon />
@@ -68,7 +68,7 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
         <button
           onClick={() => setShowHelp(true)}
           title="Como importar para o Garmin"
-          className="w-7 h-7 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-white hover:border-[var(--border-strong)] transition-all text-xs font-bold flex items-center justify-center"
+          className="w-7 h-7 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all text-xs font-bold flex items-center justify-center"
         >
           ?
         </button>
@@ -80,7 +80,7 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
           <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 space-y-5">
             <div className="flex items-center justify-between">
               <h2 className="text-white font-semibold text-base">Como importar para o Garmin</h2>
-              <button onClick={() => setShowHelp(false)} className="text-[var(--text-muted)] hover:text-white transition-colors">
+              <button onClick={() => setShowHelp(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth={2}>
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
@@ -157,7 +157,7 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
 
             <button
               onClick={() => setShowHelp(false)}
-              className="w-full py-2.5 rounded-xl bg-[var(--bg-hover)] border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white text-sm font-medium transition-colors"
+              className="w-full py-2.5 rounded-xl bg-[var(--bg-hover)] border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm font-medium transition-colors"
             >
               Fechar
             </button>

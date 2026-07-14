@@ -159,6 +159,16 @@ REGRAS ESTRITAS para os valores:
 
 INSTRUÇÃO SOBRE TERMINOLOGIA: Nos campos de texto (warmup, mainSet, cooldown, coachTip, keyFocus, coachMessage, coachNotes, periodization), quando usares termos técnicos desportivos pela primeira vez (ex: drills, strides, fartlek, brick, taper, VO2max, LT, RPE, cadência, MAF, intervalos, repetiçoes, Z1/Z2/Z3/Z4/Z5, etc.), adiciona sempre uma breve explicação entre parênteses. Exemplo: "strides (acelerações curtas de 20-30 segundos para trabalhar a mecânica de corrida a ritmo rápido)".
 
+INSTRUÇÃO SOBRE PRIORIDADE (isPriority):
+- Marca "isPriority": true nas sessões mais importantes da semana — aquelas que o atleta DEVE fazer para que o plano funcione.
+- Regras:
+  • LONG → quase sempre prioritário (é a sessão âncora da semana aeróbica)
+  • TEMPO ou INTERVALS → prioritário quando é o estímulo principal de intensidade da semana (máximo 1 por semana)
+  • BRICK → prioritário em planos de triatlo
+  • EASY, RECOVERY, STRENGTH, SWIM de volume baixo → nunca prioritários
+- Máximo 2 sessões prioritárias por semana (semanas de recuperação: máximo 1 ou nenhuma).
+- Nas semanas de taper (últimas 2), marcar apenas a sessão de ritmo de corrida como prioritária.
+
 Responde APENAS com JSON válido, sem texto antes ou depois, sem markdown:
 
 {
@@ -188,7 +198,8 @@ Responde APENAS com JSON válido, sem texto antes ou depois, sem markdown:
           "plannedDistanceKm": 8,
           "plannedDurationMin": 55,
           "plannedPace": "6:45/km",
-          "zones": { "z1": 15, "z2": 75, "z3": 10, "z4": 0, "z5": 0 }
+          "zones": { "z1": 15, "z2": 75, "z3": 10, "z4": 0, "z5": 0 },
+          "isPriority": false
         }
       ]
     }

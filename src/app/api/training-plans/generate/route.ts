@@ -147,6 +147,10 @@ export async function POST(req: NextRequest) {
                   plannedDuration: session.plannedDurationMin,
                   plannedPace: session.plannedPace,
                   plannedZones: session.zones,
+                  isPriority: session.isPriority ?? (
+                    session.sessionType === "LONG" ||
+                    session.sessionType === "BRICK"
+                  ),
                 };
               }),
             },

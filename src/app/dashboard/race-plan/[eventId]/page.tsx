@@ -37,7 +37,7 @@ export default function RacePlanPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3 print:hidden">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-[var(--bg-base)]/80 px-6 py-3 print:hidden">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
           <span className="text-white font-bold text-lg">TrainAI</span>
           <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">← Dashboard</Link>
@@ -54,7 +54,7 @@ export default function RacePlanPage() {
             {plan && (
               <button
                 onClick={handlePrint}
-                className="px-3 py-1.5 bg-[var(--bg-hover)] hover:bg-[#252525] text-[var(--text-secondary)] text-xs font-medium rounded-lg transition-colors border border-[var(--border-hover)]"
+                className="px-3 py-1.5 bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)] text-[var(--text-secondary)] text-xs font-medium rounded-lg transition-colors border border-[var(--border-hover)]"
               >
                 🖨️ Imprimir / Guardar PDF
               </button>

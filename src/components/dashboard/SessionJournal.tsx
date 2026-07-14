@@ -53,7 +53,7 @@ export function SessionJournal({ sessionId, initialNote }: Props) {
           {!editing && (
             <button
               onClick={() => setEditing(true)}
-              className="p-1.5 rounded-lg hover:bg-[#1f1f1f] transition-colors text-[var(--text-muted)] hover:text-white"
+              className="p-1.5 rounded-lg hover:bg-[var(--bg-hover)] transition-colors text-[var(--text-muted)] hover:text-[var(--text-primary)]"
               title="Editar nota"
             >
               <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -86,7 +86,7 @@ export function SessionJournal({ sessionId, initialNote }: Props) {
         </div>
       ) : (
         <p
-          className="text-sm text-[var(--text-secondary)] leading-relaxed cursor-pointer hover:text-white transition-colors"
+          className="text-sm text-[var(--text-secondary)] leading-relaxed cursor-pointer hover:text-[var(--text-primary)] transition-colors"
           onClick={() => setEditing(true)}
         >
           {note}
