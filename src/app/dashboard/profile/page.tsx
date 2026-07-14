@@ -105,12 +105,6 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        {/* Appearance */}
-        <div className="card">
-          <h2 className="font-semibold text-[var(--text-primary)] mb-4">Aparência</h2>
-          <ThemeToggle />
-        </div>
-
         {/* Athlete details */}
         <div className="card">
           <h2 className="font-semibold text-[var(--text-primary)] mb-4">Dados do atleta</h2>
@@ -186,6 +180,12 @@ export default async function ProfilePage() {
         </div>
 
         <NotificationSettings />
+
+        {/* Appearance */}
+        <div className="card">
+          <h2 className="font-semibold text-[var(--text-primary)] mb-4">Aparência</h2>
+          <ThemeToggle />
+        </div>
       </main>
     </div>
   );
