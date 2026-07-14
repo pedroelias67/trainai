@@ -53,9 +53,6 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
 
   return (
     <>
-      {error && (
-        <p className="text-xs text-red-400 mb-1">{error}</p>
-      )}
       <div className="flex items-center gap-2">
         <button
           onClick={() => setShowHelp(true)}
@@ -71,9 +68,9 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
       {showHelp && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
           onClick={(e) => { if (e.target === e.currentTarget) setShowHelp(false); }}>
-          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 space-y-5">
-            <div className="flex items-center justify-between">
-              <h2 className="text-white font-semibold text-base">Como importar para o Garmin</h2>
+          <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl flex flex-col max-h-[85vh]">
+            <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--border)] shrink-0">
+              <h2 className="text-[var(--text-primary)] font-semibold text-base">Exportar para o Garmin</h2>
               <button onClick={() => setShowHelp(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth={2}>
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -81,18 +78,20 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
               </button>
             </div>
 
+            <div className="overflow-y-auto p-6 space-y-5">
+
             {/* Export options */}
             <div className="grid grid-cols-2 gap-3">
               <button onClick={downloadSession} disabled={loading !== null}
                 className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] hover:bg-green-500/5 transition-all text-center disabled:opacity-50">
                 <span className="text-2xl">🏃</span>
-                <span className="text-sm font-semibold text-white">Este treino</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Este treino</span>
                 <span className="text-xs text-[var(--text-muted)]">1 ficheiro .tcx</span>
               </button>
               <button onClick={downloadWeek} disabled={loading !== null}
                 className="flex flex-col items-center gap-2 p-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] hover:border-[var(--accent)] hover:bg-green-500/5 transition-all text-center disabled:opacity-50">
                 <span className="text-2xl">📅</span>
-                <span className="text-sm font-semibold text-white">Semana inteira</span>
+                <span className="text-sm font-semibold text-[var(--text-primary)]">Semana inteira</span>
                 <span className="text-xs text-[var(--text-muted)]">ZIP com todos os treinos</span>
               </button>
             </div>
@@ -103,7 +102,7 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">📱</span>
-                <p className="text-sm font-semibold text-white">No telemóvel</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">No telemóvel</p>
               </div>
               {[
                 { n: 1, text: 'Descarrega "Este treino" ou "Semana inteira"' },
@@ -124,7 +123,7 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">💻</span>
-                <p className="text-sm font-semibold text-white">No computador</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">No computador</p>
               </div>
               {[
                 { n: 1, text: 'Descarrega "Este treino" ou extrai o ZIP da semana' },
@@ -145,16 +144,21 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
             <div className="flex gap-3 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/15">
               <span className="text-lg shrink-0">💡</span>
               <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                No relógio, vai a <span className="text-white font-medium">Treino → Treinos Guardados</span> para iniciar o workout estruturado com os alvos de pace.
+                No relógio, vai a <span className="text-[var(--text-primary)] font-medium">Treino → Treinos Guardados</span> para iniciar o workout estruturado com os alvos de pace.
               </p>
             </div>
 
-            <button
-              onClick={() => setShowHelp(false)}
-              className="w-full py-2.5 rounded-xl bg-[var(--bg-hover)] border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm font-medium transition-colors"
-            >
-              Fechar
-            </button>
+            </div>{/* end scrollable */}
+
+            <div className="px-6 pb-5 pt-3 border-t border-[var(--border)] shrink-0">
+              {error && <p className="text-xs text-red-400 mb-3">{error}</p>}
+              <button
+                onClick={() => setShowHelp(false)}
+                className="w-full py-2.5 rounded-xl bg-[var(--bg-hover)] border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-sm font-medium transition-colors"
+              >
+                Fechar
+              </button>
+            </div>
           </div>
         </div>
       )}
