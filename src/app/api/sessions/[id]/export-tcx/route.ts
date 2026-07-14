@@ -4,6 +4,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 
+function escapeXml(str: string): string {
+  return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
 function sportToTcx(sport: string): string {
   if (sport === "CYCLING") return "Biking";
   if (sport === "SWIMMING") return "Other";
@@ -99,22 +103,22 @@ export async function GET(
   xsi:schemaLocation="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd">
   <Workouts>
     <Workout Sport="${sportToTcx(session.sport)}">
-      <Name>${session.name}</Name>
+      <Name>${escapeXml(session.name)}</Name>
 ${steps.join("\n")}
       <ScheduledOn>${new Date(session.date).toISOString().split("T")[0]}</ScheduledOn>
-      <Notes>${[session.shortDescription, session.mainSet, session.coachTip].filter(Boolean).join(" | ")}</Notes>
+      <Notes>${escapeXml([session.shortDescription, session.mainSet, session.coachTip].filter(Boolean).join(" | "))}</Notes>
     </Workout>
   </Workouts>
 </TrainingCenterDatabase>`;
 
-  const filename = `trainai-${session.name.toLowerCase().replace(/\s+/g, "-")}.tcx`;
-  const bytes = new TextEncoder().encode(tcx);
+  const filename = `trainai-${session.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.tcx`;
+  const buffer = Buffer.from(tcx, "utf-8");
 
-  return new NextResponse(bytes, {
+  return new NextResponse(buffer, {
     headers: {
       "Content-Type": "application/octet-stream",
       "Content-Disposition": `attachment; filename="${filename}"`,
-      "Content-Length": bytes.byteLength.toString(),
+      "Content-Length": buffer.byteLength.toString(),
     },
   });
 }
