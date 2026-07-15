@@ -20,40 +20,33 @@ function sessionToTcx(session: {
   sport: string;
   date: Date;
   plannedDuration: number | null;
-  plannedDistance: number | null;
   shortDescription: string | null;
   coachTip: string | null;
 }): string {
   const totalDurationSecs = (session.plannedDuration ?? 45) * 60;
-  const distanceMeters = session.plannedDistance ? session.plannedDistance * 1000 : 0;
-  const startTime = new Date(session.date);
-  startTime.setHours(8, 0, 0, 0);
-  const startIso = startTime.toISOString();
-  const notes = escapeXml([session.name, session.shortDescription, session.coachTip].filter(Boolean).join(" — "));
+  const scheduledOn = session.date.toISOString().split("T")[0];
+  const notes = escapeXml([session.shortDescription, session.coachTip].filter(Boolean).join(" — "));
 
   return `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <TrainingCenterDatabase
   xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd">
-  <Activities>
-    <Activity Sport="${sportToTcx(session.sport)}">
-      <Id>${startIso}</Id>
-      <Lap StartTime="${startIso}">
-        <TotalTimeSeconds>${Math.round(totalDurationSecs)}</TotalTimeSeconds>
-        <DistanceMeters>${Math.round(distanceMeters)}</DistanceMeters>
-        <Calories>0</Calories>
+  <Workouts>
+    <Workout Sport="${sportToTcx(session.sport)}">
+      <Name>${escapeXml(session.name)}</Name>
+      <Step xsi:type="Step_t">
+        <StepId>1</StepId>
+        <Duration xsi:type="Time_t">
+          <Seconds>${Math.round(totalDurationSecs)}</Seconds>
+        </Duration>
         <Intensity>Active</Intensity>
-        <TriggerMethod>Manual</TriggerMethod>
-        <Track>
-          <Trackpoint>
-            <Time>${startIso}</Time>
-          </Trackpoint>
-        </Track>
-      </Lap>
+        <Target xsi:type="NullTarget_t"/>
+      </Step>
+      <ScheduledOn>${scheduledOn}</ScheduledOn>
       <Notes>${notes}</Notes>
-    </Activity>
-  </Activities>
+    </Workout>
+  </Workouts>
 </TrainingCenterDatabase>`;
 }
 
@@ -81,7 +74,6 @@ export async function GET(
           sport: true,
           date: true,
           plannedDuration: true,
-          plannedDistance: true,
           shortDescription: true,
           coachTip: true,
         },
