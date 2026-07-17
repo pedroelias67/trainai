@@ -57,8 +57,9 @@ export default function NutritionPlanView({ existingPlan, hasBodyData, eventName
     setError(null);
     try {
       const res = await fetch("/api/nutrition-plan/global", { method: "POST" });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Erro ao gerar plano");
+      let data: any = {};
+      try { data = await res.json(); } catch {}
+      if (!res.ok) throw new Error(data.error ?? `Erro ${res.status} ao gerar plano`);
       router.refresh();
     } catch (e: any) {
       setError(e.message);

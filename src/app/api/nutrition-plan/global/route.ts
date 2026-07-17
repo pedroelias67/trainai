@@ -152,27 +152,31 @@ Responde APENAS com JSON válido:
   "coachNote": "nota pessoal do nutricionista ao atleta"
 }`;
 
-  const message = await claude.messages.create({
-    model: CLAUDE_MODEL,
-    max_tokens: 4096,
-    messages: [{ role: "user", content: prompt }],
-  });
+  try {
+    const message = await claude.messages.create({
+      model: CLAUDE_MODEL,
+      max_tokens: 4096,
+      messages: [{ role: "user", content: prompt }],
+    });
 
-  const content = message.content[0];
-  if (content.type !== "text") throw new Error("Resposta inesperada");
-  const jsonMatch = content.text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) throw new Error("Resposta inválida da IA");
-  const planContent = JSON.parse(jsonMatch[0]);
+    const content = message.content[0];
+    if (content.type !== "text") throw new Error("Resposta inesperada da IA");
+    const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) throw new Error("Resposta inválida da IA");
+    const planContent = JSON.parse(jsonMatch[0]);
 
-  // Apaga plano anterior e cria novo
-  await prisma.nutritionPlan.deleteMany({ where: { athleteId: athlete.id } });
-  const nutritionPlan = await prisma.nutritionPlan.create({
-    data: {
-      athleteId: athlete.id,
-      planId: plan?.id ?? null,
-      content: planContent,
-    },
-  });
+    await prisma.nutritionPlan.deleteMany({ where: { athleteId: athlete.id } });
+    const nutritionPlan = await prisma.nutritionPlan.create({
+      data: {
+        athleteId: athlete.id,
+        planId: plan?.id ?? null,
+        content: planContent,
+      },
+    });
 
-  return NextResponse.json(nutritionPlan, { status: 201 });
+    return NextResponse.json(nutritionPlan, { status: 201 });
+  } catch (err: any) {
+    console.error("Nutrition plan generation error:", err);
+    return NextResponse.json({ error: err.message ?? "Erro interno ao gerar plano" }, { status: 500 });
+  }
 }
