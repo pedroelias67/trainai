@@ -160,8 +160,9 @@ Responde APENAS com JSON válido:
 
   const content = message.content[0];
   if (content.type !== "text") throw new Error("Resposta inesperada");
-  const text = content.text.replace(/^```(?:json)?\r?\n?/i, "").replace(/\r?\n?```\s*$/i, "").trim();
-  const planContent = JSON.parse(text);
+  const jsonMatch = content.text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("Resposta inválida da IA");
+  const planContent = JSON.parse(jsonMatch[0]);
 
   // Apaga plano anterior e cria novo
   await prisma.nutritionPlan.deleteMany({ where: { athleteId: athlete.id } });
