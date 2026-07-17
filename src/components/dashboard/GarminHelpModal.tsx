@@ -103,17 +103,17 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
               <p>Os ficheiros exportados são <strong className="text-[var(--text-primary)]">workouts estruturados</strong>. Após importação, aparecem em <strong className="text-[var(--text-primary)]">Treino → Treinos guardados</strong> no teu relógio Garmin.</p>
             </div>
 
-            {/* Phone */}
+            {/* Android */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">📱</span>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">Via app Garmin Connect (recomendado)</p>
+                <span className="text-lg">🤖</span>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Android <span className="text-green-400 text-xs font-normal">(funciona)</span></p>
               </div>
               {[
                 { n: 1, text: 'Descarrega o ficheiro .tcx para o telemóvel' },
-                { n: 2, text: 'Abre o ficheiro e escolhe "Abrir com Garmin Connect"' },
-                { n: 3, text: 'A app importa automaticamente como treino estruturado' },
-                { n: 4, text: 'Sincroniza o relógio — aparece em "Treinos guardados"' },
+                { n: 2, text: 'Abre o ficheiro — o Android pergunta com que app abrir' },
+                { n: 3, text: 'Escolhe "Garmin Connect" na lista' },
+                { n: 4, text: 'A app importa como treino estruturado — sincroniza o relógio' },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">
                   <span className="shrink-0 w-6 h-6 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
@@ -124,21 +124,34 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
 
             <div className="border-t border-[var(--border)]" />
 
-            {/* Computer */}
+            {/* iOS */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">💻</span>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">Via Garmin Express (computador)</p>
+                <span className="text-lg">🍎</span>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">iPhone <span className="text-yellow-400 text-xs font-normal">(limitação iOS)</span></p>
               </div>
+              <div className="flex gap-3 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/15 text-xs text-[var(--text-secondary)] leading-relaxed">
+                <span className="shrink-0">⚠️</span>
+                <p>A app Garmin Connect no iOS não suporta abertura direta de ficheiros .tcx. A integração nativa está em desenvolvimento e ficará disponível em breve.</p>
+              </div>
+              <p className="text-xs text-[var(--text-muted)]">Alternativa: segue o treino pela app TrainAI no telemóvel — tens todas as instruções, pace e zonas visíveis no ecrã.</p>
+            </div>
+
+            <div className="border-t border-[var(--border)]" />
+
+            {/* Outros relógios */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-[var(--text-primary)]">Outros relógios</p>
               {[
-                { n: 1, text: 'Descarrega "Este treino" ou extrai o ZIP da semana' },
-                { n: 2, text: 'Abre o Garmin Express e liga o relógio por USB' },
-                { n: 3, text: 'Arrasta os ficheiros .tcx para a janela do Garmin Express' },
-                { n: 4, text: 'Sincroniza — os treinos aparecem em "Treinos guardados" no relógio' },
-              ].map(({ n, text }) => (
-                <div key={n} className="flex items-start gap-3">
-                  <span className="shrink-0 w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
-                  <p className="text-sm text-[var(--text-secondary)]">{text}</p>
+                { icon: "🟢", label: "Polar", note: "Aceita .tcx via Polar Flow (web ou app)" },
+                { icon: "🟢", label: "Suunto", note: "Aceita .tcx via Suunto app ou web" },
+                { icon: "🔴", label: "Apple Watch", note: "Não suporta .tcx" },
+                { icon: "🔴", label: "COROS / Wahoo", note: "Não suportam .tcx" },
+              ].map(({ icon, label, note }) => (
+                <div key={label} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
+                  <span>{icon}</span>
+                  <span className="font-medium text-[var(--text-primary)] w-20 shrink-0">{label}</span>
+                  <span className="text-[var(--text-muted)]">{note}</span>
                 </div>
               ))}
             </div>
