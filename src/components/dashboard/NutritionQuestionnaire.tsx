@@ -86,22 +86,23 @@ const STEPS = [
 ];
 
 interface Props {
-  hasSport: boolean; // se já tem plano de treino (skip sport step)
+  hasSport: boolean;
+  initial?: Partial<QuestionnaireData>;
 }
 
-export default function NutritionQuestionnaire({ hasSport }: Props) {
+export default function NutritionQuestionnaire({ hasSport, initial }: Props) {
   const router = useRouter();
   const steps = hasSport ? STEPS.filter((s) => s.id !== "mainSport") : STEPS;
 
   const [step, setStep] = useState(0);
   const [data, setData] = useState<QuestionnaireData>({
-    activityLevel: "",
-    dietStyle: "",
-    foodAllergies: "",
-    mealsPerDay: 4,
-    mainSport: "",
-    trainingTimeOfDay: "",
-    bodyFatPct: "",
+    activityLevel: initial?.activityLevel ?? "",
+    dietStyle: initial?.dietStyle ?? "",
+    foodAllergies: initial?.foodAllergies ?? "",
+    mealsPerDay: initial?.mealsPerDay ?? 4,
+    mainSport: initial?.mainSport ?? "",
+    trainingTimeOfDay: initial?.trainingTimeOfDay ?? "",
+    bodyFatPct: initial?.bodyFatPct ?? "",
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -135,7 +136,7 @@ export default function NutritionQuestionnaire({ hasSport }: Props) {
 
       const res = await fetch("/api/athletes/profile", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
       if (!res.ok) throw new Error("Erro ao guardar");
-      router.refresh();
+      router.push("/dashboard/nutrition");
     } catch (e: any) {
       setError(e.message);
       setSaving(false);

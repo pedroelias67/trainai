@@ -6,7 +6,8 @@ import { LogoFull } from "@/components/ui/Logo";
 import NutritionPlanView from "@/components/dashboard/NutritionPlanView";
 import NutritionQuestionnaire from "@/components/dashboard/NutritionQuestionnaire";
 
-export default async function NutritionPage() {
+export default async function NutritionPage({ searchParams }: { searchParams: Promise<{ edit?: string }> }) {
+  const { edit } = await searchParams;
   const cookieStore = await cookies();
   const userId = cookieStore.get("user_id")?.value;
   if (!userId) redirect("/auth/login");
@@ -25,7 +26,7 @@ export default async function NutritionPage() {
   if (!athlete) redirect("/onboarding");
 
   const hasBodyData = !!(athlete.weightKg && athlete.heightCm);
-  const hasQuestionnaire = !!(athlete.activityLevel && athlete.dietStyle && athlete.trainingTimeOfDay);
+  const hasQuestionnaire = !!(athlete.activityLevel && athlete.dietStyle && athlete.trainingTimeOfDay) && !edit;
   const existingPlan = athlete.nutritionPlans[0] ?? null;
   const activePlan = athlete.trainingPlans[0] ?? null;
 
@@ -63,10 +64,10 @@ export default async function NutritionPage() {
               <p className="text-[var(--text-muted)] text-sm mt-1">Plano nutricional para atleta de endurance</p>
             )}
           </div>
-          {hasQuestionnaire && existingPlan && (
-            <button className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+          {hasQuestionnaire && (
+            <Link href="/dashboard/nutrition?edit=1" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
               Editar perfil nutricional
-            </button>
+            </Link>
           )}
         </div>
 
@@ -89,11 +90,24 @@ export default async function NutritionPage() {
 
         {hasBodyData && !hasQuestionnaire && (
           <div className="space-y-4">
-            <div className="flex gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/15 text-sm text-[var(--text-secondary)]">
-              <span className="shrink-0 text-lg">🥗</span>
-              <p>Responde a algumas perguntas rápidas para personalizar o teu plano nutricional. Só precisas de fazer isto uma vez.</p>
-            </div>
-            <NutritionQuestionnaire hasSport={!!activePlan} />
+            {!edit && (
+              <div className="flex gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/15 text-sm text-[var(--text-secondary)]">
+                <span className="shrink-0 text-lg">🥗</span>
+                <p>Responde a algumas perguntas rápidas para personalizar o teu plano nutricional. Só precisas de fazer isto uma vez.</p>
+              </div>
+            )}
+            <NutritionQuestionnaire
+              hasSport={!!activePlan}
+              initial={{
+                activityLevel: athlete.activityLevel ?? "",
+                dietStyle: athlete.dietStyle ?? "",
+                foodAllergies: athlete.foodAllergies ?? "",
+                mealsPerDay: athlete.mealsPerDay ?? 4,
+                mainSport: athlete.mainSport ?? "",
+                trainingTimeOfDay: athlete.trainingTimeOfDay ?? "",
+                bodyFatPct: athlete.bodyFatPct ? String(athlete.bodyFatPct) : "",
+              }}
+            />
           </div>
         )}
 
