@@ -139,6 +139,32 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
 
             <div className="border-t border-[var(--border)]" />
 
+            {/* Via Strava */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-orange-400 shrink-0"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Via Strava <span className="text-orange-400 text-xs font-normal">(iOS + Android)</span></p>
+              </div>
+              <div className="flex gap-3 p-3 rounded-xl bg-orange-500/5 border border-orange-500/15 text-xs text-[var(--text-secondary)] leading-relaxed">
+                <span className="shrink-0">💡</span>
+                <p>Se tiveres o Strava ligado ao Garmin Connect, os treinos registados no Strava sincronizam automaticamente com o Garmin.</p>
+              </div>
+              {[
+                { n: 1, text: 'Descarrega o ficheiro .tcx para o computador' },
+                { n: 2, text: 'Acede a strava.com → Dashboard → + → Carregar atividade' },
+                { n: 3, text: 'Faz upload do ficheiro .tcx' },
+                { n: 4, text: 'O Strava sincroniza automaticamente com o Garmin Connect' },
+              ].map(({ n, text }) => (
+                <div key={n} className="flex items-start gap-3">
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
+                  <p className="text-sm text-[var(--text-secondary)]">{text}</p>
+                </div>
+              ))}
+              <p className="text-xs text-[var(--text-muted)]">Para ativar a sincronização: Garmin Connect → Definições → Apps e dispositivos ligados → Strava.</p>
+            </div>
+
+            <div className="border-t border-[var(--border)]" />
+
             {/* Outros relógios */}
             <div className="space-y-2">
               <p className="text-xs font-semibold text-[var(--text-primary)]">Outros relógios</p>
