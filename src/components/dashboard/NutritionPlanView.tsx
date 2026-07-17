@@ -26,7 +26,6 @@ interface NutritionContent {
 
 interface Props {
   existingPlan: { id: string; content: any; createdAt: string } | null;
-  hasBodyData: boolean;
   eventName: string | null;
 }
 
@@ -43,7 +42,7 @@ const macroColors = {
   fatG: "bg-orange-500",
 };
 
-export default function NutritionPlanView({ existingPlan, hasBodyData, eventName }: Props) {
+export default function NutritionPlanView({ existingPlan, eventName }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -79,11 +78,10 @@ export default function NutritionPlanView({ existingPlan, hasBodyData, eventName
           </p>
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
-        <button onClick={generate} disabled={loading || !hasBodyData}
+        <button onClick={generate} disabled={loading}
           className="btn-primary px-8 py-3 disabled:opacity-50">
           {loading ? "A gerar plano…" : "Gerar plano nutricional"}
         </button>
-        {!hasBodyData && <p className="text-xs text-[var(--text-muted)]">Preenche o peso e altura no perfil primeiro.</p>}
       </div>
     );
   }

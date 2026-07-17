@@ -72,6 +72,14 @@ model Athlete {
   heightCm        Int?      // Altura em cm
   weightGoal      String?   // "maintain" | "lose" | "gain"
   dietaryRestrictions String? // ex: "vegetariano, sem glúten"
+  // Questionário nutricional
+  activityLevel   String?   // "sedentary" | "lightly_active" | "active" | "very_active"
+  dietStyle       String?   // "omnivore" | "vegetarian" | "vegan" | "mediterranean" | "low_carb" | "high_protein"
+  foodAllergies   String?   // texto livre
+  mealsPerDay     Int?      // 3-6
+  mainSport       String?   // "running" | "cycling" | "triathlon" | "swimming" | "gym" (fallback se sem plano)
+  trainingTimeOfDay String? // "early_morning" | "morning" | "afternoon" | "evening"
+  bodyFatPct      Float?    // opcional
   garminConnected  Boolean   @default(false)
   garminUserId     String?
   stravaConnected  Boolean   @default(false)

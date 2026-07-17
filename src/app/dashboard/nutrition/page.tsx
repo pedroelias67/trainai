@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LogoFull } from "@/components/ui/Logo";
 import NutritionPlanView from "@/components/dashboard/NutritionPlanView";
+import NutritionQuestionnaire from "@/components/dashboard/NutritionQuestionnaire";
 
 export default async function NutritionPage() {
   const cookieStore = await cookies();
@@ -24,6 +25,7 @@ export default async function NutritionPage() {
   if (!athlete) redirect("/onboarding");
 
   const hasBodyData = !!(athlete.weightKg && athlete.heightCm);
+  const hasQuestionnaire = !!(athlete.activityLevel && athlete.dietStyle && athlete.trainingTimeOfDay);
   const existingPlan = athlete.nutritionPlans[0] ?? null;
   const activePlan = athlete.trainingPlans[0] ?? null;
 
@@ -53,12 +55,19 @@ export default async function NutritionPage() {
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-[var(--text-primary)]">Plano Nutricional</h1>
-            {activePlan && (
+            {activePlan ? (
               <p className="text-[var(--text-muted)] text-sm mt-1">
                 Adaptado para {activePlan.event.name} · {new Date(activePlan.event.date).toLocaleDateString("pt-PT", { day: "numeric", month: "long", year: "numeric" })}
               </p>
+            ) : (
+              <p className="text-[var(--text-muted)] text-sm mt-1">Plano nutricional para atleta de endurance</p>
             )}
           </div>
+          {hasQuestionnaire && existingPlan && (
+            <button className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
+              Editar perfil nutricional
+            </button>
+          )}
         </div>
 
         {!hasBodyData && (
@@ -78,11 +87,22 @@ export default async function NutritionPage() {
           </div>
         )}
 
-        <NutritionPlanView
-          existingPlan={existingPlan ? { id: existingPlan.id, content: existingPlan.content, createdAt: existingPlan.createdAt.toISOString() } : null}
-          hasBodyData={hasBodyData}
-          eventName={activePlan?.event.name ?? null}
-        />
+        {hasBodyData && !hasQuestionnaire && (
+          <div className="space-y-4">
+            <div className="flex gap-3 p-4 rounded-xl bg-green-500/5 border border-green-500/15 text-sm text-[var(--text-secondary)]">
+              <span className="shrink-0 text-lg">🥗</span>
+              <p>Responde a algumas perguntas rápidas para personalizar o teu plano nutricional. Só precisas de fazer isto uma vez.</p>
+            </div>
+            <NutritionQuestionnaire hasSport={!!activePlan} />
+          </div>
+        )}
+
+        {hasBodyData && hasQuestionnaire && (
+          <NutritionPlanView
+            existingPlan={existingPlan ? { id: existingPlan.id, content: existingPlan.content, createdAt: existingPlan.createdAt.toISOString() } : null}
+            eventName={activePlan?.event.name ?? null}
+          />
+        )}
       </main>
     </div>
   );

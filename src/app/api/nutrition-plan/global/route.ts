@@ -57,6 +57,33 @@ export async function POST(req: NextRequest) {
     gain: "ganhar massa muscular (excedente calórico moderado de ~200 kcal/dia)",
   };
 
+  const activityLevelLabel: Record<string, string> = {
+    sedentary: "Sedentário (trabalho de escritório, pouco movimento fora dos treinos)",
+    lightly_active: "Ligeiramente ativo (alguns passeios, trabalho de pé ocasional)",
+    active: "Ativo (trabalho físico ou muito movimento diário)",
+    very_active: "Muito ativo (trabalho físico intenso ou duplas sessões de treino)",
+  };
+
+  const dietStyleLabel: Record<string, string> = {
+    omnivore: "Omnívoro (come de tudo)",
+    mediterranean: "Mediterrânico (peixe, legumes, azeite, pouca carne vermelha)",
+    vegetarian: "Vegetariano (sem carne nem peixe)",
+    vegan: "Vegan (sem produtos de origem animal)",
+    low_carb: "Low-carb (reduzido em hidratos de carbono)",
+    high_protein: "High-protein (foco em proteína elevada)",
+  };
+
+  const trainingTimeLabel: Record<string, string> = {
+    early_morning: "Manhã cedo (antes das 8h) — refeições devem considerar treino em jejum ou pré-treino leve",
+    morning: "Manhã (8h-12h) — pequeno-almoço antes do treino, refeição de recuperação a seguir",
+    afternoon: "Tarde (12h-18h) — almoço leve antes, jantar de recuperação",
+    evening: "Noite (após 18h) — jantar pós-treino, recuperação noturna importante",
+  };
+
+  const mainSport = plan
+    ? plan.event.sport
+    : (athlete as any).mainSport ?? "running";
+
   const prompt = `És o melhor nutricionista desportivo do mundo, especializado em corredores e triatletas. Cria um plano nutricional completo e personalizado para este atleta.
 
 ═══════════════════════════════════════════
@@ -65,19 +92,29 @@ PERFIL DO ATLETA
 Nome: ${athlete.user.name}
 Idade: ${age} anos | Género: ${athlete.gender === "FEMALE" ? "Feminino" : "Masculino"}
 Peso: ${athlete.weightKg} kg | Altura: ${athlete.heightCm} cm
-IMC: ${(athlete.weightKg / Math.pow(athlete.heightCm / 100, 2)).toFixed(1)}
+IMC: ${(athlete.weightKg! / Math.pow(athlete.heightCm! / 100, 2)).toFixed(1)}
+${(athlete as any).bodyFatPct ? `% Gordura corporal: ${(athlete as any).bodyFatPct}%` : ""}
 TMB (Mifflin-St Jeor): ${Math.round(bmr)} kcal/dia
 Nível: ${athlete.fitnessLevel}
+Modalidade principal: ${mainSport}
 Horas de treino/semana: ${athlete.weeklyHours ?? 5}h
+Atividade diária fora do treino: ${activityLevelLabel[(athlete as any).activityLevel ?? "sedentary"]}
+Horário habitual dos treinos: ${trainingTimeLabel[(athlete as any).trainingTimeOfDay ?? "morning"]}
+Estilo alimentar: ${dietStyleLabel[(athlete as any).dietStyle ?? "omnivore"]}
+Nº de refeições por dia preferido: ${(athlete as any).mealsPerDay ?? 4}
 Objetivo de peso: ${weightGoalLabel[athlete.weightGoal ?? "maintain"]}
-Restrições alimentares: ${athlete.dietaryRestrictions || "nenhuma"}
+Alergias/intolerâncias: ${(athlete as any).foodAllergies || "nenhuma"}
+Restrições alimentares adicionais: ${athlete.dietaryRestrictions || "nenhuma"}
 
-${plan ? `═══════════════════════════════════════════
+${plan ? `
+═══════════════════════════════════════════
 PLANO DE TREINO ATIVO
 ═══════════════════════════════════════════
-Evento: ${plan.event.name} (${plan.event.distance})
+Evento alvo: ${plan.event.name} (${plan.event.distance})
 Data da prova: ${plan.event.date.toISOString().split("T")[0]}
-Semanas até à prova: ${Math.ceil((plan.event.date.getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 7))}` : ""}
+Semanas até à prova: ${Math.ceil((plan.event.date.getTime() - Date.now()) / (1000 * 60 * 60 * 24 * 7))}
+IMPORTANTE: O plano nutricional deve estar alinhado com as fases do plano de treino e preparação para esta prova.` : `
+NOTA: O atleta não tem plano de treino ativo. Cria um plano nutricional geral para atleta de endurance da modalidade ${mainSport}, com foco em performance e recuperação.`}
 
 ═══════════════════════════════════════════
 INSTRUÇÃO

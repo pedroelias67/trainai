@@ -29,6 +29,13 @@ export async function PUT(req: NextRequest) {
         ...(body.heightCm != null && { heightCm: Number(body.heightCm) }),
         ...(body.weightGoal && { weightGoal: body.weightGoal }),
         ...(body.dietaryRestrictions !== undefined && { dietaryRestrictions: body.dietaryRestrictions || null }),
+        ...(body.activityLevel && { activityLevel: body.activityLevel }),
+        ...(body.dietStyle && { dietStyle: body.dietStyle }),
+        ...(body.foodAllergies !== undefined && { foodAllergies: body.foodAllergies || null }),
+        ...(body.mealsPerDay != null && { mealsPerDay: Number(body.mealsPerDay) }),
+        ...(body.mainSport && { mainSport: body.mainSport }),
+        ...(body.trainingTimeOfDay && { trainingTimeOfDay: body.trainingTimeOfDay }),
+        ...(body.bodyFatPct != null && { bodyFatPct: body.bodyFatPct === "" ? null : Number(body.bodyFatPct) }),
       },
     });
 
