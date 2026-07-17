@@ -68,6 +68,10 @@ model Athlete {
   maxHR           Int?      // FC máxima
   ftp             Float?    // Functional Threshold Power (ciclismo/triatlo)
   ltPace          String?   // Limiar anaeróbio pace (corrida, ex: "5:30/km")
+  weightKg        Float?    // Peso em kg
+  heightCm        Int?      // Altura em cm
+  weightGoal      String?   // "maintain" | "lose" | "gain"
+  dietaryRestrictions String? // ex: "vegetariano, sem glúten"
   garminConnected  Boolean   @default(false)
   garminUserId     String?
   stravaConnected  Boolean   @default(false)
@@ -87,6 +91,18 @@ model Athlete {
   weeklyReports   WeeklyReport[]
   shoes           Shoe[]
   personalRecords PersonalRecord[]
+  nutritionPlans  NutritionPlan[]
+}
+
+model NutritionPlan {
+  id              String    @id @default(cuid())
+  athleteId       String
+  planId          String?   // ligado a um plano de treino (opcional)
+  content         Json      // conteúdo gerado pela IA
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  athlete         Athlete   @relation(fields: [athleteId], references: [id], onDelete: Cascade)
 }
 
 model Event {

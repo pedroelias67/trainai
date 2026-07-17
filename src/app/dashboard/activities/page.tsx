@@ -43,6 +43,7 @@ export default async function ActivitiesPage() {
             {[
               { href: "/dashboard", label: "Dashboard" },
               { href: "/dashboard/plan", label: "Plano" },
+              { href: "/dashboard/nutrition", label: "Nutrição" },
               { href: "/dashboard/activities", label: "Atividades" },
               { href: "/dashboard/profile", label: "Perfil" },
             ].map((item) => (

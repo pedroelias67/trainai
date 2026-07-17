@@ -25,6 +25,10 @@ export async function PUT(req: NextRequest) {
         ...(body.maxHR != null && { maxHR: Number(body.maxHR) }),
         ...(body.ltPace && { ltPace: body.ltPace }),
         ...(body.ftp != null && { ftp: Number(body.ftp) }),
+        ...(body.weightKg != null && { weightKg: Number(body.weightKg) }),
+        ...(body.heightCm != null && { heightCm: Number(body.heightCm) }),
+        ...(body.weightGoal && { weightGoal: body.weightGoal }),
+        ...(body.dietaryRestrictions !== undefined && { dietaryRestrictions: body.dietaryRestrictions || null }),
       },
     });
 

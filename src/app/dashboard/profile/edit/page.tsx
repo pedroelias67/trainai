@@ -42,6 +42,10 @@ export default async function EditProfilePage() {
             restingHR: athlete.restingHR ?? null,
             ltPace: athlete.ltPace ?? null,
             ftp: athlete.ftp ?? null,
+            weightKg: athlete.weightKg ?? null,
+            heightCm: athlete.heightCm ?? null,
+            weightGoal: athlete.weightGoal ?? null,
+            dietaryRestrictions: athlete.dietaryRestrictions ?? null,
           }}
         />
       </main>

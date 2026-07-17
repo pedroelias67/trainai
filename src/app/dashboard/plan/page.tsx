@@ -44,6 +44,7 @@ export default async function PlanPage() {
             {[
               { href: "/dashboard", label: "Dashboard" },
               { href: "/dashboard/plan", label: "Plano" },
+              { href: "/dashboard/nutrition", label: "Nutrição" },
               { href: "/dashboard/calendar", label: "Calendário" },
               { href: "/dashboard/fitness", label: "Fitness" },
               { href: "/dashboard/activities", label: "Atividades" },

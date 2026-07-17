@@ -14,6 +14,10 @@ interface Props {
     restingHR: number | null;
     ltPace: string | null;
     ftp: number | null;
+    weightKg: number | null;
+    heightCm: number | null;
+    weightGoal: string | null;
+    dietaryRestrictions: string | null;
   };
 }
 
@@ -59,6 +63,10 @@ export function EditProfileForm({ initial }: Props) {
           restingHR: form.restingHR || undefined,
           ltPace: form.ltPace || undefined,
           ftp: form.ftp || undefined,
+          weightKg: form.weightKg || undefined,
+          heightCm: form.heightCm || undefined,
+          weightGoal: form.weightGoal || undefined,
+          dietaryRestrictions: form.dietaryRestrictions || undefined,
         }),
       });
       if (!res.ok) throw new Error("Erro ao guardar");
@@ -162,6 +170,53 @@ export function EditProfileForm({ initial }: Props) {
           </div>
         </div>
         <p className="text-xs text-[var(--text-faint)]">FC Máxima e Pace de Limiar são usados para calcular zonas de treino precisas nos planos gerados por IA.</p>
+      </div>
+
+      {/* Nutrition */}
+      <div className="card space-y-4">
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">Dados para plano nutricional</h3>
+
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="label">Peso <span className="normal-case text-[var(--text-faint)]">kg</span></label>
+            <input type="number" className="input" value={form.weightKg ?? ""}
+              onChange={(e) => set("weightKg", e.target.value ? Number(e.target.value) : null)}
+              placeholder="ex: 72" min="30" max="200" step="0.1" />
+          </div>
+          <div>
+            <label className="label">Altura <span className="normal-case text-[var(--text-faint)]">cm</span></label>
+            <input type="number" className="input" value={form.heightCm ?? ""}
+              onChange={(e) => set("heightCm", e.target.value ? Number(e.target.value) : null)}
+              placeholder="ex: 175" min="100" max="250" />
+          </div>
+        </div>
+
+        <div>
+          <label className="label">Objetivo de peso</label>
+          <div className="grid grid-cols-3 gap-2 mt-2">
+            {[
+              { value: "lose", label: "Perder" },
+              { value: "maintain", label: "Manter" },
+              { value: "gain", label: "Ganhar" },
+            ].map((o) => (
+              <button key={o.value} type="button" onClick={() => set("weightGoal", o.value)}
+                className={`py-2.5 px-3 rounded-xl text-sm font-medium border transition-all ${
+                  form.weightGoal === o.value
+                    ? "bg-green-500/10 text-green-400 border-green-500/30"
+                    : "bg-[var(--bg-hover)] text-[var(--text-secondary)] border-[var(--border-hover)] hover:border-[var(--border-strong)]"
+                }`}>
+                {o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div>
+          <label className="label">Restrições alimentares <span className="normal-case text-[var(--text-faint)]">(opcional)</span></label>
+          <input type="text" className="input" value={form.dietaryRestrictions ?? ""}
+            onChange={(e) => set("dietaryRestrictions", e.target.value)}
+            placeholder="ex: vegetariano, intolerante ao glúten" />
+        </div>
       </div>
 
       <button type="submit" disabled={loading} className="btn-primary w-full py-3">
