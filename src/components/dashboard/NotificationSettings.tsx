@@ -18,9 +18,12 @@ export default function NotificationSettings() {
     if (granted && "serviceWorker" in navigator) {
       try {
         const reg = await navigator.serviceWorker.ready;
+        const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
         const sub = await reg.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: undefined,
+          applicationServerKey: vapidKey
+            ? Uint8Array.from(atob(vapidKey.replace(/-/g, "+").replace(/_/g, "/")), (c) => c.charCodeAt(0))
+            : undefined,
         });
         await fetch("/api/push/subscribe", {
           method: "POST",

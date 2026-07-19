@@ -3,9 +3,11 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LogoFull } from "@/components/ui/Logo";
-import { format, subDays, isSameDay } from "date-fns";
+import { format, subDays, isSameDay, startOfWeek } from "date-fns";
+import { pt } from "date-fns/locale";
 import { FitnessChart } from "@/components/dashboard/FitnessChart";
 import { PersonalRecords } from "@/components/dashboard/PersonalRecords";
+import { ProgressionChart } from "@/components/dashboard/ProgressionChart";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -49,7 +51,7 @@ export default async function FitnessPage() {
           date: { gte: subDays(new Date(), 90) },
         },
         orderBy: { date: "asc" },
-        select: { date: true, duration: true, avgHR: true, sport: true },
+        select: { date: true, duration: true, avgHR: true, sport: true, avgPace: true, distance: true },
       },
     },
   });
@@ -102,7 +104,47 @@ export default async function FitnessPage() {
 
   const todayData = chartData[chartData.length - 1] ?? { ctl: 0, atl: 0, tsb: 0 };
 
-  void ninetyDaysAgo; // used implicitly via subDays
+  // Build weekly progression data (pace + HR) for running activities
+  function paceToSeconds(pace: string | null): number | null {
+    if (!pace) return null;
+    const match = pace.match(/(\d+):(\d+)/);
+    if (!match) return null;
+    return parseInt(match[1]) * 60 + parseInt(match[2]);
+  }
+  function secondsToPace(s: number): string {
+    return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}/km`;
+  }
+
+  const runningActivities = athlete.activities.filter(
+    (a) => a.sport === "RUNNING" && a.avgPace && a.distance && a.distance > 2000
+  );
+
+  // Group by week
+  const weekMap = new Map<string, { paceSecs: number[]; hrs: number[]; km: number }>();
+  for (const a of runningActivities) {
+    const weekStart = startOfWeek(new Date(a.date), { weekStartsOn: 1 });
+    const key = format(weekStart, "dd/MM", { locale: pt });
+    if (!weekMap.has(key)) weekMap.set(key, { paceSecs: [], hrs: [], km: 0 });
+    const entry = weekMap.get(key)!;
+    const ps = paceToSeconds(a.avgPace ?? null);
+    if (ps) entry.paceSecs.push(ps);
+    if (a.avgHR) entry.hrs.push(a.avgHR);
+    entry.km += (a.distance ?? 0) / 1000;
+  }
+
+  const progressionData = Array.from(weekMap.entries()).map(([week, v]) => {
+    const avgPaceSec = v.paceSecs.length ? Math.round(v.paceSecs.reduce((a, b) => a + b) / v.paceSecs.length) : null;
+    const avgHR = v.hrs.length ? Math.round(v.hrs.reduce((a, b) => a + b) / v.hrs.length) : null;
+    return {
+      week,
+      avgPaceSec,
+      avgHR,
+      km: Math.round(v.km * 10) / 10,
+      paceLabel: avgPaceSec ? secondsToPace(avgPaceSec) : null,
+    };
+  });
+
+  void ninetyDaysAgo;
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
@@ -148,6 +190,10 @@ export default async function FitnessPage() {
           todayATL={todayData.atl}
           todayTSB={todayData.tsb}
         />
+
+        <div className="mt-6">
+          <ProgressionChart data={progressionData} />
+        </div>
       </main>
     </div>
   );
