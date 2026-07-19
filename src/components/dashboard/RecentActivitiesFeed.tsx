@@ -4,6 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import dynamic from "next/dynamic";
+
+const EnrichedMap = dynamic(() => import("@/components/dashboard/EnrichedMap"), { ssr: false });
 
 interface Activity {
   id: string;
@@ -18,6 +21,10 @@ interface Activity {
   calories: number | null;
   elevationGain: number | null;
   aerobicEffect: number | null;
+  trainingLoad: number | null;
+  gpsTrack: any;
+  hrZones: any;
+  splits: any;
 }
 
 interface Props {
@@ -34,6 +41,7 @@ const sportIcon: Record<string, string> = {
   TRIATHLON_SPRINT: "🏊🚴🏃", TRIATHLON_OLYMPIC: "🏊🚴🏃",
   TRIATHLON_HALF: "🏊🚴🏃", TRIATHLON_FULL: "🏊🚴🏃",
 };
+const zoneColors = ["bg-zinc-500", "bg-green-500", "bg-yellow-500", "bg-orange-500", "bg-red-500"];
 
 function formatDuration(seconds: number) {
   const h = Math.floor(seconds / 3600);
@@ -42,10 +50,18 @@ function formatDuration(seconds: number) {
 }
 
 function FeaturedActivity({ activity }: { activity: Activity }) {
+  const gpsTrack = Array.isArray(activity.gpsTrack) && activity.gpsTrack.length > 0 ? activity.gpsTrack : null;
+  const hrZones = activity.hrZones as Record<string, number> | null;
+  const splits = Array.isArray(activity.splits) && activity.splits.length > 0 ? activity.splits : null;
+
+  const totalZoneSeconds = hrZones
+    ? Object.values(hrZones).reduce((a: number, b) => a + (b as number), 0)
+    : 0;
+
   return (
-    <Link href={`/dashboard/activity/${activity.id}`}
-      className="block group">
-      <div className="rounded-2xl border border-[var(--border)] hover:border-[var(--accent)]/40 bg-[var(--bg-card)] hover:bg-green-500/3 transition-all p-5">
+    <div className="rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] overflow-hidden">
+      {/* Header */}
+      <div className="p-5">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div className="flex items-center gap-3">
             <span className="text-3xl">{sportIcon[activity.sport] ?? "🏃"}</span>
@@ -63,52 +79,92 @@ function FeaturedActivity({ activity }: { activity: Activity }) {
           </span>
         </div>
 
-        <div className="grid grid-cols-4 gap-3">
-          {activity.distance && (
-            <div className="bg-[var(--bg-subtle)] rounded-xl p-3 text-center">
-              <p className="text-lg font-bold text-[var(--text-primary)]">{(activity.distance / 1000).toFixed(2)}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5">km</p>
+        {/* Key stats */}
+        <div className="grid grid-cols-4 gap-2">
+          {[
+            { label: "km", value: activity.distance ? (activity.distance / 1000).toFixed(2) : null },
+            { label: "pace", value: activity.avgPace },
+            { label: "FC média", value: activity.avgHR ? `${activity.avgHR}` : null },
+            { label: "duração", value: activity.duration ? formatDuration(activity.duration) : null },
+          ].filter((s) => s.value).map((s) => (
+            <div key={s.label} className="bg-[var(--bg-subtle)] rounded-xl p-3 text-center">
+              <p className="text-base font-bold text-[var(--text-primary)]">{s.value}</p>
+              <p className="text-xs text-[var(--text-muted)] mt-0.5">{s.label}</p>
             </div>
-          )}
-          {activity.avgPace && (
-            <div className="bg-[var(--bg-subtle)] rounded-xl p-3 text-center">
-              <p className="text-lg font-bold text-[var(--text-primary)]">{activity.avgPace}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5">pace</p>
-            </div>
-          )}
-          {activity.avgHR && (
-            <div className="bg-[var(--bg-subtle)] rounded-xl p-3 text-center">
-              <p className="text-lg font-bold text-[var(--text-primary)]">{activity.avgHR}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5">bpm FC</p>
-            </div>
-          )}
-          {activity.duration && (
-            <div className="bg-[var(--bg-subtle)] rounded-xl p-3 text-center">
-              <p className="text-lg font-bold text-[var(--text-primary)]">{formatDuration(activity.duration)}</p>
-              <p className="text-xs text-[var(--text-muted)] mt-0.5">duração</p>
-            </div>
-          )}
+          ))}
         </div>
 
-        {(activity.elevationGain || activity.calories || activity.aerobicEffect) && (
-          <div className="flex gap-4 mt-3 pt-3 border-t border-[var(--border)]">
-            {activity.elevationGain && (
-              <span className="text-xs text-[var(--text-muted)]">↑ {Math.round(activity.elevationGain)}m</span>
-            )}
-            {activity.calories && (
-              <span className="text-xs text-[var(--text-muted)]">🔥 {activity.calories} kcal</span>
-            )}
-            {activity.aerobicEffect && (
-              <span className="text-xs text-[var(--text-muted)]">Efeito aeróbico: {activity.aerobicEffect.toFixed(1)}</span>
-            )}
+        {/* Secondary stats */}
+        {(activity.elevationGain || activity.calories || activity.trainingLoad) && (
+          <div className="flex gap-4 mt-3 text-xs text-[var(--text-muted)]">
+            {activity.elevationGain && <span>↑ {Math.round(activity.elevationGain)}m</span>}
+            {activity.calories && <span>🔥 {activity.calories} kcal</span>}
+            {activity.trainingLoad && <span>Carga: {Math.round(activity.trainingLoad)}</span>}
+            {activity.aerobicEffect && <span>Aeróbico: {activity.aerobicEffect.toFixed(1)}</span>}
           </div>
         )}
-
-        <p className="text-xs text-[var(--accent)] mt-3 group-hover:underline">
-          Ver análise completa e mapa →
-        </p>
       </div>
-    </Link>
+
+      {/* Map */}
+      {gpsTrack && (
+        <div className="border-t border-[var(--border)]">
+          <div className="h-56">
+            <EnrichedMap gpsTrack={gpsTrack} elevationGain={activity.elevationGain} />
+          </div>
+        </div>
+      )}
+
+      {/* HR Zones */}
+      {hrZones && totalZoneSeconds > 0 && (
+        <div className="border-t border-[var(--border)] p-5">
+          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-3">Zonas de FC</p>
+          <div className="space-y-2">
+            {["z1", "z2", "z3", "z4", "z5"].map((z, i) => {
+              const seconds = (hrZones[z] ?? 0) as number;
+              const pct = totalZoneSeconds > 0 ? Math.round((seconds / totalZoneSeconds) * 100) : 0;
+              const mins = Math.floor(seconds / 60);
+              if (pct === 0) return null;
+              return (
+                <div key={z} className="flex items-center gap-3">
+                  <span className="text-xs text-[var(--text-muted)] w-12 shrink-0">Z{i + 1} · {mins}m</span>
+                  <div className="flex-1 bg-[var(--bg-hover)] rounded-full h-1.5">
+                    <div className={`h-1.5 rounded-full ${zoneColors[i]}`} style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className="text-xs text-[var(--text-muted)] w-8 text-right">{pct}%</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Splits (top 5) */}
+      {splits && splits.length > 0 && (
+        <div className="border-t border-[var(--border)] p-5">
+          <p className="text-xs font-semibold text-[var(--text-muted)] uppercase tracking-widest mb-3">Splits</p>
+          <div className="space-y-1">
+            {splits.slice(0, 5).map((split: any) => (
+              <div key={split.km} className="flex items-center gap-3 text-xs">
+                <span className="text-[var(--text-faint)] w-8">km {split.km}</span>
+                <span className="font-medium text-[var(--text-primary)]">{split.pace}</span>
+                {split.hr && <span className="text-[var(--text-muted)] ml-auto">{split.hr} bpm</span>}
+              </div>
+            ))}
+            {splits.length > 5 && (
+              <p className="text-xs text-[var(--text-faint)] mt-1">+{splits.length - 5} splits</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Footer link */}
+      <div className="border-t border-[var(--border)] px-5 py-3 bg-[var(--bg-subtle)]">
+        <Link href={`/dashboard/activity/${activity.id}`}
+          className="text-xs text-[var(--accent)] hover:underline">
+          Ver análise completa →
+        </Link>
+      </div>
+    </div>
   );
 }
 
@@ -120,8 +176,8 @@ export default function RecentActivitiesFeed({ activities }: Props) {
   const [latest, ...rest] = activities;
 
   return (
-    <div className="card">
-      <div className="flex items-center justify-between mb-4">
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
         <h2 className="font-bold text-[var(--text-primary)]">Atividades Recentes</h2>
         <Link href="/dashboard/activities" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-colors">
           Ver todas →
@@ -131,7 +187,7 @@ export default function RecentActivitiesFeed({ activities }: Props) {
       <FeaturedActivity activity={latest} />
 
       {rest.length > 0 && (
-        <div className="mt-3 space-y-1">
+        <div className="card space-y-1">
           {rest.map((activity) => (
             <div key={activity.id}>
               <button
@@ -157,31 +213,23 @@ export default function RecentActivitiesFeed({ activities }: Props) {
               </button>
 
               {expanded === activity.id && (
-                <div className="mx-3 mb-2 p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border)]">
-                  <div className="grid grid-cols-3 gap-2 mb-3">
-                    {activity.distance && (
-                      <div className="text-center">
-                        <p className="text-sm font-bold text-[var(--text-primary)]">{(activity.distance / 1000).toFixed(1)} km</p>
-                        <p className="text-xs text-[var(--text-muted)]">distância</p>
-                      </div>
-                    )}
-                    {activity.avgHR && (
-                      <div className="text-center">
-                        <p className="text-sm font-bold text-[var(--text-primary)]">{activity.avgHR} bpm</p>
-                        <p className="text-xs text-[var(--text-muted)]">FC média</p>
-                      </div>
-                    )}
-                    {activity.duration && (
-                      <div className="text-center">
-                        <p className="text-sm font-bold text-[var(--text-primary)]">{formatDuration(activity.duration)}</p>
-                        <p className="text-xs text-[var(--text-muted)]">duração</p>
-                      </div>
-                    )}
+                <div className="mx-1 mb-2 rounded-xl border border-[var(--border)] overflow-hidden">
+                  <div className="grid grid-cols-3 gap-2 p-3">
+                    {activity.distance && <div className="text-center"><p className="text-sm font-bold text-[var(--text-primary)]">{(activity.distance / 1000).toFixed(1)} km</p><p className="text-xs text-[var(--text-muted)]">distância</p></div>}
+                    {activity.avgHR && <div className="text-center"><p className="text-sm font-bold text-[var(--text-primary)]">{activity.avgHR} bpm</p><p className="text-xs text-[var(--text-muted)]">FC média</p></div>}
+                    {activity.duration && <div className="text-center"><p className="text-sm font-bold text-[var(--text-primary)]">{formatDuration(activity.duration)}</p><p className="text-xs text-[var(--text-muted)]">duração</p></div>}
                   </div>
-                  <Link href={`/dashboard/activity/${activity.id}`}
-                    className="block text-center text-xs text-[var(--accent)] hover:underline">
-                    Ver análise completa e mapa →
-                  </Link>
+                  {Array.isArray(activity.gpsTrack) && activity.gpsTrack.length > 0 && (
+                    <div className="h-40 border-t border-[var(--border)]">
+                      <EnrichedMap gpsTrack={activity.gpsTrack} elevationGain={activity.elevationGain} />
+                    </div>
+                  )}
+                  <div className="p-3 border-t border-[var(--border)] bg-[var(--bg-subtle)]">
+                    <Link href={`/dashboard/activity/${activity.id}`}
+                      className="block text-center text-xs text-[var(--accent)] hover:underline">
+                      Ver análise completa →
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>
