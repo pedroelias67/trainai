@@ -6,6 +6,7 @@ import { format, isToday, isTomorrow, subDays } from "date-fns";
 import { pt } from "date-fns/locale";
 import { LogoFull } from "@/components/ui/Logo";
 import { RacePrediction } from "@/components/dashboard/RacePrediction";
+import RecentActivitiesFeed from "@/components/dashboard/RecentActivitiesFeed";
 
 async function getDashboardData(userId: string) {
   return prisma.athlete.findUnique({
@@ -25,7 +26,16 @@ async function getDashboardData(userId: string) {
         },
         take: 1,
       },
-      activities: { orderBy: { date: "desc" }, take: 5 },
+      activities: {
+        orderBy: { date: "desc" },
+        take: 5,
+        select: {
+          id: true, sport: true, name: true, date: true,
+          distance: true, duration: true, avgPace: true,
+          avgHR: true, maxHR: true, calories: true,
+          elevationGain: true, aerobicEffect: true,
+        },
+      },
     },
   });
 }
@@ -235,34 +245,11 @@ export default async function DashboardPage() {
                 date: a.date.toISOString(),
               }))} />
 
-              {/* Recent activities */}
-              {athlete.activities.length > 0 && (
-                <div className="card">
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="font-bold text-white">Atividades Recentes</h2>
-                    <Link href="/dashboard/activities" className="text-xs text-[var(--text-muted)] hover:text-[var(--text-secondary)]">Ver todas →</Link>
-                  </div>
-                  <div className="space-y-1">
-                    {athlete.activities.map((activity) => (
-                      <Link key={activity.id} href={`/dashboard/activity/${activity.id}`}
-                        className="flex items-center gap-3 p-3 rounded-xl hover:bg-[var(--bg-subtle)] transition-colors group">
-                        <span className="text-lg">{sportIcon[activity.sport] ?? "🏃"}</span>
-                        <div className="flex-1">
-                          <p className="text-sm font-medium text-white">{activity.name ?? sportLabels[activity.sport]}</p>
-                          <p className="text-xs text-[var(--text-muted)]">
-                            {format(new Date(activity.date), "d MMM", { locale: pt })}
-                            {activity.distance ? ` · ${(activity.distance / 1000).toFixed(1)}km` : ""}
-                            {activity.avgHR ? ` · ${activity.avgHR}bpm` : ""}
-                          </p>
-                        </div>
-                        <svg className="w-4 h-4 text-zinc-700 group-hover:text-[var(--text-muted)] transition-colors" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                        </svg>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
+              {/* Recent activities feed */}
+              <RecentActivitiesFeed activities={athlete.activities.map((a) => ({
+                ...a,
+                date: a.date.toISOString(),
+              }))} />
             </div>
 
             {/* Sidebar */}

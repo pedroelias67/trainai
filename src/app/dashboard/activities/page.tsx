@@ -2,17 +2,10 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
 import { LogoFull } from "@/components/ui/Logo";
 import { SyncButton } from "@/components/dashboard/SyncButton";
+import ActivitiesList from "@/components/dashboard/ActivitiesList";
 
-const sportLabels: Record<string, string> = {
-  RUNNING: "Corrida", CYCLING: "Ciclismo", SWIMMING: "Natação",
-};
-const sportIcon: Record<string, string> = {
-  RUNNING: "🏃", CYCLING: "🚴", SWIMMING: "🏊",
-};
 
 export default async function ActivitiesPage() {
   const cookieStore = await cookies();
@@ -22,7 +15,16 @@ export default async function ActivitiesPage() {
   const athlete = await prisma.athlete.findUnique({
     where: { userId },
     include: {
-      activities: { orderBy: { date: "desc" }, take: 50 },
+      activities: {
+        orderBy: { date: "desc" },
+        take: 50,
+        select: {
+          id: true, sport: true, name: true, date: true,
+          distance: true, duration: true, avgPace: true,
+          avgHR: true, maxHR: true, elevationGain: true,
+          calories: true, trainingLoad: true, aerobicEffect: true,
+        },
+      },
     },
   });
 
@@ -94,55 +96,7 @@ export default async function ActivitiesPage() {
             )}
           </div>
         ) : (
-          <div className="space-y-2">
-            {activities.map((activity) => (
-              <Link key={activity.id} href={`/dashboard/activity/${activity.id}`}
-                className="group flex items-center gap-4 p-4 rounded-2xl border border-[var(--border)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-card)] transition-all">
-                <div className="w-10 h-10 bg-[var(--bg-hover)] rounded-xl flex items-center justify-center text-lg shrink-0">
-                  {sportIcon[activity.sport] ?? "🏃"}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-white text-sm">{activity.name ?? sportLabels[activity.sport]}</p>
-                  <p className="text-xs text-[var(--text-muted)] mt-0.5 capitalize">
-                    {format(new Date(activity.date), "EEEE, d 'de' MMMM yyyy", { locale: pt })}
-                  </p>
-                </div>
-                <div className="hidden sm:flex items-center gap-6 text-right">
-                  {activity.distance && (
-                    <div>
-                      <p className="text-sm font-semibold text-white">{(activity.distance / 1000).toFixed(1)} km</p>
-                      <p className="text-xs text-[var(--text-faint)]">distância</p>
-                    </div>
-                  )}
-                  {activity.avgPace && (
-                    <div>
-                      <p className="text-sm font-semibold text-white">{activity.avgPace}</p>
-                      <p className="text-xs text-[var(--text-faint)]">pace</p>
-                    </div>
-                  )}
-                  {activity.avgHR && (
-                    <div>
-                      <p className="text-sm font-semibold text-white">{activity.avgHR} bpm</p>
-                      <p className="text-xs text-[var(--text-faint)]">FC média</p>
-                    </div>
-                  )}
-                  {activity.duration && (
-                    <div>
-                      <p className="text-sm font-semibold text-white">
-                        {Math.floor(activity.duration / 3600) > 0
-                          ? `${Math.floor(activity.duration / 3600)}h${Math.floor((activity.duration % 3600) / 60)}min`
-                          : `${Math.floor(activity.duration / 60)}min`}
-                      </p>
-                      <p className="text-xs text-[var(--text-faint)]">duração</p>
-                    </div>
-                  )}
-                </div>
-                <svg className="w-4 h-4 text-zinc-700 group-hover:text-[var(--text-muted)] transition-colors shrink-0" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
-                </svg>
-              </Link>
-            ))}
-          </div>
+          <ActivitiesList activities={activities.map((a) => ({ ...a, date: a.date.toISOString() }))} />
         )}
       </main>
     </div>
