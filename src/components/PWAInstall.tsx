@@ -55,7 +55,7 @@ export default function PWAInstall() {
   if (!showBanner) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-[var(--bg-card)] border-t border-[var(--border)] flex items-center justify-between gap-3">
+    <div className="fixed bottom-16 md:bottom-0 left-0 right-0 z-40 p-4 bg-[var(--bg-card)] border-t border-[var(--border)] flex items-center justify-between gap-3 shadow-lg">
       <div className="flex items-center gap-3">
         <span className="text-2xl">📱</span>
         <p className="text-sm text-[var(--text-secondary)]">Instala o TrainAI no teu telemóvel</p>

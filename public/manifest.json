@@ -8,12 +8,15 @@
   "theme_color": "#22c55e",
   "orientation": "portrait-primary",
   "icons": [
-    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    { "src": "/api/icon/192", "sizes": "192x192", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/api/icon/512", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/api/icon/192", "sizes": "192x192", "type": "image/svg+xml", "purpose": "maskable" }
   ],
   "categories": ["sports", "health", "fitness"],
   "shortcuts": [
-    { "name": "Dashboard", "url": "/dashboard", "description": "Ver o dashboard" },
-    { "name": "Plano", "url": "/dashboard/plan", "description": "Ver o plano de treino" }
+    { "name": "Hoje", "url": "/dashboard", "description": "Dashboard" },
+    { "name": "Plano", "url": "/dashboard/plan", "description": "Plano de treino" },
+    { "name": "Nutrição", "url": "/dashboard/nutrition", "description": "Plano nutricional" },
+    { "name": "Atividades", "url": "/dashboard/activities", "description": "Histórico" }
   ]
 }

@@ -189,4 +189,21 @@
   .surface-gradient {
     background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-subtle) 100%);
   }
+
+  /* iOS safe area for bottom nav */
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+}
+
+/* Mobile touch target minimum */
+@media (max-width: 767px) {
+  button, a[href] {
+    min-height: 44px;
+  }
+
+  /* Larger tap targets for nav and small buttons */
+  nav a, .card a {
+    min-height: 44px;
+  }
 }
