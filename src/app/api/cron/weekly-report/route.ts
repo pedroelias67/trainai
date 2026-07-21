@@ -2,8 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { analyzeWeekAndAdapt } from "@/lib/claude";
-import { startOfWeek, endOfWeek, subWeeks } from "date-fns";
+import { analyzeWeekAndAdapt, suggestSessionAdaptations } from "@/lib/claude";
+import { startOfWeek, endOfWeek, subWeeks, subDays, startOfDay } from "date-fns";
 
 // Called by Vercel Cron every Sunday at 20:00
 export async function GET(req: NextRequest) {
@@ -95,6 +95,62 @@ export async function GET(req: NextRequest) {
           actualDistance: activities.reduce((sum, a) => sum + (a.distance ?? 0) / 1000, 0),
         },
       });
+
+      // Auto-adapt NEXT week's sessions based on this analysis
+      try {
+        const nextWeek = await prisma.trainingWeek.findFirst({
+          where: { planId: week.planId, weekNumber: week.weekNumber + 1 },
+          include: { sessions: { where: { cancelled: false, completed: false } } },
+        });
+        if (nextWeek && !nextWeek.adaptationsApplied && nextWeek.sessions.length > 0) {
+          const wellnessLogs = await prisma.wellnessLog.findMany({
+            where: { athleteId: athlete.id, date: { gte: subDays(startOfDay(new Date()), 7) } },
+            orderBy: { date: "desc" },
+          });
+          const wellnessSummary = wellnessLogs.length > 0
+            ? wellnessLogs.map(l => `${l.date.toISOString().split("T")[0]}: sono=${l.sleepQuality ?? "?"}/5 fadiga=${l.fatigue ?? "?"}/5 humor=${l.mood ?? "?"}/5`).join("\n")
+            : "Sem dados de bem-estar";
+
+          const adjustments = await suggestSessionAdaptations({
+            analysis: analysis.summary,
+            nextWeekAdjustments: analysis.nextWeekAdjustments,
+            wellnessSummary,
+            sessions: nextWeek.sessions.map(s => ({
+              id: s.id, name: s.name, sessionType: s.sessionType,
+              plannedDistance: s.plannedDistance, plannedDuration: s.plannedDuration, plannedPace: s.plannedPace,
+            })),
+          });
+
+          for (const adj of adjustments) {
+            const session = nextWeek.sessions.find(s => s.id === adj.sessionId);
+            if (!session || adj.action === "keep") continue;
+            const update: Record<string, unknown> = {};
+            if (adj.action === "convert_to_easy" || adj.convertToType) {
+              update.sessionType = adj.convertToType ?? "EASY";
+              update.name = `[Adaptado] ${session.name}`;
+              update.coachTip = adj.reason;
+            }
+            if (adj.distanceMultiplier && session.plannedDistance)
+              update.plannedDistance = Math.round(session.plannedDistance * adj.distanceMultiplier * 10) / 10;
+            if (adj.durationMultiplier && session.plannedDuration)
+              update.plannedDuration = Math.round(session.plannedDuration * adj.durationMultiplier);
+            if (Object.keys(update).length > 0)
+              await prisma.trainingSession.update({ where: { id: adj.sessionId }, data: update });
+          }
+
+          const adaptationSummary = adjustments
+            .filter(a => a.action !== "keep")
+            .map(a => `• ${nextWeek.sessions.find(s => s.id === a.sessionId)?.name ?? a.sessionId}: ${a.reason}`)
+            .join("\n");
+
+          await prisma.trainingWeek.update({
+            where: { id: nextWeek.id },
+            data: { adaptationsApplied: true, adaptations: adaptationSummary || "Plano mantém-se." },
+          });
+        }
+      } catch (adaptErr) {
+        console.error("Adaptation error:", adaptErr);
+      }
 
       // Send push notification if athlete has subscription
       if (athlete.pushSubscription) {

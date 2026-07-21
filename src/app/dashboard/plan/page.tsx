@@ -163,6 +163,14 @@ export default async function PlanPage() {
                       </div>
                     )}
 
+                    {/* AI adaptations applied */}
+                    {week.adaptationsApplied && week.adaptations && (
+                      <div className="mx-3 mb-3 p-3 rounded-xl bg-blue-500/8 border border-blue-500/20">
+                        <p className="text-xs text-blue-400 uppercase tracking-widest mb-1.5">✦ Plano adaptado pela IA</p>
+                        <p className="text-xs text-[var(--text-secondary)] whitespace-pre-line leading-relaxed">{week.adaptations}</p>
+                      </div>
+                    )}
+
                     {/* Weekly AI analysis */}
                     {(isPastWeek || isCurrentWeek) && (
                       <div className="mx-3 mb-3 p-4 rounded-xl bg-[#0f0f0f] border border-[var(--border)]">

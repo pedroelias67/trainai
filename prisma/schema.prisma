@@ -100,6 +100,7 @@ model Athlete {
   shoes           Shoe[]
   personalRecords PersonalRecord[]
   nutritionPlans  NutritionPlan[]
+  wellnessLogs    WellnessLog[]
 }
 
 model NutritionPlan {
@@ -162,6 +163,7 @@ model TrainingWeek {
   totalDuration   Float?
   aiAnalysis      String?
   adaptations     String?
+  adaptationsApplied Boolean @default(false)
   createdAt       DateTime  @default(now())
 
   plan            TrainingPlan @relation(fields: [planId], references: [id], onDelete: Cascade)
@@ -232,6 +234,23 @@ model Activity {
   sessions        TrainingSession[]
   shoe            Shoe?     @relation(fields: [shoeId], references: [id])
   personalRecords PersonalRecord[]
+}
+
+model WellnessLog {
+  id            String   @id @default(cuid())
+  athleteId     String
+  date          DateTime // date only (start of day)
+  sleepQuality  Int?     // 1-5
+  fatigue       Int?     // 1-5 (1=fresh, 5=exhausted)
+  mood          Int?     // 1-5
+  musclesSore   Int?     // 1-5
+  rpe           Int?     // perceived exertion yesterday 1-10
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  athlete       Athlete  @relation(fields: [athleteId], references: [id], onDelete: Cascade)
+
+  @@unique([athleteId, date])
 }
 
 model WeeklyReport {

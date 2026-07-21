@@ -265,3 +265,63 @@ Responde APENAS com JSON válido, sem markdown.`;
   const text = content.text.replace(/^```(?:json)?\r?\n?/i, "").replace(/\r?\n?```\s*$/i, "").trim();
   return JSON.parse(text);
 }
+
+export interface SessionAdjustment {
+  sessionId: string;
+  action: "reduce_distance" | "reduce_intensity" | "convert_to_easy" | "increase_distance" | "keep";
+  distanceMultiplier?: number;   // e.g. 0.8 = reduce 20%
+  durationMultiplier?: number;
+  convertToType?: string;        // e.g. "EASY"
+  newPace?: string;
+  reason: string;
+}
+
+export async function suggestSessionAdaptations(params: {
+  analysis: string;
+  nextWeekAdjustments: string;
+  wellnessSummary: string;
+  sessions: Array<{ id: string; name: string; sessionType: string; plannedDistance: number | null; plannedDuration: number | null; plannedPace: string | null }>;
+}): Promise<SessionAdjustment[]> {
+  const prompt = `Com base na análise semanal e nos dados de bem-estar do atleta, sugere ajustes concretos para as sessões da próxima semana.
+
+ANÁLISE DA SEMANA:
+${params.analysis}
+
+AJUSTES RECOMENDADOS (texto do coach):
+${params.nextWeekAdjustments}
+
+ESTADO DE BEM-ESTAR DO ATLETA:
+${params.wellnessSummary}
+
+SESSÕES DA PRÓXIMA SEMANA:
+${JSON.stringify(params.sessions, null, 2)}
+
+Para cada sessão, indica o ajuste a fazer. Usa apenas as ações: "reduce_distance", "reduce_intensity", "convert_to_easy", "increase_distance", "keep".
+- Se o atleta está fatigado: reduz volume ou converte para fácil
+- Se correu menos do que planeado: mantém ou aumenta ligeiramente
+- Se está em boa forma: mantém ou aumenta progressivamente (máx +10%)
+
+Responde em JSON com EXATAMENTE esta estrutura (array):
+[
+  {
+    "sessionId": "id da sessão",
+    "action": "reduce_distance",
+    "distanceMultiplier": 0.85,
+    "durationMultiplier": 0.85,
+    "reason": "Fadiga elevada esta semana — reduz 15% do volume para recuperar"
+  }
+]
+
+Responde APENAS com JSON válido (array), sem markdown.`;
+
+  const message = await claude.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 1024,
+    messages: [{ role: "user", content: prompt }],
+  });
+
+  const content = message.content[0];
+  if (content.type !== "text") throw new Error("Resposta inesperada da IA");
+  const text = content.text.replace(/^```(?:json)?\r?\n?/i, "").replace(/\r?\n?```\s*$/i, "").trim();
+  return JSON.parse(text);
+}

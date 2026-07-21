@@ -6,6 +6,7 @@ import { format, isToday, isTomorrow, subDays } from "date-fns";
 import { pt } from "date-fns/locale";
 import { LogoFull } from "@/components/ui/Logo";
 import { RacePrediction } from "@/components/dashboard/RacePrediction";
+import { WellnessCheckin } from "@/components/dashboard/WellnessCheckin";
 import RecentActivitiesFeed from "@/components/dashboard/RecentActivitiesFeed";
 
 async function getDashboardData(userId: string) {
@@ -45,11 +46,20 @@ async function getRunningActivities(athleteId: string) {
   return prisma.activity.findMany({
     where: {
       athleteId,
-      sport: { in: ["RUNNING", "TRIATHLON_SPRINT", "TRIATHLON_OLYMPIC", "TRIATHLON_HALF", "TRIATHLON_FULL"] },
-      date: { gte: subDays(new Date(), 30) },
+      sport: "RUNNING",
+      date: { gte: subDays(new Date(), 60) },
+      distance: { gt: 2000 },
     },
-    select: { id: true, distance: true, duration: true, date: true },
+    select: { id: true, distance: true, duration: true, avgPace: true, date: true },
     orderBy: { date: "desc" },
+    take: 20,
+  });
+}
+
+async function getPersonalRecords(athleteId: string) {
+  return prisma.personalRecord.findMany({
+    where: { athleteId },
+    orderBy: { distance: "asc" },
   });
 }
 
@@ -79,6 +89,20 @@ export default async function DashboardPage() {
   if (!athlete) redirect("/onboarding");
 
   const runningActivities = await getRunningActivities(athlete.id);
+  const personalRecords = await getPersonalRecords(athlete.id);
+
+  // Best recent pace from running activities
+  function paceToSecs(pace: string | null): number | null {
+    if (!pace) return null;
+    const m = pace.match(/(\d+):(\d+)/);
+    return m ? parseInt(m[1]) * 60 + parseInt(m[2]) : null;
+  }
+  const recentWithPace = runningActivities.filter(a => a.avgPace && a.distance && a.distance > 5000);
+  const bestRecentActivity = recentWithPace.sort((a, b) =>
+    (paceToSecs(a.avgPace ?? null) ?? 999) - (paceToSecs(b.avgPace ?? null) ?? 999)
+  )[0] ?? null;
+  const recentBestPaceSec = bestRecentActivity ? paceToSecs(bestRecentActivity.avgPace ?? null) : null;
+  const recentBestDistM = bestRecentActivity?.distance ?? null;
 
   const activePlan = athlete.trainingPlans[0];
   const currentWeek = activePlan?.weeks[0];
@@ -239,12 +263,14 @@ export default async function DashboardPage() {
               )}
 
               {/* Race prediction */}
-              <RacePrediction recentActivities={runningActivities.map((a) => ({
-                id: a.id,
-                distance: a.distance,
-                duration: a.duration,
-                date: a.date.toISOString(),
-              }))} />
+              {activePlan && (
+                <RacePrediction
+                  records={personalRecords.map(r => ({ distance: r.distance, timeSeconds: r.timeSeconds }))}
+                  recentBestPaceSec={recentBestPaceSec}
+                  recentBestDistM={recentBestDistM}
+                  targetDistance={activePlan.event.distance}
+                />
+              )}
 
               {/* Recent activities feed */}
               <RecentActivitiesFeed activities={athlete.activities.map((a) => ({
@@ -301,6 +327,8 @@ export default async function DashboardPage() {
                   </div>
                 </div>
               )}
+
+              <WellnessCheckin />
 
               <Link href="/dashboard/plan"
                 className="flex items-center justify-between p-4 rounded-2xl border border-[var(--border)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-card)] transition-all group">

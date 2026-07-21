@@ -1,138 +1,122 @@
 "use client";
 
-type Activity = {
-  id: string;
-  distance: number | null;
-  duration: number | null;
-  date: string;
+// Riegel formula: T2 = T1 × (D2/D1)^1.06
+function riegel(knownTimeSecs: number, knownDistM: number, targetDistM: number): number {
+  return knownTimeSecs * Math.pow(targetDistM / knownDistM, 1.06);
+}
+
+function formatTime(secs: number): string {
+  const h = Math.floor(secs / 3600);
+  const m = Math.floor((secs % 3600) / 60);
+  const s = Math.round(secs % 60);
+  if (h > 0) return `${h}h${String(m).padStart(2, "0")}m${String(s).padStart(2, "0")}s`;
+  return `${m}m${String(s).padStart(2, "0")}s`;
+}
+
+interface PersonalRecord {
+  distance: number;
+  timeSeconds: number;
+}
+
+interface Props {
+  records: PersonalRecord[];
+  recentBestPaceSec: number | null;
+  recentBestDistM: number | null;
+  targetDistance: string;
+}
+
+const RACE_DISTANCES: Record<string, { label: string; meters: number }> = {
+  FIVE_K:            { label: "5 km",            meters: 5000 },
+  TEN_K:             { label: "10 km",            meters: 10000 },
+  HALF_MARATHON:     { label: "Meia Maratona",    meters: 21097 },
+  MARATHON:          { label: "Maratona",         meters: 42195 },
+  SPRINT_TRIATHLON:  { label: "Sprint Triathlon", meters: 5000 },
+  OLYMPIC_TRIATHLON: { label: "Olímpico",         meters: 10000 },
+  HALF_IRONMAN:      { label: "Half Ironman",     meters: 21097 },
+  IRONMAN:           { label: "Ironman",          meters: 42195 },
 };
 
-type Props = {
-  recentActivities: Activity[];
-};
-
-const RACE_DISTANCES = [
-  { label: "5 km", meters: 5000 },
-  { label: "10 km", meters: 10000 },
-  { label: "Meia Maratona", meters: 21097 },
-  { label: "Maratona", meters: 42195 },
+const REFERENCE_DISTANCES = [
+  { label: "5K",     meters: 5000 },
+  { label: "10K",    meters: 10000 },
+  { label: "Meia",   meters: 21097 },
+  { label: "Marat.", meters: 42195 },
 ];
 
-function formatTime(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.floor(seconds % 60);
-  if (h > 0) {
-    return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+export function RacePrediction({ records, recentBestPaceSec, recentBestDistM, targetDistance }: Props) {
+  const target = RACE_DISTANCES[targetDistance];
+  if (!target) return null;
+
+  let bestTimeSecs: number | null = null;
+  let bestDistM: number | null = null;
+  let source = "";
+
+  if (records.length > 0) {
+    const sorted = [...records].sort((a, b) =>
+      Math.abs(a.distance * 1000 - target.meters) - Math.abs(b.distance * 1000 - target.meters)
+    );
+    bestTimeSecs = sorted[0].timeSeconds;
+    bestDistM = sorted[0].distance * 1000;
+    source = `baseado no teu recorde de ${sorted[0].distance}km`;
+  } else if (recentBestPaceSec && recentBestDistM && recentBestDistM >= 3000) {
+    bestTimeSecs = recentBestPaceSec * (recentBestDistM / 1000);
+    bestDistM = recentBestDistM;
+    source = "baseado no pace médio recente";
   }
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
 
-function formatPace(secondsPerKm: number): string {
-  const m = Math.floor(secondsPerKm / 60);
-  const s = Math.floor(secondsPerKm % 60);
-  return `${m}:${String(s).padStart(2, "0")}/km`;
-}
-
-// Riegel formula: T2 = T1 * (D2/D1)^1.06
-function riegelPredict(t1Seconds: number, d1Meters: number, d2Meters: number): number {
-  return t1Seconds * Math.pow(d2Meters / d1Meters, 1.06);
-}
-
-export function RacePrediction({ recentActivities }: Props) {
-  // Filter activities with distance >= 5km and valid duration
-  const validActivities = recentActivities.filter(
-    (a) => a.distance !== null && a.distance >= 5000 && a.duration !== null && a.duration > 0
-  );
-
-  if (validActivities.length === 0) {
+  if (!bestTimeSecs || !bestDistM) {
     return (
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
-        <h3 className="font-bold text-white mb-1">Previsão de Tempos de Corrida</h3>
-        <p className="text-[var(--text-muted)] text-sm">Sem dados suficientes (precisa de pelo menos 1 corrida ≥5km nos últimos 30 dias)</p>
+        <h3 className="font-bold text-[var(--text-primary)]">⏱ Previsão de Tempo de Prova</h3>
+        <p className="text-sm text-[var(--text-muted)] mt-2">
+          Sem dados suficientes. Sincroniza atividades de corrida para ver a previsão.
+        </p>
       </div>
     );
   }
 
-  // Find best pace (lowest seconds per meter) over 5km+
-  let bestPacePerMeter = Infinity;
-  let bestActivity: Activity | null = null;
-  for (const a of validActivities) {
-    const pacePerMeter = a.duration! / a.distance!;
-    if (pacePerMeter < bestPacePerMeter) {
-      bestPacePerMeter = pacePerMeter;
-      bestActivity = a;
-    }
-  }
+  const predictedSecs = riegel(bestTimeSecs, bestDistM, target.meters);
+  const paceSecs = predictedSecs / (target.meters / 1000);
+  const paceStr = `${Math.floor(paceSecs / 60)}:${String(Math.round(paceSecs % 60)).padStart(2, "0")}/km`;
 
-  const predictions = RACE_DISTANCES.map((race) => ({
-    ...race,
-    predictedSeconds: riegelPredict(
-      bestActivity!.duration!,
-      bestActivity!.distance!,
-      race.meters
-    ),
+  const allPredictions = REFERENCE_DISTANCES.map(d => ({
+    ...d,
+    timeSecs: riegel(bestTimeSecs!, bestDistM!, d.meters),
   }));
 
-  // Trend: compare last 2 weeks pace vs previous 2 weeks
-  const now = new Date();
-  const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-  const fourWeeksAgo = new Date(now.getTime() - 28 * 24 * 60 * 60 * 1000);
-
-  const recentValid = validActivities.filter((a) => new Date(a.date) >= twoWeeksAgo);
-  const previousValid = validActivities.filter(
-    (a) => new Date(a.date) >= fourWeeksAgo && new Date(a.date) < twoWeeksAgo
-  );
-
-  let trendIcon = "";
-  let trendText = "";
-  if (recentValid.length > 0 && previousValid.length > 0) {
-    const recentAvgPace =
-      recentValid.reduce((sum, a) => sum + a.duration! / a.distance!, 0) / recentValid.length;
-    const prevAvgPace =
-      previousValid.reduce((sum, a) => sum + a.duration! / a.distance!, 0) / previousValid.length;
-    const diff = ((prevAvgPace - recentAvgPace) / prevAvgPace) * 100;
-    if (diff > 1) {
-      trendIcon = "↑";
-      trendText = `${Math.abs(diff).toFixed(1)}% mais rápido que nas 2 semanas anteriores`;
-    } else if (diff < -1) {
-      trendIcon = "↓";
-      trendText = `${Math.abs(diff).toFixed(1)}% mais lento que nas 2 semanas anteriores`;
-    } else {
-      trendIcon = "→";
-      trendText = "Ritmo estável nas últimas 4 semanas";
-    }
-  }
-
-  const bestPacePerKm = bestPacePerMeter * 1000;
-
   return (
-    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h3 className="font-bold text-white">Previsão de Tempos de Corrida</h3>
-          <p className="text-[var(--text-muted)] text-xs mt-0.5">
-            Baseado no melhor ritmo recente: {formatPace(bestPacePerKm)}
-            {trendText && (
-              <span className={`ml-2 ${trendIcon === "↑" ? "text-green-400" : trendIcon === "↓" ? "text-red-400" : "text-[var(--text-secondary)]"}`}>
-                {trendIcon} {trendText}
-              </span>
-            )}
-          </p>
-        </div>
+    <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5 space-y-4">
+      <div>
+        <h3 className="font-bold text-[var(--text-primary)]">⏱ Previsão de Tempo de Prova</h3>
+        <p className="text-xs text-[var(--text-muted)] mt-0.5">{source} · Fórmula de Riegel</p>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        {predictions.map((p) => (
-          <div key={p.label} className="bg-[#0f0f0f] border border-[var(--border)] rounded-xl p-3 text-center">
-            <p className="text-xs text-[var(--text-muted)] mb-1">{p.label}</p>
-            <p className="text-lg font-bold text-white">{formatTime(p.predictedSeconds)}</p>
-            <p className="text-xs text-[var(--text-faint)] mt-0.5">
-              {formatPace((p.predictedSeconds / p.meters) * 1000)}
-            </p>
-          </div>
-        ))}
+      <div className="bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-xl p-4 text-center">
+        <p className="text-xs text-[var(--accent)] font-medium mb-1">{target.label}</p>
+        <p className="text-3xl font-bold text-white">{formatTime(predictedSecs)}</p>
+        <p className="text-xs text-[var(--text-muted)] mt-1">Pace médio {paceStr}</p>
       </div>
+
+      <div className="grid grid-cols-4 gap-2">
+        {allPredictions.map(p => {
+          const isTarget = Math.abs(p.meters - target.meters) < 100;
+          return (
+            <div
+              key={p.label}
+              className={`rounded-xl p-3 text-center ${isTarget ? "bg-[var(--accent)]/15 border border-[var(--accent)]/30" : "bg-white/5"}`}
+            >
+              <p className="text-[10px] text-[var(--text-faint)]">{p.label}</p>
+              <p className={`text-sm font-bold mt-0.5 ${isTarget ? "text-[var(--accent)]" : "text-[var(--text-primary)]"}`}>
+                {formatTime(p.timeSecs)}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      <p className="text-[10px] text-[var(--text-faint)] text-center">
+        Previsões baseadas no teu estado de forma atual. Melhoram à medida que treinas.
+      </p>
     </div>
   );
 }
