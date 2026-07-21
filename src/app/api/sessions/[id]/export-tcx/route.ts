@@ -14,53 +14,145 @@ function sportToTcx(sport: string): string {
   return "Running";
 }
 
-function paceToMetersPerSecond(pace: string | null): number | null {
+function paceToMetersPerSecond(pace: string | null | undefined): number | null {
   if (!pace) return null;
   const match = pace.match(/^(\d+):(\d+)$/);
   if (!match) return null;
-  const totalSeconds = parseInt(match[1]) * 60 + parseInt(match[2]);
-  return 1000 / totalSeconds;
+  const totalSecs = parseInt(match[1]) * 60 + parseInt(match[2]);
+  return 1000 / totalSecs;
 }
 
-// Generate synthetic trackpoints to represent a workout
-// Strava requires at least a start + end trackpoint with timestamps and distance
-function generateTrackpoints(
-  startTime: Date,
-  durationSecs: number,
-  distanceMeters: number | null,
-  speedMps: number | null,
-  heartRate: number | null
-): string {
-  const points: string[] = [];
-  // Generate a trackpoint every 60 seconds
-  const intervalSecs = 60;
-  const totalPoints = Math.max(2, Math.ceil(durationSecs / intervalSecs) + 1);
-  const effectiveSpeed = speedMps ?? (distanceMeters ? distanceMeters / durationSecs : null);
+// Garmin TCX Workout steps — each step shown on the watch during training
+function buildSteps(session: {
+  sessionType: string;
+  plannedDuration: number | null;
+  plannedDistance: number | null;
+  plannedPace: string | null;
+  warmup: string | null;
+  mainSet: string | null;
+  cooldown: string | null;
+}): { xml: string; stepCount: number } {
+  const totalDurationSecs = (session.plannedDuration ?? 45) * 60;
+  const speedMps = paceToMetersPerSecond(session.plannedPace);
+  let stepId = 1;
+  const steps: string[] = [];
 
-  for (let i = 0; i < totalPoints; i++) {
-    const offsetSecs = Math.min(i * intervalSecs, durationSecs);
-    const t = new Date(startTime.getTime() + offsetSecs * 1000);
-    const dist = effectiveSpeed ? effectiveSpeed * offsetSecs : (distanceMeters ? (distanceMeters * offsetSecs / durationSecs) : null);
-
-    const hrXml = heartRate
-      ? `<HeartRateBpm><Value>${heartRate}</Value></HeartRateBpm>`
-      : "";
-    const distXml = dist != null
-      ? `<DistanceMeters>${dist.toFixed(1)}</DistanceMeters>`
-      : "";
-    const speedXml = effectiveSpeed
-      ? `<Extensions><ns3:TPX xmlns:ns3="http://www.garmin.com/xmlschemas/ActivityExtension/v2"><ns3:Speed>${effectiveSpeed.toFixed(2)}</ns3:Speed></ns3:TPX></Extensions>`
-      : "";
-
-    points.push(`      <Trackpoint>
-        <Time>${t.toISOString()}</Time>
-        ${distXml}
-        ${hrXml}
-        ${speedXml}
-      </Trackpoint>`);
+  function timeStep(label: string, secs: number, intensity: "Warmup" | "Active" | "Cooldown", targetXml: string): string {
+    return `<Step xsi:type="Step_t">
+        <StepId>${stepId++}</StepId>
+        <Name>${escapeXml(label)}</Name>
+        <Duration xsi:type="Time_t"><Seconds>${Math.round(secs)}</Seconds></Duration>
+        <Intensity>${intensity}</Intensity>
+        <Target ${targetXml ? "" : 'xsi:type="NullTarget_t"'}>${targetXml}</Target>
+      </Step>`;
   }
 
-  return points.join("\n");
+  function distanceStep(label: string, meters: number, intensity: "Warmup" | "Active" | "Cooldown", targetXml: string): string {
+    return `<Step xsi:type="Step_t">
+        <StepId>${stepId++}</StepId>
+        <Name>${escapeXml(label)}</Name>
+        <Duration xsi:type="Distance_t"><Meters>${Math.round(meters)}</Meters></Duration>
+        <Intensity>${intensity}</Intensity>
+        <Target ${targetXml ? "" : 'xsi:type="NullTarget_t"'}>${targetXml}</Target>
+      </Step>`;
+  }
+
+  function paceTarget(mps: number, toleranceMps = 0.15): string {
+    return `xsi:type="Speed_t"><Low>${(mps - toleranceMps).toFixed(3)}</Low><High>${(mps + toleranceMps).toFixed(3)}</High>`;
+  }
+
+  const warmupSecs = 10 * 60;   // 10 min
+  const cooldownSecs = 10 * 60; // 10 min
+  const mainSecs = Math.max(totalDurationSecs - warmupSecs - cooldownSecs, totalDurationSecs * 0.6);
+
+  const easyMps = 1000 / (7 * 60); // ~7:00/km easy default
+
+  switch (session.sessionType) {
+    case "EASY":
+    case "RECOVERY":
+    case "LONG": {
+      const mainMeters = session.plannedDistance ? session.plannedDistance * 1000 : null;
+      const target = speedMps ? paceTarget(speedMps) : "";
+      if (mainMeters) {
+        steps.push(distanceStep("Aquecimento", 1000, "Warmup", paceTarget(easyMps)));
+        steps.push(distanceStep(session.sessionType === "LONG" ? "Longo" : "Corrida fácil", mainMeters - 2000, "Active", target));
+        steps.push(distanceStep("Retorno à calma", 1000, "Cooldown", paceTarget(easyMps)));
+      } else {
+        steps.push(timeStep("Aquecimento", warmupSecs, "Warmup", paceTarget(easyMps)));
+        steps.push(timeStep(session.sessionType === "LONG" ? "Longo" : "Corrida fácil", mainSecs, "Active", target));
+        steps.push(timeStep("Retorno à calma", cooldownSecs, "Cooldown", paceTarget(easyMps)));
+      }
+      break;
+    }
+
+    case "TEMPO": {
+      const tempoMps = speedMps ?? 1000 / (5 * 60);
+      steps.push(timeStep("Aquecimento", warmupSecs, "Warmup", paceTarget(easyMps)));
+      steps.push(timeStep("Tempo", mainSecs, "Active", paceTarget(tempoMps, 0.1)));
+      steps.push(timeStep("Retorno à calma", cooldownSecs, "Cooldown", paceTarget(easyMps)));
+      break;
+    }
+
+    case "INTERVALS": {
+      const intervalMps = speedMps ?? 1000 / (4.5 * 60);
+      const repDurationSecs = 4 * 60;   // 4 min interval
+      const recovSecs = 2 * 60;          // 2 min recovery
+      const reps = Math.max(4, Math.round(mainSecs / (repDurationSecs + recovSecs)));
+
+      steps.push(timeStep("Aquecimento", warmupSecs, "Warmup", paceTarget(easyMps)));
+
+      // Repeat block
+      const repeatSteps: string[] = [];
+      const repId1 = stepId;
+      repeatSteps.push(`<Step xsi:type="Step_t">
+        <StepId>${stepId++}</StepId>
+        <Name>Esforço</Name>
+        <Duration xsi:type="Time_t"><Seconds>${repDurationSecs}</Seconds></Duration>
+        <Intensity>Active</Intensity>
+        <Target ${paceTarget(intervalMps, 0.1)}></Target>
+      </Step>`);
+      const repId2 = stepId;
+      repeatSteps.push(`<Step xsi:type="Step_t">
+        <StepId>${stepId++}</StepId>
+        <Name>Recuperação</Name>
+        <Duration xsi:type="Time_t"><Seconds>${recovSecs}</Seconds></Duration>
+        <Intensity>Rest</Intensity>
+        <Target xsi:type="NullTarget_t"/>
+      </Step>`);
+
+      steps.push(`<Step xsi:type="Repeat_t">
+        <StepId>${stepId++}</StepId>
+        <Repetitions>${reps}</Repetitions>
+        <Child xsi:type="Step_t">
+          <StepId>${repId1}</StepId>
+          <Name>Esforço</Name>
+          <Duration xsi:type="Time_t"><Seconds>${repDurationSecs}</Seconds></Duration>
+          <Intensity>Active</Intensity>
+          <Target ${paceTarget(intervalMps, 0.1)}></Target>
+        </Child>
+        <Child xsi:type="Step_t">
+          <StepId>${repId2}</StepId>
+          <Name>Recuperação</Name>
+          <Duration xsi:type="Time_t"><Seconds>${recovSecs}</Seconds></Duration>
+          <Intensity>Rest</Intensity>
+          <Target xsi:type="NullTarget_t"/>
+        </Child>
+      </Step>`);
+      void repeatSteps; // steps already inlined above
+
+      steps.push(timeStep("Retorno à calma", cooldownSecs, "Cooldown", paceTarget(easyMps)));
+      break;
+    }
+
+    default: {
+      // Generic: single active step
+      steps.push(timeStep("Aquecimento", warmupSecs, "Warmup", ""));
+      steps.push(timeStep("Principal", mainSecs, "Active", speedMps ? paceTarget(speedMps) : ""));
+      steps.push(timeStep("Retorno à calma", cooldownSecs, "Cooldown", ""));
+    }
+  }
+
+  return { xml: steps.join("\n      "), stepCount: stepId - 1 };
 }
 
 export async function GET(
@@ -75,61 +167,34 @@ export async function GET(
   if (!athlete) return NextResponse.json({ error: "Atleta não encontrado" }, { status: 404 });
 
   const { id } = await params;
-
-  const owned = await prisma.trainingSession.findFirst({
+  const session = await prisma.trainingSession.findFirst({
     where: { id, week: { plan: { athleteId: athlete.id } } },
     include: { week: true },
   });
-  if (!owned) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
+  if (!session) return NextResponse.json({ error: "Não encontrado" }, { status: 404 });
 
-  const session = owned;
-  const durationSecs = (session.plannedDuration ?? 45) * 60;
-  const distanceMeters = session.plannedDistance ? session.plannedDistance * 1000 : null;
-  const speedMps = paceToMetersPerSecond(session.plannedPace ?? null);
-
-  // Use session date at 08:00 local time as start time
-  const sessionDate = new Date(session.date);
-  const startTime = new Date(
-    sessionDate.getFullYear(),
-    sessionDate.getMonth(),
-    sessionDate.getDate(),
-    8, 0, 0
-  );
-  const endTime = new Date(startTime.getTime() + durationSecs * 1000);
-
-  const sport = sportToTcx(session.sport);
+  const scheduledOn = new Date(session.date).toISOString().split("T")[0];
   const notes = escapeXml(
     [session.shortDescription, session.coachTip].filter(Boolean).join(" — ")
   );
-  const trackpoints = generateTrackpoints(startTime, durationSecs, distanceMeters, speedMps, null);
+  const { xml: stepsXml } = buildSteps(session);
 
-  const tcx = `<?xml version="1.0" encoding="UTF-8"?>
+  const tcx = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <TrainingCenterDatabase
   xmlns="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://www.garmin.com/xmlschemas/TrainingCenterDatabase/v2 http://www.garmin.com/xmlschemas/TrainingCenterDatabasev2.xsd">
-  <Activities>
-    <Activity Sport="${sport}">
-      <Id>${startTime.toISOString()}</Id>
-      <Lap StartTime="${startTime.toISOString()}">
-        <TotalTimeSeconds>${Math.round(durationSecs)}</TotalTimeSeconds>
-        ${distanceMeters != null ? `<DistanceMeters>${distanceMeters.toFixed(1)}</DistanceMeters>` : ""}
-        <Intensity>Active</Intensity>
-        <TriggerMethod>Manual</TriggerMethod>
-        <Track>
-${trackpoints}
-        </Track>
-        <Notes>${notes}</Notes>
-      </Lap>
-      <Creator xsi:type="Device_t">
-        <Name>TrainAI</Name>
-      </Creator>
-    </Activity>
-  </Activities>
+  <Workouts>
+    <Workout Sport="${sportToTcx(session.sport)}">
+      <Name>${escapeXml(session.name)}</Name>
+      ${stepsXml}
+      <ScheduledOn>${scheduledOn}</ScheduledOn>
+      <Notes>${notes}</Notes>
+    </Workout>
+  </Workouts>
 </TrainingCenterDatabase>`;
 
-  const safeName = session.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
-  const filename = `trainai-${safeName}.tcx`;
+  const filename = `trainai-${session.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.tcx`;
   const buffer = Buffer.from(tcx, "utf-8");
 
   return new NextResponse(buffer, {
