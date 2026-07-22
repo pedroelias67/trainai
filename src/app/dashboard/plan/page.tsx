@@ -7,6 +7,8 @@ import { pt } from "date-fns/locale";
 import { LogoFull } from "@/components/ui/Logo";
 import { WeeklyAnalysis } from "@/components/dashboard/WeeklyAnalysis";
 import { PlanWeekGrid } from "@/components/dashboard/PlanWeekGrid";
+import { PlanWeekCollapsible } from "@/components/dashboard/PlanWeekCollapsible";
+import { PlanWeekScroller } from "@/components/dashboard/PlanWeekScroller";
 
 
 export default async function PlanPage() {
@@ -89,98 +91,115 @@ export default async function PlanPage() {
               </Link>
             </div>
 
+            {/* Auto-scroll to current week */}
+            {plan.weeks.find(w => w.weekNumber === plan.currentWeek) && (
+              <PlanWeekScroller currentWeekId={plan.weeks.find(w => w.weekNumber === plan.currentWeek)!.id} />
+            )}
+
             {/* Weeks */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {plan.weeks.map((week) => {
                 const isCurrentWeek = week.weekNumber === plan.currentWeek;
                 const isPastWeek = week.weekNumber < plan.currentWeek;
+                const isFutureWeek = week.weekNumber > plan.currentWeek;
                 const completedCount = week.sessions.filter((s) => s.completed).length;
+                // Past weeks collapsed by default; current and future open
+                const defaultOpen = !isPastWeek;
+
+                const weekHeader = (
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    {isCurrentWeek && (
+                      <span className="shrink-0 text-xs font-medium text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">
+                        Semana atual
+                      </span>
+                    )}
+                    <h2 className={`font-semibold text-sm truncate ${isPastWeek ? "text-[var(--text-muted)]" : "text-white"}`}>
+                      Semana {week.weekNumber}
+                      {week.focus && <span className="text-[var(--text-muted)] font-normal"> · {week.focus}</span>}
+                    </h2>
+                    <div className="flex items-center gap-3 text-xs text-[var(--text-muted)] ml-auto shrink-0">
+                      <span>{completedCount}/{week.sessions.length} treinos</span>
+                      {week.totalDistance && <span>{week.totalDistance} km</span>}
+                      {isPastWeek && completedCount === week.sessions.filter(s => !s.cancelled).length && (
+                        <span className="text-green-400">✓</span>
+                      )}
+                      {isFutureWeek && <span className="text-[var(--text-faint)]">Em breve</span>}
+                      <a
+                        href={`/api/weeks/${week.id}/export-tcx-zip`}
+                        download
+                        onClick={e => e.stopPropagation()}
+                        title="Exportar semana para Garmin"
+                        className="flex items-center gap-1 px-2 py-1 rounded-lg border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all"
+                      >
+                        <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current" strokeWidth={2}>
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round"/>
+                          <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round"/>
+                          <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round"/>
+                        </svg>
+                        ZIP
+                      </a>
+                    </div>
+                  </div>
+                );
 
                 return (
                   <div key={week.id}
-                    className={`rounded-2xl border transition-all ${
+                    className={`rounded-2xl border overflow-hidden transition-all ${
                       isCurrentWeek
                         ? "border-green-500/30 bg-green-500/3"
+                        : isPastWeek
+                        ? "border-[var(--border)] bg-[var(--bg-card)]/50 opacity-70 hover:opacity-100 transition-opacity"
                         : "border-[var(--border)] bg-[var(--bg-card)]"
                     }`}>
-                    {/* Week header */}
-                    <div className="flex items-center justify-between px-5 py-4 border-b border-[var(--border)]">
-                      <div className="flex items-center gap-3">
-                        {isCurrentWeek && (
-                          <span className="text-xs font-medium text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">
-                            Semana atual
-                          </span>
-                        )}
-                        <h2 className="font-semibold text-white text-sm">
-                          Semana {week.weekNumber}
-                          {week.focus && <span className="text-[var(--text-muted)] font-normal"> · {week.focus}</span>}
-                        </h2>
-                      </div>
-                      <div className="flex items-center gap-3 text-xs text-[var(--text-muted)]">
-                        <span>{completedCount}/{week.sessions.length} treinos</span>
-                        {week.totalDistance && <span>{week.totalDistance} km</span>}
-                        {isPastWeek && completedCount === week.sessions.length && (
-                          <span className="text-green-400">✓ Concluída</span>
-                        )}
-                        <a
-                          href={`/api/weeks/${week.id}/export-tcx-zip`}
-                          download
-                          title="Exportar semana para Garmin (ZIP com todos os treinos)"
-                          className="flex items-center gap-1 px-2 py-1 rounded-lg border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all"
-                        >
-                          <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current" strokeWidth={2}>
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round"/>
-                            <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round"/>
-                            <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round"/>
-                          </svg>
-                          Garmin ZIP
-                        </a>
-                      </div>
-                    </div>
+                    <PlanWeekCollapsible
+                      weekId={week.id}
+                      defaultOpen={defaultOpen}
+                      header={weekHeader}
+                    >
+                      {/* Sessions */}
+                      <PlanWeekGrid sessions={week.sessions.map((s) => ({
+                        id: s.id,
+                        name: s.name,
+                        sessionType: s.sessionType,
+                        sport: s.sport,
+                        date: s.date.toISOString(),
+                        dayOfWeek: s.dayOfWeek,
+                        plannedDistance: s.plannedDistance ?? null,
+                        plannedDuration: s.plannedDuration ?? null,
+                        completed: s.completed,
+                        isPriority: s.isPriority,
+                        cancelled: s.cancelled,
+                        shortDescription: s.shortDescription ?? null,
+                        coachTip: s.coachTip ?? null,
+                      }))} />
 
-                    {/* Sessions */}
-                    <PlanWeekGrid sessions={week.sessions.map((s) => ({
-                      id: s.id,
-                      name: s.name,
-                      sessionType: s.sessionType,
-                      sport: s.sport,
-                      date: s.date.toISOString(),
-                      dayOfWeek: s.dayOfWeek,
-                      plannedDistance: s.plannedDistance ?? null,
-                      plannedDuration: s.plannedDuration ?? null,
-                      completed: s.completed,
-                      isPriority: s.isPriority,
-                      cancelled: s.cancelled,
-                      shortDescription: s.shortDescription ?? null,
-                      coachTip: s.coachTip ?? null,
-                    }))} />
+                      {/* Week coach message */}
+                      {week.coachMessage && (
+                        <div className="mx-3 mb-3 p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-hover)]">
+                          <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1">Nota do treinador</p>
+                          <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{week.coachMessage}</p>
+                        </div>
+                      )}
 
-                    {/* Week coach message */}
-                    {week.coachMessage && (
-                      <div className="mx-3 mb-3 p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border-hover)]">
-                        <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest mb-1">Nota do treinador</p>
-                        <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{week.coachMessage}</p>
-                      </div>
-                    )}
+                      {/* AI adaptations applied */}
+                      {week.adaptationsApplied && week.adaptations && (
+                        <div className="mx-3 mb-3 p-3 rounded-xl bg-blue-500/8 border border-blue-500/20">
+                          <p className="text-xs text-blue-400 uppercase tracking-widest mb-1.5">✦ Plano adaptado pela IA</p>
+                          <p className="text-xs text-[var(--text-secondary)] whitespace-pre-line leading-relaxed">{week.adaptations}</p>
+                        </div>
+                      )}
 
-                    {/* AI adaptations applied */}
-                    {week.adaptationsApplied && week.adaptations && (
-                      <div className="mx-3 mb-3 p-3 rounded-xl bg-blue-500/8 border border-blue-500/20">
-                        <p className="text-xs text-blue-400 uppercase tracking-widest mb-1.5">✦ Plano adaptado pela IA</p>
-                        <p className="text-xs text-[var(--text-secondary)] whitespace-pre-line leading-relaxed">{week.adaptations}</p>
-                      </div>
-                    )}
-
-                    {/* Weekly AI analysis */}
-                    {(isPastWeek || isCurrentWeek) && (
-                      <div className="mx-3 mb-3 p-4 rounded-xl bg-[#0f0f0f] border border-[var(--border)]">
-                        <WeeklyAnalysis
-                          weekId={week.id}
-                          weekNumber={week.weekNumber}
-                          savedAnalysis={week.aiAnalysis ? JSON.parse(week.aiAnalysis as string) : null}
-                        />
-                      </div>
-                    )}
+                      {/* Weekly AI analysis */}
+                      {(isPastWeek || isCurrentWeek) && (
+                        <div className="mx-3 mb-3 p-4 rounded-xl bg-[#0f0f0f] border border-[var(--border)]">
+                          <WeeklyAnalysis
+                            weekId={week.id}
+                            weekNumber={week.weekNumber}
+                            savedAnalysis={week.aiAnalysis ? JSON.parse(week.aiAnalysis as string) : null}
+                          />
+                        </div>
+                      )}
+                    </PlanWeekCollapsible>
                   </div>
                 );
               })}
