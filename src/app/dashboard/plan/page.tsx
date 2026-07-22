@@ -124,20 +124,6 @@ export default async function PlanPage() {
                         <span className="text-green-400">✓</span>
                       )}
                       {isFutureWeek && <span className="text-[var(--text-faint)]">Em breve</span>}
-                      <a
-                        href={`/api/weeks/${week.id}/export-tcx-zip`}
-                        download
-                        onClick={e => e.stopPropagation()}
-                        title="Exportar semana para Garmin"
-                        className="flex items-center gap-1 px-2 py-1 rounded-lg border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all"
-                      >
-                        <svg viewBox="0 0 24 24" className="w-3 h-3 fill-none stroke-current" strokeWidth={2}>
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" strokeLinecap="round" strokeLinejoin="round"/>
-                          <polyline points="7 10 12 15 17 10" strokeLinecap="round" strokeLinejoin="round"/>
-                          <line x1="12" y1="15" x2="12" y2="3" strokeLinecap="round"/>
-                        </svg>
-                        ZIP
-                      </a>
                     </div>
                   </div>
                 );
@@ -155,6 +141,7 @@ export default async function PlanPage() {
                       weekId={week.id}
                       defaultOpen={defaultOpen}
                       header={weekHeader}
+                      zipHref={`/api/weeks/${week.id}/export-tcx-zip`}
                     >
                       {/* Sessions */}
                       <PlanWeekGrid sessions={week.sessions.map((s) => ({
