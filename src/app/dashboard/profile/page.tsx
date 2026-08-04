@@ -7,6 +7,7 @@ import { pt } from "date-fns/locale";
 import { LogoFull } from "@/components/ui/Logo";
 import NotificationSettings from "@/components/dashboard/NotificationSettings";
 import ThemeToggle from "@/components/dashboard/ThemeToggle";
+import { DeleteAccount } from "@/components/dashboard/DeleteAccount";
 
 const fitnessLabels: Record<string, string> = {
   BEGINNER: "Iniciante", INTERMEDIATE: "Intermédio", ADVANCED: "Avançado", ELITE: "Elite",
@@ -178,6 +179,22 @@ export default async function ProfilePage() {
               Terminar sessão
             </button>
           </form>
+        </div>
+
+        {/* Privacy & Data */}
+        <div className="card space-y-4">
+          <h2 className="font-semibold text-[var(--text-primary)]">Privacidade e Dados</h2>
+          <div className="flex gap-4 text-xs text-[var(--text-muted)]">
+            <Link href="/privacy" className="hover:text-[var(--text-secondary)] transition-colors underline underline-offset-2">
+              Política de Privacidade
+            </Link>
+            <Link href="/terms" className="hover:text-[var(--text-secondary)] transition-colors underline underline-offset-2">
+              Termos de Serviço
+            </Link>
+          </div>
+          <div className="pt-1">
+            <DeleteAccount />
+          </div>
         </div>
 
         <NotificationSettings />

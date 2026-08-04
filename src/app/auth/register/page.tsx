@@ -25,6 +25,7 @@ function RegisterForm() {
   const [loading, setLoading] = useState(false);
 
   const [account, setAccount] = useState({ name: "", email: "", password: "" });
+  const [termsAccepted, setTermsAccepted] = useState(false);
   const [athlete, setAthlete] = useState({
     dateOfBirth: "",
     gender: "MALE",
@@ -38,6 +39,7 @@ function RegisterForm() {
     e.preventDefault();
     setError("");
     if (account.password.length < 8) { setError("Password com mínimo 8 caracteres"); return; }
+    if (!termsAccepted) { setError("Tens de aceitar os Termos de Serviço e a Política de Privacidade"); return; }
     setStep("athlete");
   }
 
@@ -153,6 +155,20 @@ function RegisterForm() {
                   onChange={(e) => setAccount({ ...account, password: e.target.value })}
                   placeholder="Mínimo 8 caracteres" required />
               </div>
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={termsAccepted}
+                  onChange={(e) => setTermsAccepted(e.target.checked)}
+                  className="mt-0.5 accent-green-500 shrink-0"
+                />
+                <span className="text-xs text-[var(--text-muted)] leading-relaxed">
+                  Li e aceito os{" "}
+                  <a href="/terms" target="_blank" className="text-green-400 hover:text-green-300 underline underline-offset-2">Termos de Serviço</a>
+                  {" "}e a{" "}
+                  <a href="/privacy" target="_blank" className="text-green-400 hover:text-green-300 underline underline-offset-2">Política de Privacidade</a>
+                </span>
+              </label>
               <button type="submit" className="btn-primary w-full py-3 mt-2">Continuar →</button>
             </form>
           </div>

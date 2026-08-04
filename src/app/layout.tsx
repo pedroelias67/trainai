@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import PWAProvider from "@/components/PWAProvider";
+import CookieBanner from "@/components/CookieBanner";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
@@ -61,6 +62,7 @@ export default async function RootLayout({
         <ThemeProvider initialTheme={initialTheme}>
           <PWAProvider>
             {children}
+            <CookieBanner />
           </PWAProvider>
         </ThemeProvider>
       </body>
