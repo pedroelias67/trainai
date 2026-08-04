@@ -8,7 +8,6 @@ import { LogoFull } from "@/components/ui/Logo";
 import { WeeklyAnalysis } from "@/components/dashboard/WeeklyAnalysis";
 import { PlanWeekGrid } from "@/components/dashboard/PlanWeekGrid";
 import { PlanWeekCollapsible } from "@/components/dashboard/PlanWeekCollapsible";
-import { PlanWeekScroller } from "@/components/dashboard/PlanWeekScroller";
 
 
 export default async function PlanPage() {
@@ -91,14 +90,12 @@ export default async function PlanPage() {
               </Link>
             </div>
 
-            {/* Auto-scroll to current week */}
-            {plan.weeks.find(w => w.weekNumber === plan.currentWeek) && (
-              <PlanWeekScroller currentWeekId={plan.weeks.find(w => w.weekNumber === plan.currentWeek)!.id} />
-            )}
-
-            {/* Weeks */}
+            {/* Weeks — current + future first, past weeks at the bottom */}
             <div className="space-y-3">
-              {plan.weeks.map((week) => {
+              {[
+                ...plan.weeks.filter(w => w.weekNumber >= plan.currentWeek),
+                ...plan.weeks.filter(w => w.weekNumber < plan.currentWeek).reverse(),
+              ].map((week) => {
                 const isCurrentWeek = week.weekNumber === plan.currentWeek;
                 const isPastWeek = week.weekNumber < plan.currentWeek;
                 const isFutureWeek = week.weekNumber > plan.currentWeek;
