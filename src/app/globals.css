@@ -196,6 +196,46 @@
   }
 }
 
+/* PWA page transitions */
+@keyframes page-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fade-out {
+  0%   { opacity: 1; }
+  70%  { opacity: 1; }
+  100% { opacity: 0; pointer-events: none; }
+}
+
+.animate-page-in {
+  animation: page-in 0.2s ease-out both;
+}
+
+.animate-fade-out {
+  animation: fade-out 1.2s ease-in-out forwards;
+}
+
+/* Smooth scroll for the whole app */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Prevent text selection during swipe */
+@media (max-width: 767px) {
+  body {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  /* Re-enable selection on inputs */
+  input, textarea, [contenteditable] {
+    -webkit-user-select: text;
+    user-select: text;
+  }
+}
+
 /* Mobile touch target minimum */
 @media (max-width: 767px) {
   button, a[href] {

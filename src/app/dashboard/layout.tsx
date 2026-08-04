@@ -4,7 +4,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <>
       {/* pb-20 on mobile so content clears the bottom nav */}
-      <div className="pb-20 md:pb-0">
+      <div className="pb-20 md:pb-0 animate-page-in">
         {children}
       </div>
       <MobileBottomNav />

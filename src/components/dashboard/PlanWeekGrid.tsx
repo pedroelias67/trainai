@@ -6,6 +6,7 @@ import { format, isToday, isPast } from "date-fns";
 import { pt } from "date-fns/locale";
 import { SessionEditDrawer } from "./SessionEditDrawer";
 import { SessionActions } from "./SessionActions";
+import { haptic } from "@/components/PWAProvider";
 
 type Session = {
   id: string;
@@ -120,7 +121,7 @@ export function PlanWeekGrid({ sessions }: Props) {
                     cancelled={session.cancelled}
                   />
                   <button
-                    onClick={(e) => { e.preventDefault(); setEditingSession(session); }}
+                    onClick={(e) => { e.preventDefault(); haptic("light"); setEditingSession(session); }}
                     title="Editar sessão"
                     className="w-6 h-6 rounded-md bg-[var(--bg-hover)] border border-[var(--border-hover)] flex items-center justify-center
                       text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all">

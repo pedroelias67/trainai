@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import PWAInstall from "@/components/PWAInstall";
+import PWAProvider from "@/components/PWAProvider";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
@@ -59,8 +59,9 @@ export default async function RootLayout({
     <html lang="pt" data-theme={initialTheme}>
       <body className="antialiased">
         <ThemeProvider initialTheme={initialTheme}>
-          {children}
-          <PWAInstall />
+          <PWAProvider>
+            {children}
+          </PWAProvider>
         </ThemeProvider>
       </body>
     </html>

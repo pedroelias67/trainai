@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { haptic } from "@/components/PWAProvider";
 
 type Props = {
   sessionId: string;
@@ -32,6 +33,7 @@ export function SessionActions({ sessionId, sessionDate, isPriority, cancelled, 
   }
 
   async function togglePriority() {
+    haptic("light");
     setLoading("priority");
     try {
       await patch({ isPriority: !isPriority });
@@ -57,6 +59,7 @@ export function SessionActions({ sessionId, sessionDate, isPriority, cancelled, 
   }
 
   async function handleCancel() {
+    haptic("medium");
     setLoading("cancel");
     setShowCancelConfirm(false);
     try {
