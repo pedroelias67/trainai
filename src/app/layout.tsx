@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import PWAProvider from "@/components/PWAProvider";
 import CookieBanner from "@/components/CookieBanner";
+import { FeedbackButton } from "@/components/FeedbackButton";
 import { Analytics } from "@vercel/analytics/react";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { cookies } from "next/headers";
@@ -64,6 +65,7 @@ export default async function RootLayout({
           <PWAProvider>
             {children}
             <CookieBanner />
+            <FeedbackButton />
           </PWAProvider>
           <Analytics />
         </ThemeProvider>
