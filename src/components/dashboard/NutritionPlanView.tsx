@@ -47,7 +47,16 @@ export default function NutritionPlanView({ existingPlan, eventName }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [activeDay, setActiveDay] = useState<"restDay" | "trainingDay">("trainingDay");
-  const [activeTab, setActiveTab] = useState<"meals" | "phases" | "foods" | "supplements">("meals");
+  const [activeTab, setActiveTab] = useState<"meals" | "phases" | "foods" | "shopping" | "supplements">("meals");
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+
+  function toggleCheck(item: string) {
+    setCheckedItems(prev => {
+      const next = new Set(prev);
+      next.has(item) ? next.delete(item) : next.add(item);
+      return next;
+    });
+  }
 
   const plan: NutritionContent | null = existingPlan?.content ?? null;
 
@@ -190,6 +199,7 @@ export default function NutritionPlanView({ existingPlan, eventName }: Props) {
             ["meals", "Durante treino"],
             ["phases", "Fases"],
             ["foods", "Alimentos"],
+            ["shopping", "Lista de Compras"],
             ["supplements", "Suplementos"],
           ] as const).map(([tab, label]) => (
             <button key={tab} onClick={() => setActiveTab(tab)}
@@ -264,6 +274,60 @@ export default function NutritionPlanView({ existingPlan, eventName }: Props) {
                   </li>
                 ))}
               </ul>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "shopping" && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-[var(--text-muted)]">
+                {checkedItems.size} de {plan.foods.recommended.length} itens selecionados
+              </p>
+              <button
+                onClick={() => setCheckedItems(new Set())}
+                className="text-xs text-[var(--text-faint)] hover:text-[var(--text-muted)] transition-colors"
+              >
+                Limpar
+              </button>
+            </div>
+            {/* Progress bar */}
+            <div className="h-1.5 bg-[var(--bg-hover)] rounded-full overflow-hidden">
+              <div
+                className="h-full bg-green-500 rounded-full transition-all duration-300"
+                style={{ width: `${plan.foods.recommended.length > 0 ? (checkedItems.size / plan.foods.recommended.length) * 100 : 0}%` }}
+              />
+            </div>
+            <ul className="space-y-2">
+              {plan.foods.recommended.map((item, i) => {
+                const checked = checkedItems.has(item);
+                return (
+                  <li key={i}>
+                    <button
+                      onClick={() => toggleCheck(item)}
+                      className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
+                        checked
+                          ? "border-green-500/20 bg-green-500/5 opacity-60"
+                          : "border-[var(--border)] hover:border-[var(--border-hover)] bg-[var(--bg-subtle)]"
+                      }`}
+                    >
+                      <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
+                        checked ? "bg-green-500 border-green-500" : "border-[var(--border-strong)]"
+                      }`}>
+                        {checked && <span className="text-black text-xs font-bold">✓</span>}
+                      </div>
+                      <span className={`text-sm ${checked ? "line-through text-[var(--text-faint)]" : "text-[var(--text-secondary)]"}`}>
+                        {item}
+                      </span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+            <div className="pt-2 border-t border-[var(--border)]">
+              <p className="text-xs text-[var(--text-faint)]">
+                💡 Baseado nos alimentos recomendados para o teu plano. Marca os que já tens em casa.
+              </p>
             </div>
           </div>
         )}

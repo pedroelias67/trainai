@@ -8,6 +8,7 @@ import { pt } from "date-fns/locale";
 import { FitnessChart } from "@/components/dashboard/FitnessChart";
 import { PersonalRecords } from "@/components/dashboard/PersonalRecords";
 import { ProgressionChart } from "@/components/dashboard/ProgressionChart";
+import { MonthlyVolumeChart } from "@/components/dashboard/MonthlyVolumeChart";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -191,7 +192,12 @@ export default async function FitnessPage() {
           todayTSB={todayData.tsb}
         />
 
-        <div className="mt-6">
+        <div className="mt-6 space-y-4">
+          <MonthlyVolumeChart activities={athlete.activities.map(a => ({
+            date: a.date.toISOString(),
+            sport: a.sport,
+            distance: a.distance,
+          }))} />
           <ProgressionChart data={progressionData} />
         </div>
       </main>
