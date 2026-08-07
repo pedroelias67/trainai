@@ -8,6 +8,7 @@ import { LogoFull } from "@/components/ui/Logo";
 import { GarminExportButton } from "@/components/dashboard/GarminHelpModal";
 import { SessionJournal } from "@/components/dashboard/SessionJournal";
 import NutritionPlan from "@/components/dashboard/NutritionPlan";
+import { WorkoutTimer } from "@/components/dashboard/WorkoutTimer";
 
 const sessionTypeColors: Record<string, string> = {
   EASY: "bg-green-500/10 text-green-400 border-green-500/20",
@@ -225,6 +226,15 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             <p className="text-[var(--text-faint)] text-sm">Ainda sem atividade registada para este treino</p>
             <p className="text-zinc-700 text-xs mt-1">Será preenchido automaticamente após sincronização Strava</p>
           </div>
+        )}
+
+        {/* Workout timer — only for non-completed sessions */}
+        {!session.completed && !session.cancelled && (
+          <WorkoutTimer
+            sessionType={session.sessionType}
+            plannedDuration={session.plannedDuration}
+            sessionName={session.name}
+          />
         )}
 
         {/* Training journal */}

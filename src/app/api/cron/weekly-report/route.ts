@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { analyzeWeekAndAdapt, suggestSessionAdaptations } from "@/lib/claude";
+import { sendWeeklyReportEmail } from "@/lib/email";
+import { differenceInWeeks } from "date-fns";
 import { startOfWeek, endOfWeek, subWeeks, subDays, startOfDay } from "date-fns";
 
 // Called by Vercel Cron every Sunday at 20:00
@@ -174,6 +176,28 @@ export async function GET(req: NextRequest) {
             );
           } catch {}
         }
+      }
+
+      // Send weekly email report
+      try {
+        const report = await prisma.weeklyReport.findUnique({ where: { weekId: week.id } });
+        const weeksToEvent = Math.max(
+          differenceInWeeks(week.plan.event.date, new Date()),
+          0
+        );
+        await sendWeeklyReportEmail(athlete.user.email, athlete.user.name ?? "Atleta", {
+          weekNumber: week.weekNumber,
+          completedSessions: report?.completedSessions ?? week.sessions.filter(s => s.completed).length,
+          plannedSessions: week.sessions.length,
+          actualDistance: report?.actualDistance ?? 0,
+          plannedDistance: week.totalDistance,
+          aiSummary: analysis.summary,
+          nextWeekAdaptations: analysis.nextWeekAdjustments ?? null,
+          eventName: week.plan.event.name,
+          weeksToEvent,
+        });
+      } catch (emailErr) {
+        console.error("Weekly email error:", emailErr);
       }
 
       generated++;

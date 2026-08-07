@@ -8,12 +8,14 @@ import { LogoFull } from "@/components/ui/Logo";
 import { RacePrediction } from "@/components/dashboard/RacePrediction";
 import { WellnessCheckin } from "@/components/dashboard/WellnessCheckin";
 import RecentActivitiesFeed from "@/components/dashboard/RecentActivitiesFeed";
+import { OnboardingTour } from "@/components/dashboard/OnboardingTour";
+import { WeeklyLoadChart, PaceEvolutionChart } from "@/components/dashboard/TrainingCharts";
 
 async function getDashboardData(userId: string) {
   return prisma.athlete.findUnique({
     where: { userId },
     include: {
-      user: true,
+      user: { select: { name: true, email: true, createdAt: true } },
       events: { orderBy: { date: "asc" }, take: 3 },
       trainingPlans: {
         where: { status: "ACTIVE" },
@@ -115,6 +117,20 @@ export default async function DashboardPage() {
 
   const completedThisWeek = currentWeek?.sessions.filter((s) => s.completed).length ?? 0;
   const totalThisWeek = currentWeek?.sessions.length ?? 0;
+
+  // New user = registered in the last 7 days
+  const isNewUser = athlete.user.createdAt
+    ? (Date.now() - new Date(athlete.user.createdAt).getTime()) < 7 * 24 * 60 * 60 * 1000
+    : false;
+
+  const allActivities = athlete.activities.map(a => ({
+    id: a.id,
+    date: a.date.toISOString(),
+    distance: a.distance,
+    duration: a.duration,
+    avgPace: a.avgPace,
+    sport: a.sport,
+  }));
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
@@ -330,6 +346,14 @@ export default async function DashboardPage() {
 
               <WellnessCheckin />
 
+              {/* Training charts */}
+              {athlete.activities.length >= 3 && (
+                <div className="space-y-3">
+                  <WeeklyLoadChart activities={allActivities} />
+                  <PaceEvolutionChart activities={allActivities} />
+                </div>
+              )}
+
               <Link href="/dashboard/plan"
                 className="flex items-center justify-between p-4 rounded-2xl border border-[var(--border)] hover:border-[var(--border-hover)] hover:bg-[var(--bg-card)] transition-all group">
                 <span className="text-sm font-medium text-[var(--text-secondary)] group-hover:text-[var(--text-primary)]">Ver plano completo</span>
@@ -341,6 +365,8 @@ export default async function DashboardPage() {
           </div>
         )}
       </main>
+
+      <OnboardingTour isNew={isNewUser} />
     </div>
   );
 }
