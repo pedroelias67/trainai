@@ -18,9 +18,9 @@ export async function GET(req: NextRequest) {
   const lastWeekEnd = endOfWeek(subWeeks(new Date(), 1), { weekStartsOn: 1 });
 
   // Find all active training weeks that ended last week
-  const weeks = await prisma.trainingWeek.findMany({
+  const allWeeks = await prisma.trainingWeek.findMany({
     where: {
-      startDate: { gte: lastWeekStart },
+      startDate: { gte: lastWeekStart, lte: lastWeekEnd },
       endDate: { lte: lastWeekEnd },
       weeklyReport: null, // only weeks without a report
     },
@@ -33,6 +33,16 @@ export async function GET(req: NextRequest) {
         },
       },
     },
+    orderBy: { plan: { createdAt: "desc" } },
+  });
+
+  // Deduplicate: one week per athlete (newest plan wins)
+  const seen = new Set<string>();
+  const weeks = allWeeks.filter(w => {
+    const athleteId = w.plan.athleteId;
+    if (seen.has(athleteId)) return false;
+    seen.add(athleteId);
+    return true;
   });
 
   let generated = 0;
