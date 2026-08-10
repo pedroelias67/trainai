@@ -8,6 +8,7 @@ import { LogoFull } from "@/components/ui/Logo";
 import { WeeklyAnalysis } from "@/components/dashboard/WeeklyAnalysis";
 import { PlanWeekGrid } from "@/components/dashboard/PlanWeekGrid";
 import { PlanWeekCollapsible } from "@/components/dashboard/PlanWeekCollapsible";
+import { ArchivePlan } from "@/components/dashboard/ArchivePlan";
 
 
 export default async function PlanPage() {
@@ -85,9 +86,12 @@ export default async function PlanPage() {
                   <p className="mt-3 text-[var(--text-secondary)] text-sm leading-relaxed max-w-2xl">{plan.coachNotes}</p>
                 )}
               </div>
-              <Link href="/dashboard/plan/edit" className="shrink-0 btn-secondary text-sm py-2">
-                Editar preferências
-              </Link>
+              <div className="flex flex-col items-end gap-2 shrink-0">
+                <Link href="/dashboard/plan/edit" className="btn-secondary text-sm py-2">
+                  Editar preferências
+                </Link>
+                <ArchivePlan planId={plan.id} />
+              </div>
             </div>
 
             {/* Weeks — current + future first, past weeks at the bottom */}
