@@ -208,7 +208,7 @@ Responde APENAS com JSON válido, sem texto antes ou depois, sem markdown:
 
   const message = await claude.messages.create({
     model: CLAUDE_MODEL,
-    max_tokens: 16000,
+    max_tokens: 32000,
     messages: [{ role: "user", content: prompt }],
   });
 
