@@ -21,6 +21,8 @@ Sentry.init({
   // Don't send errors from browser extensions or local dev
   beforeSend(event) {
     if (process.env.NODE_ENV === "development") return null;
+    // Ignore "Load failed" — happens when fetch is cancelled by navigation (not a real error)
+    if (event.exception?.values?.[0]?.value === "Load failed") return null;
     return event;
   },
 });
