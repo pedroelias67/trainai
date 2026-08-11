@@ -123,8 +123,8 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold text-white mb-3">11. Contacto</h2>
             <p className="text-sm">
               Para questões relacionadas com estes termos, contacta-nos em{" "}
-              <a href="mailto:pedroelias67@gmail.com" className="text-green-400 hover:text-green-300">
-                pedroelias67@gmail.com
+              <a href="mailto:pedro@trainai.pedroelias.com" className="text-green-400 hover:text-green-300">
+                pedro@trainai.pedroelias.com
               </a>.
             </p>
           </section>

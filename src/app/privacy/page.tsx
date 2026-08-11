@@ -24,8 +24,8 @@ export default function PrivacyPage() {
             <p>
               O TrainAI é uma plataforma de treino personalizado com inteligência artificial, desenvolvida
               e operada a título individual. Para questões de privacidade, podes contactar-nos através de{" "}
-              <a href="mailto:pedroelias67@gmail.com" className="text-green-400 hover:text-green-300">
-                pedroelias67@gmail.com
+              <a href="mailto:pedro@trainai.pedroelias.com" className="text-green-400 hover:text-green-300">
+                pedro@trainai.pedroelias.com
               </a>.
             </p>
           </section>
@@ -116,8 +116,8 @@ export default function PrivacyPage() {
               Para exercer qualquer um destes direitos, acede ao teu{" "}
               <Link href="/dashboard/profile" className="text-green-400 hover:text-green-300">Perfil</Link>{" "}
               ou contacta-nos em{" "}
-              <a href="mailto:pedroelias67@gmail.com" className="text-green-400 hover:text-green-300">
-                pedroelias67@gmail.com
+              <a href="mailto:pedro@trainai.pedroelias.com" className="text-green-400 hover:text-green-300">
+                pedro@trainai.pedroelias.com
               </a>.
             </p>
           </section>
@@ -150,8 +150,8 @@ export default function PrivacyPage() {
           <div className="pt-4 border-t border-[var(--border)]">
             <p className="text-xs text-[var(--text-faint)]">
               Tens dúvidas? Contacta-nos em{" "}
-              <a href="mailto:pedroelias67@gmail.com" className="text-green-400 hover:text-green-300">
-                pedroelias67@gmail.com
+              <a href="mailto:pedro@trainai.pedroelias.com" className="text-green-400 hover:text-green-300">
+                pedro@trainai.pedroelias.com
               </a>
             </p>
           </div>
