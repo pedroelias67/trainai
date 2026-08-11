@@ -181,7 +181,7 @@ export async function sendFeedbackEmail(data: {
 
   await resend.emails.send({
     from: FROM,
-    to: "pedro@pedroelias.com",
+    to: "pedro@trainai.pedroelias.com",
     replyTo: data.email,
     subject: `[TrainAI Feedback] ${categoryLabels[data.category] ?? data.category} — ${data.name}`,
     html: emailShell({
