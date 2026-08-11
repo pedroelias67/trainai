@@ -18,6 +18,7 @@ interface Props {
   initialLongRunDay: number;
   initialWeeklyHours: number;
   initialFitnessLevel: string;
+  initialPreferredDays: number[];
   eventId: string;
   eventName: string;
   hasPlan: boolean;
@@ -25,13 +26,26 @@ interface Props {
 
 export function EditPlanForm({
   initialDays, initialLongRunDay, initialWeeklyHours, initialFitnessLevel,
-  eventId, eventName, hasPlan,
+  initialPreferredDays, eventId, eventName, hasPlan,
 }: Props) {
   const router = useRouter();
   const [days, setDays] = useState(initialDays);
   const [longRunDay, setLongRunDay] = useState(initialLongRunDay);
   const [weeklyHours, setWeeklyHours] = useState(initialWeeklyHours);
   const [fitnessLevel, setFitnessLevel] = useState(initialFitnessLevel);
+  const [preferredDays, setPreferredDays] = useState<number[]>(initialPreferredDays);
+
+  function toggleDay(day: number) {
+    setPreferredDays(prev => {
+      if (prev.includes(day)) {
+        if (prev.length <= 1) return prev; // mínimo 1 dia
+        return prev.filter(d => d !== day);
+      }
+      const next = [...prev, day].sort((a, b) => a - b);
+      setDays(next.length);
+      return next;
+    });
+  }
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -46,7 +60,7 @@ export function EditPlanForm({
       const profileRes = await fetch("/api/athletes/profile", {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ trainingDaysPerWeek: days, longRunDay, weeklyHours, fitnessLevel }),
+        body: JSON.stringify({ trainingDaysPerWeek: days, longRunDay, weeklyHours, fitnessLevel, preferredDays }),
       });
       if (!profileRes.ok) {
         const errData = await profileRes.json().catch(() => ({}));
@@ -91,25 +105,41 @@ export function EditPlanForm({
         </div>
       )}
 
-      {/* Training days per week */}
+      {/* Preferred training days */}
       <div className="card">
         <label className="label">
-          Dias de treino por semana —{" "}
-          <span className="text-green-400 normal-case font-semibold">{days} dias</span>
+          Dias disponíveis para treinar —{" "}
+          <span className="text-green-400 normal-case font-semibold">{preferredDays.length} dias</span>
         </label>
-        <div className="flex items-center gap-3 mt-3">
-          {[3, 4, 5, 6, 7].map((d) => (
-            <button key={d} type="button"
-              onClick={() => setDays(d)}
-              className={`flex-1 py-3 rounded-xl text-sm font-medium border transition-all ${
-                days === d
-                  ? "bg-green-500 text-black border-green-500"
-                  : "bg-[var(--bg-hover)] text-[var(--text-secondary)] border-[var(--border-hover)] hover:border-[var(--border-strong)]"
-              }`}>
-              {d}
-            </button>
-          ))}
+        <p className="text-xs text-[var(--text-faint)] mb-3">Seleciona os dias em que podes treinar. O plano será gerado especificamente para estes dias.</p>
+        <div className="grid grid-cols-7 gap-1.5">
+          {DAYS_OF_WEEK.map((day, i) => {
+            const val = i + 1;
+            const selected = preferredDays.includes(val);
+            const isLongRun = longRunDay === val;
+            return (
+              <button key={val} type="button"
+                onClick={() => toggleDay(val)}
+                className={`py-3 rounded-xl text-xs font-medium border transition-all relative ${
+                  selected
+                    ? isLongRun
+                      ? "bg-green-500 text-black border-green-500"
+                      : "bg-green-500/20 text-green-400 border-green-500/40"
+                    : "bg-[var(--bg-hover)] text-[var(--text-faint)] border-[var(--border-hover)] hover:border-[var(--border-strong)]"
+                }`}>
+                {day.slice(0, 3)}
+                {isLongRun && selected && (
+                  <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border border-[var(--bg-card)]" />
+                )}
+              </button>
+            );
+          })}
         </div>
+        <p className="text-xs text-[var(--text-faint)] mt-2">
+          {preferredDays.length > 0
+            ? `Dias selecionados: ${preferredDays.map(d => DAYS_OF_WEEK[d - 1]).join(", ")}`
+            : "Seleciona pelo menos 1 dia"}
+        </p>
       </div>
 
       {/* Long run day */}
@@ -117,14 +147,23 @@ export function EditPlanForm({
         <label className="label">Dia do treino longo</label>
         <div className="grid grid-cols-7 gap-1.5 mt-3">
           {DAYS_OF_WEEK.map((day, i) => {
-            const val = i + 1; // 1=Seg ... 7=Dom
+            const val = i + 1;
+            const available = preferredDays.includes(val);
             return (
               <button key={val} type="button"
-                onClick={() => setLongRunDay(val)}
+                onClick={() => {
+                  if (!preferredDays.includes(val)) {
+                    setPreferredDays(prev => [...prev, val].sort((a, b) => a - b));
+                    setDays(prev => prev + 1);
+                  }
+                  setLongRunDay(val);
+                }}
                 className={`py-3 rounded-xl text-xs font-medium border transition-all ${
                   longRunDay === val
                     ? "bg-green-500 text-black border-green-500"
-                    : "bg-[var(--bg-hover)] text-[var(--text-secondary)] border-[var(--border-hover)] hover:border-[var(--border-strong)]"
+                    : available
+                    ? "bg-green-500/10 text-green-400 border-green-500/20 hover:border-green-500/40"
+                    : "bg-[var(--bg-hover)] text-[var(--text-faint)] border-[var(--border-hover)] hover:border-[var(--border-strong)]"
                 }`}>
                 {day.slice(0, 3)}
               </button>
@@ -132,7 +171,8 @@ export function EditPlanForm({
           })}
         </div>
         <p className="text-xs text-[var(--text-faint)] mt-2">
-          O treino longo ficará sempre agendado para {DAYS_OF_WEEK[(longRunDay - 1) % 7]}
+          O treino longo ficará agendado para {DAYS_OF_WEEK[(longRunDay - 1) % 7]}.
+          {!preferredDays.includes(longRunDay) && " (Será adicionado automaticamente aos teus dias de treino)"}
         </p>
       </div>
 

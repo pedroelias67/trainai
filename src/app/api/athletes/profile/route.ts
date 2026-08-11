@@ -21,6 +21,7 @@ export async function PUT(req: NextRequest) {
         ...(body.weeklyHours != null && { weeklyHours: Number(body.weeklyHours) }),
         ...(body.trainingDaysPerWeek != null && { trainingDaysPerWeek: Number(body.trainingDaysPerWeek) }),
         ...(body.longRunDay != null && { longRunDay: Number(body.longRunDay) }),
+        ...(Array.isArray(body.preferredDays) && { preferredDays: body.preferredDays.map(Number) }),
         ...(body.restingHR != null && { restingHR: Number(body.restingHR) }),
         ...(body.maxHR != null && { maxHR: Number(body.maxHR) }),
         ...(body.ltPace && { ltPace: body.ltPace }),

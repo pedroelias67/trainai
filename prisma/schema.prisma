@@ -63,7 +63,8 @@ model Athlete {
   fitnessLevel    FitnessLevel @default(BEGINNER)
   weeklyHours     Float?    // horas de treino por semana disponíveis
   trainingDaysPerWeek Int?  // dias de treino por semana (ex: 4)
-  longRunDay      Int?      // dia da semana para o treino longo (0=Dom, 1=Seg, ..., 6=Sáb)
+  preferredDays   Int[]     // dias preferidos para treinar (1=Seg, 2=Ter, ..., 7=Dom)
+  longRunDay      Int?      // dia da semana para o treino longo (1=Seg, ..., 7=Dom)
   restingHR       Int?      // FC repouso
   maxHR           Int?      // FC máxima
   ftp             Float?    // Functional Threshold Power (ciclismo/triatlo)

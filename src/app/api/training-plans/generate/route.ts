@@ -47,6 +47,7 @@ export async function POST(req: NextRequest) {
         weeklyHours: athlete.weeklyHours ?? 8,
         trainingDaysPerWeek: athlete.trainingDaysPerWeek ?? undefined,
         longRunDay: athlete.longRunDay ?? undefined,
+        preferredDays: athlete.preferredDays.length > 0 ? athlete.preferredDays : undefined,
         restingHR: athlete.restingHR ?? undefined,
         maxHR: athlete.maxHR ?? undefined,
         ltPace: athlete.ltPace ?? undefined,
@@ -71,16 +72,38 @@ export async function POST(req: NextRequest) {
       LONG: 6, INTERVALS: 5, TEMPO: 4, STRENGTH: 3, BRICK: 3, SWIM: 3, EASY: 2, RECOVERY: 1, RACE: 7,
     };
     const maxDays = athlete.trainingDaysPerWeek ?? null;
-    if (maxDays) {
-      for (const week of planData.weeks) {
-        if (week.sessions.length > maxDays) {
-          week.sessions.sort((a: any, b: any) =>
-            (sessionPriority[b.sessionType] ?? 0) - (sessionPriority[a.sessionType] ?? 0)
-          );
-          week.sessions = week.sessions.slice(0, maxDays);
-          // Re-sort by dayOfWeek after trimming
-          week.sessions.sort((a: any, b: any) => a.dayOfWeek - b.dayOfWeek);
+    const preferredDaysSet = athlete.preferredDays.length > 0 ? new Set(athlete.preferredDays) : null;
+
+    for (const week of planData.weeks) {
+      // Move sessions that fall outside preferred days to the nearest available day
+      if (preferredDaysSet && preferredDaysSet.size > 0) {
+        const preferredArr = [...preferredDaysSet].sort((a, b) => a - b);
+        for (const session of week.sessions) {
+          if (!preferredDaysSet.has(session.dayOfWeek)) {
+            // Find closest preferred day
+            const closest = preferredArr.reduce((prev: number, curr: number) =>
+              Math.abs(curr - session.dayOfWeek) < Math.abs(prev - session.dayOfWeek) ? curr : prev
+            );
+            session.dayOfWeek = closest;
+          }
         }
+        // Deduplicate: if two sessions land on the same day, keep the higher-priority one
+        const byDay = new Map<number, any>();
+        for (const session of week.sessions) {
+          const existing = byDay.get(session.dayOfWeek);
+          if (!existing || (sessionPriority[session.sessionType] ?? 0) > (sessionPriority[existing.sessionType] ?? 0)) {
+            byDay.set(session.dayOfWeek, session);
+          }
+        }
+        week.sessions = [...byDay.values()].sort((a: any, b: any) => a.dayOfWeek - b.dayOfWeek);
+      }
+
+      if (maxDays && week.sessions.length > maxDays) {
+        week.sessions.sort((a: any, b: any) =>
+          (sessionPriority[b.sessionType] ?? 0) - (sessionPriority[a.sessionType] ?? 0)
+        );
+        week.sessions = week.sessions.slice(0, maxDays);
+        week.sessions.sort((a: any, b: any) => a.dayOfWeek - b.dayOfWeek);
       }
     }
 

@@ -47,6 +47,7 @@ export default async function EditPlanPage() {
           initialLongRunDay={athlete.longRunDay ?? 7}
           initialWeeklyHours={athlete.weeklyHours ?? 8}
           initialFitnessLevel={athlete.fitnessLevel ?? "INTERMEDIATE"}
+          initialPreferredDays={athlete.preferredDays ?? []}
           eventId={activePlan?.event.id ?? ""}
           eventName={activePlan?.event.name ?? ""}
           hasPlan={!!activePlan}

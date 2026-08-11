@@ -14,7 +14,8 @@ export interface TrainingPlanRequest {
     fitnessLevel: string;
     weeklyHours: number;
     trainingDaysPerWeek?: number;
-    longRunDay?: number; // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
+    longRunDay?: number;
+    preferredDays?: number[]; // 1=Seg, 2=Ter, 3=Qua, 4=Qui, 5=Sex, 6=Sáb, 7=Dom
     restingHR?: number;
     maxHR?: number;
     ltPace?: string;
@@ -146,6 +147,10 @@ REGRA 2 — DIA DO TREINO LONGO: O tipo LONG vai OBRIGATORIAMENTE em dayOfWeek=$
 REGRA 3 — DIAS CONSECUTIVOS: NUNCA colocar INTERVALS ou TEMPO em dias seguidos. NUNCA colocar LONG no dia a seguir a INTERVALS ou TEMPO.
 
 REGRA 4 — CALENDÁRIO: dayOfWeek usa 1=Segunda, 2=Terça, 3=Quarta, 4=Quinta, 5=Sexta, 6=Sábado, 7=Domingo. A semana começa na Segunda (1) e termina no Domingo (7).
+${request.athlete.preferredDays && request.athlete.preferredDays.length > 0
+  ? `\nREGRA 5 — DIAS PREFERIDOS: O atleta APENAS pode treinar nos seguintes dias: ${request.athlete.preferredDays.map(d => `${d}=${["","Segunda","Terça","Quarta","Quinta","Sexta","Sábado","Domingo"][d]}`).join(", ")}. TODAS as sessões devem ter dayOfWeek dentro deste conjunto. Não colocar sessões noutros dias.`
+  : ""
+}
 
 ═══════════════════════════════════════════
 INSTRUÇÃO DE GERAÇÃO
