@@ -53,7 +53,7 @@ export function emailShell({
               <a href="${BASE_URL}/dashboard" style="color:#52525b;text-decoration:none;font-size:12px;margin:0 8px">Dashboard</a>
               <a href="${BASE_URL}/privacy" style="color:#52525b;text-decoration:none;font-size:12px;margin:0 8px">Privacidade</a>
               <a href="${BASE_URL}/status" style="color:#52525b;text-decoration:none;font-size:12px;margin:0 8px">Estado</a>
-              <a href="mailto:pedroelias67@gmail.com" style="color:#52525b;text-decoration:none;font-size:12px;margin:0 8px">Suporte</a>
+              <a href="mailto:pedro@pedroelias.com" style="color:#52525b;text-decoration:none;font-size:12px;margin:0 8px">Suporte</a>
             </td></tr>
             <tr><td style="padding-top:12px">
               <p style="margin:0;font-size:11px;color:#3f3f46;line-height:1.6">

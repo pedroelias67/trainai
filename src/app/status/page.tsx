@@ -125,7 +125,7 @@ export default async function StatusPage() {
 
         <p className="text-center text-[var(--text-faint)] text-xs mt-8">
           Problemas?{" "}
-          <a href="mailto:pedroelias67@gmail.com" className="hover:text-[var(--text-muted)] underline underline-offset-2">
+          <a href="mailto:pedro@pedroelias.com" className="hover:text-[var(--text-muted)] underline underline-offset-2">
             Contacta o suporte
           </a>
         </p>
