@@ -117,13 +117,31 @@ export async function POST(req: NextRequest) {
       RUN: "RUNNING", BIKE: "CYCLING", CYCLE: "CYCLING", SWIM: "SWIMMING",
     };
 
-    // Align plan start to the Monday of the current week (or today if Monday)
-    // Sunday (0) → go forward 1 day to Monday; otherwise go back to the most recent Monday
+    // The week grid is always anchored to Monday — session dates are derived from
+    // weekStart + (dayOfWeek - 1), so weekStart must be a Monday for days to line up.
+    // Sunday (0) → roll to tomorrow's Monday; otherwise fall back to this week's Monday.
     const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-    const daysToMonday = dayOfWeek === 0 ? 1 : -(dayOfWeek - 1);
+    const startsNextWeek = dayOfWeek === 0;
+    const daysToMonday = startsNextWeek ? 1 : -(dayOfWeek - 1);
     const planStart = new Date(today);
     planStart.setDate(planStart.getDate() + daysToMonday);
     planStart.setHours(0, 0, 0, 0);
+
+    // Week 1 starts today, not last Monday — drop the sessions already in the past
+    // and recompute the week totals so the summary matches what's left to train.
+    if (!startsNextWeek) {
+      const todayDow = dayOfWeek; // 1=Mon ... 6=Sat, matching the session scheme
+      const firstWeek = planData.weeks.find((w: any) => w.weekNumber === 1);
+      if (firstWeek) {
+        firstWeek.sessions = firstWeek.sessions.filter((s: any) => s.dayOfWeek >= todayDow);
+        firstWeek.totalDistanceKm = firstWeek.sessions.reduce(
+          (sum: number, s: any) => sum + (s.plannedDistanceKm ?? 0), 0
+        );
+        firstWeek.totalDurationMin = firstWeek.sessions.reduce(
+          (sum: number, s: any) => sum + (s.plannedDurationMin ?? 0), 0
+        );
+      }
+    }
 
     const plan = await prisma.trainingPlan.create({
       data: {
