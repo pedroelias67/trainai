@@ -117,11 +117,12 @@ export async function POST(req: NextRequest) {
       RUN: "RUNNING", BIKE: "CYCLING", CYCLE: "CYCLING", SWIM: "SWIMMING",
     };
 
-    // Align plan start to next Monday
+    // Align plan start to the Monday of the current week (or today if Monday)
+    // Sunday (0) → go forward 1 day to Monday; otherwise go back to the most recent Monday
     const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-    const daysUntilMonday = dayOfWeek === 1 ? 0 : dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+    const daysToMonday = dayOfWeek === 0 ? 1 : -(dayOfWeek - 1);
     const planStart = new Date(today);
-    planStart.setDate(planStart.getDate() + daysUntilMonday);
+    planStart.setDate(planStart.getDate() + daysToMonday);
     planStart.setHours(0, 0, 0, 0);
 
     const plan = await prisma.trainingPlan.create({
