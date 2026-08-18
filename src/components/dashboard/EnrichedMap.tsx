@@ -12,6 +12,10 @@ interface TrackPoint {
 interface Props {
   gpsTrack: TrackPoint[];
   elevationGain?: number | null;
+  /** Height of the map canvas in px. The toggle, legend and elevation profile stack below it. */
+  height?: number;
+  /** Trims the chrome for small embeds: tighter padding and no elevation profile. */
+  compact?: boolean;
 }
 
 type ColorBy = "pace" | "hr";
@@ -41,7 +45,7 @@ function hrToColor(hr: number): string {
   return "#ef4444"; // red Z5
 }
 
-export default function EnrichedMap({ gpsTrack, elevationGain }: Props) {
+export default function EnrichedMap({ gpsTrack, elevationGain, height = 380, compact = false }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const [colorBy, setColorBy] = useState<ColorBy>("pace");
@@ -116,6 +120,9 @@ export default function EnrichedMap({ gpsTrack, elevationGain }: Props) {
       L.marker(latlngs[0], { icon: startIcon }).addTo(map).bindPopup("Início");
       L.marker(latlngs[latlngs.length - 1], { icon: endIcon }).addTo(map).bindPopup("Fim");
 
+      // The container can still be settling when the map mounts (collapsible rows,
+      // dynamic import); recompute the size before fitting so the track is centred.
+      map.invalidateSize();
       const bounds = L.latLngBounds(latlngs);
       map.fitBounds(bounds, { padding: [20, 20] });
     });
@@ -150,7 +157,7 @@ export default function EnrichedMap({ gpsTrack, elevationGain }: Props) {
   return (
     <div>
       {/* Toggle */}
-      <div className="px-5 py-3 border-b border-[var(--border)] bg-[var(--bg-card)] flex items-center gap-2">
+      <div className={`${compact ? "px-3 py-2" : "px-5 py-3"} border-b border-[var(--border)] bg-[var(--bg-card)] flex items-center gap-2`}>
         <span className="text-xs text-[var(--text-muted)] mr-1">Colorir por:</span>
         <button
           onClick={() => setColorBy("pace")}
@@ -171,10 +178,10 @@ export default function EnrichedMap({ gpsTrack, elevationGain }: Props) {
       </div>
 
       {/* Map */}
-      <div ref={mapRef} style={{ height: "380px", width: "100%" }} />
+      <div ref={mapRef} style={{ height: `${height}px`, width: "100%" }} />
 
       {/* Legend */}
-      <div className="px-5 py-3 bg-[var(--bg-card)] border-t border-[var(--border)]">
+      <div className={`${compact ? "px-3 py-2" : "px-5 py-3"} bg-[var(--bg-card)] border-t border-[var(--border)]`}>
         {colorBy === "pace" ? (
           <div className="flex items-center gap-2">
             <span className="text-xs text-[var(--text-muted)]">Rápido</span>
@@ -200,7 +207,7 @@ export default function EnrichedMap({ gpsTrack, elevationGain }: Props) {
       </div>
 
       {/* Elevation profile */}
-      {hasElevation && elevations.length > 1 && (
+      {!compact && hasElevation && elevations.length > 1 && (
         <div className="px-5 py-4 bg-[var(--bg-card)] border-t border-[var(--border)]">
           <div className="flex items-center justify-between mb-2">
             <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wide">Perfil de Elevação</h3>

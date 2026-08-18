@@ -108,9 +108,7 @@ function FeaturedActivity({ activity }: { activity: Activity }) {
       {/* Map */}
       {gpsTrack && (
         <div className="border-t border-[var(--border)]">
-          <div className="h-56">
-            <EnrichedMap gpsTrack={gpsTrack} elevationGain={activity.elevationGain} />
-          </div>
+          <EnrichedMap gpsTrack={gpsTrack} elevationGain={activity.elevationGain} height={220} compact />
         </div>
       )}
 
@@ -215,13 +213,29 @@ export default function RecentActivitiesFeed({ activities }: Props) {
               {expanded === activity.id && (
                 <div className="mx-1 mb-2 rounded-xl border border-[var(--border)] overflow-hidden">
                   <div className="grid grid-cols-3 gap-2 p-3">
-                    {activity.distance && <div className="text-center"><p className="text-sm font-bold text-[var(--text-primary)]">{(activity.distance / 1000).toFixed(1)} km</p><p className="text-xs text-[var(--text-muted)]">distância</p></div>}
-                    {activity.avgHR && <div className="text-center"><p className="text-sm font-bold text-[var(--text-primary)]">{activity.avgHR} bpm</p><p className="text-xs text-[var(--text-muted)]">FC média</p></div>}
-                    {activity.duration && <div className="text-center"><p className="text-sm font-bold text-[var(--text-primary)]">{formatDuration(activity.duration)}</p><p className="text-xs text-[var(--text-muted)]">duração</p></div>}
+                    {[
+                      { label: "distância", value: activity.distance ? `${(activity.distance / 1000).toFixed(2)} km` : null },
+                      { label: "pace", value: activity.avgPace },
+                      { label: "duração", value: activity.duration ? formatDuration(activity.duration) : null },
+                      { label: "FC média", value: activity.avgHR ? `${activity.avgHR} bpm` : null },
+                      { label: "elevação", value: activity.elevationGain ? `+${Math.round(activity.elevationGain)}m` : null },
+                      { label: "calorias", value: activity.calories ? `${activity.calories} kcal` : null },
+                    ].filter((s) => s.value).map((s) => (
+                      <div key={s.label} className="text-center">
+                        <p className="text-sm font-bold text-[var(--text-primary)]">{s.value}</p>
+                        <p className="text-xs text-[var(--text-muted)]">{s.label}</p>
+                      </div>
+                    ))}
                   </div>
+                  {(activity.trainingLoad || activity.aerobicEffect) && (
+                    <div className="flex gap-4 px-3 pb-3 text-xs text-[var(--text-muted)]">
+                      {activity.trainingLoad && <span>Carga: <strong className="text-[var(--text-secondary)]">{Math.round(activity.trainingLoad)}</strong></span>}
+                      {activity.aerobicEffect && <span>Aeróbico: <strong className="text-[var(--text-secondary)]">{activity.aerobicEffect.toFixed(1)}</strong></span>}
+                    </div>
+                  )}
                   {Array.isArray(activity.gpsTrack) && activity.gpsTrack.length > 0 && (
-                    <div className="h-40 border-t border-[var(--border)]">
-                      <EnrichedMap gpsTrack={activity.gpsTrack} elevationGain={activity.elevationGain} />
+                    <div className="border-t border-[var(--border)]">
+                      <EnrichedMap gpsTrack={activity.gpsTrack} elevationGain={activity.elevationGain} height={180} compact />
                     </div>
                   )}
                   <div className="p-3 border-t border-[var(--border)] bg-[var(--bg-subtle)]">
