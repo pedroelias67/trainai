@@ -108,15 +108,28 @@ export default async function DashboardPage() {
 
   const activePlan = athlete.trainingPlans[0];
   const currentWeek = activePlan?.weeks[0];
-  const todaySessions = currentWeek?.sessions.filter((s) => isToday(new Date(s.date))) ?? [];
-  const tomorrowSessions = currentWeek?.sessions.filter((s) => isTomorrow(new Date(s.date))) ?? [];
+  // A cancelled session is one the athlete removed: it belongs in neither the day
+  // cards nor the week's totals. The plan page and calendar still list it struck
+  // through, which is where restoring it lives.
+  const weekSessions = currentWeek?.sessions.filter((s) => !s.cancelled) ?? [];
+  const todaySessions = weekSessions.filter((s) => isToday(new Date(s.date)));
+  const tomorrowSessions = weekSessions.filter((s) => isTomorrow(new Date(s.date)));
 
   const daysToEvent = activePlan
     ? Math.ceil((new Date(activePlan.event.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
 
-  const completedThisWeek = currentWeek?.sessions.filter((s) => s.completed).length ?? 0;
-  const totalThisWeek = currentWeek?.sessions.length ?? 0;
+  const completedThisWeek = weekSessions.filter((s) => s.completed).length;
+  const totalThisWeek = weekSessions.length;
+
+  // totalDistance is the figure the plan was generated with, so discount whatever
+  // the athlete has cancelled since rather than recomputing it from the sessions.
+  const cancelledDistance = currentWeek?.sessions
+    .filter((s) => s.cancelled)
+    .reduce((sum, s) => sum + (s.plannedDistance ?? 0), 0) ?? 0;
+  const plannedDistanceThisWeek = currentWeek?.totalDistance != null
+    ? Math.round(Math.max(0, currentWeek.totalDistance - cancelledDistance) * 10) / 10
+    : null;
 
   // New user = registered in the last 7 days
   const isNewUser = athlete.user.createdAt
@@ -328,7 +341,7 @@ export default async function DashboardPage() {
                   )}
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="bg-[var(--bg-subtle)] rounded-xl p-3 text-center">
-                      <p className="text-xl font-bold text-white">{currentWeek.totalDistance ?? "—"}</p>
+                      <p className="text-xl font-bold text-white">{plannedDistanceThisWeek ?? "—"}</p>
                       <p className="text-[var(--text-muted)] text-xs mt-0.5">km planeados</p>
                     </div>
                     <div className="bg-[var(--bg-subtle)] rounded-xl p-3 text-center">
