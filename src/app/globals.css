@@ -208,8 +208,12 @@
   100% { opacity: 0; pointer-events: none; }
 }
 
+/* `backwards`, never `both`: `both` retains the final translateY(0), and any
+   transform other than `none` makes the element a containing block for its
+   position:fixed descendants — which would anchor every dashboard modal to the
+   full-height page wrapper instead of the viewport. */
 .animate-page-in {
-  animation: page-in 0.2s ease-out both;
+  animation: page-in 0.2s ease-out backwards;
 }
 
 .animate-fade-out {
