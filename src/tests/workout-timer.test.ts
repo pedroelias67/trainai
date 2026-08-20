@@ -101,3 +101,29 @@ describe("buildPhases", () => {
     expect(buildPhases("STRENGTH", 10, noText).every(p => p.duration > 0)).toBe(true);
   });
 });
+
+describe("phase hints", () => {
+  const text = {
+    warmup: "10min Z1 + 4x30s acelerações.",
+    mainSet: "5x3min Z5 com 2min de recuperação.",
+    cooldown: "10min trote muito leve.",
+  };
+
+  it("gives each phase the step it belongs to", () => {
+    const phases = buildPhases("INTERVALS", 55, text);
+    expect(phases[0].hint).toBe(text.warmup);
+    expect(phases[1].hint).toBe(text.mainSet);
+    expect(phases[2].hint).toMatch(/Trote muito leve/);
+    expect(phases.at(-1)?.hint).toBe(text.cooldown);
+  });
+
+  it("hints the coarse phases too", () => {
+    const phases = buildPhases("EASY", 40, text);
+    expect(phases.map(p => p.hint)).toEqual([text.warmup, text.mainSet, text.cooldown]);
+  });
+
+  it("leaves the hint empty when the session has no description", () => {
+    expect(buildPhases("LONG", 90, { warmup: null, mainSet: null, cooldown: null })
+      .every(p => !p.hint)).toBe(true);
+  });
+});

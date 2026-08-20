@@ -237,6 +237,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             warmup={session.warmup}
             mainSet={session.mainSet}
             cooldown={session.cooldown}
+            plannedPace={session.plannedPace}
           />
         )}
 

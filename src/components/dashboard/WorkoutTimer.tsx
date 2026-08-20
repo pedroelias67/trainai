@@ -12,6 +12,11 @@ function fmt(secs: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
+/** Phases where the target pace is what the athlete should be holding. */
+function isWorkPhase(label: string): boolean {
+  return !/^(Aquecimento|Arrefecimento|Alongamentos|Recuperação|Transição)/.test(label);
+}
+
 export function WorkoutTimer({
   sessionType,
   plannedDuration,
@@ -19,6 +24,7 @@ export function WorkoutTimer({
   warmup = null,
   mainSet = null,
   cooldown = null,
+  plannedPace = null,
 }: {
   sessionType: string;
   plannedDuration: number | null;
@@ -26,6 +32,7 @@ export function WorkoutTimer({
   warmup?: string | null;
   mainSet?: string | null;
   cooldown?: string | null;
+  plannedPace?: string | null;
 }) {
   const phases = buildPhases(sessionType, plannedDuration, { warmup, mainSet, cooldown });
   const [active, setActive] = useState(false);
@@ -145,6 +152,23 @@ export function WorkoutTimer({
           <p className="font-semibold text-white">{currentPhase.label}</p>
           <p className="text-xs text-[var(--text-muted)]">Total: {fmt(totalElapsed)}</p>
         </div>
+
+        {/* What to do right now, so the breakdown above never has to be revisited */}
+        {currentPhase.hint && (
+          <div
+            className="w-full rounded-xl p-3 border bg-[var(--bg-subtle)]"
+            style={{ borderColor: `${currentPhase.color}33` }}
+          >
+            <p className="text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-line">
+              {currentPhase.hint}
+            </p>
+            {plannedPace && isWorkPhase(currentPhase.label) && (
+              <p className="text-xs mt-2 font-medium" style={{ color: currentPhase.color }}>
+                Pace alvo: {plannedPace}
+              </p>
+            )}
+          </div>
+        )}
 
         {/* Controls */}
         <div className="flex gap-3">

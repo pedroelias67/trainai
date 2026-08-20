@@ -5,6 +5,8 @@ export type Phase = {
   label: string;
   duration: number; // seconds, 0 = open-ended
   color: string;
+  /** What to actually do during this phase, in the coach's words. */
+  hint?: string | null;
 };
 
 export type SessionText = {
@@ -70,6 +72,23 @@ export function parseIntervals(
   return { reps, workSecs, restSecs: asRest(rest ? toSeconds(parseInt(rest[1], 10), rest[2]) : null) };
 }
 
+/**
+ * Attaches each step's own description to the phases it covers, so the timer can
+ * show what to do without the athlete scrolling back to the session breakdown.
+ */
+function withHints(phases: Phase[], text: SessionText): Phase[] {
+  return phases.map(p => {
+    if (p.label.startsWith("Aquecimento")) return { ...p, hint: text.warmup };
+    if (p.label.startsWith("Arrefecimento") || p.label.startsWith("Alongamentos")) {
+      return { ...p, hint: text.cooldown };
+    }
+    if (p.label === "Recuperação" || p.label === "Transição T2") {
+      return { ...p, hint: "Trote muito leve ou caminhada. Recupera para atacar a próxima repetição." };
+    }
+    return { ...p, hint: text.mainSet };
+  });
+}
+
 export function buildPhases(
   sessionType: string,
   plannedDuration: number | null,
@@ -96,7 +115,7 @@ export function buildPhases(
         }
       }
       phases.push({ label: "Arrefecimento", duration: cooldownSecs, color: "#a1a1aa" });
-      return phases;
+      return withHints(phases, text);
     }
   }
 
@@ -143,5 +162,8 @@ export function buildPhases(
     ],
   };
 
-  return phaseMap[sessionType] ?? [{ label: "Treino", duration: total, color: "#22c55e" }];
+  return withHints(
+    phaseMap[sessionType] ?? [{ label: "Treino", duration: total, color: "#22c55e" }],
+    text
+  );
 }
