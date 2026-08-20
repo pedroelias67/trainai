@@ -98,64 +98,42 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
 
             <div className="border-t border-[var(--border)]" />
 
-            <div className="flex gap-3 p-3 rounded-xl bg-green-500/5 border border-green-500/15 text-xs text-[var(--text-secondary)] leading-relaxed">
-              <span className="text-lg shrink-0">✅</span>
-              <p>Os ficheiros exportados são <strong className="text-[var(--text-primary)]">workouts estruturados</strong>. Após importação, aparecem em <strong className="text-[var(--text-primary)]">Treino → Treinos guardados</strong> no teu relógio Garmin.</p>
+            <div className="flex gap-3 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-xs text-[var(--text-secondary)] leading-relaxed">
+              <span className="text-lg shrink-0">⚠️</span>
+              <p><strong className="text-[var(--text-primary)]">O Garmin Connect não importa estes ficheiros.</strong> Nem em connect.garmin.com, nem pela app no telemóvel: a Garmin só aceita treinos planeados através da sua API, não por upload de .tcx. O nosso pedido de acesso já foi submetido e aguarda aprovação da Garmin — assim que for aprovado, os treinos passam a ser enviados diretamente para o teu relógio, sem ficheiros pelo meio. Até lá, vê as alternativas abaixo.</p>
             </div>
 
-            {/* Android */}
+            {/* O que é este ficheiro */}
+            <div className="space-y-2">
+              <p className="text-sm font-semibold text-[var(--text-primary)]">O que é este ficheiro</p>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                Um <strong className="text-[var(--text-primary)]">treino planeado</strong>: aquecimento, série principal, retorno à calma, com alvos de pace ou de frequência cardíaca. Não é uma atividade já realizada — não tem GPS, tempos nem batimentos registados.
+              </p>
+            </div>
+
+            <div className="border-t border-[var(--border)]" />
+
+            {/* Alternativa que funciona */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">🤖</span>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">Android <span className="text-green-400 text-xs font-normal">(funciona)</span></p>
+                <span className="text-lg">⌚</span>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Pôr o treino no relógio hoje</p>
               </div>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                O <strong className="text-[var(--text-primary)]">Intervals.icu</strong> liga-se ao Garmin Connect e envia treinos planeados para o relógio. Ressalva honesta: constróis o treino lá a partir do que vês neste ecrã — a ponte não lê o nosso ficheiro.
+              </p>
               {[
-                { n: 1, text: 'Descarrega o ficheiro .tcx para o telemóvel' },
-                { n: 2, text: 'Abre o ficheiro — o Android pergunta com que app abrir' },
-                { n: 3, text: 'Escolhe "Garmin Connect" na lista' },
-                { n: 4, text: 'A app importa como treino estruturado — sincroniza o relógio' },
+                { n: 1, text: 'Cria conta em intervals.icu e liga o Garmin em Settings → Integrations' },
+                { n: 2, text: 'Calendar → Add → Workout, no dia do treino' },
+                { n: 3, text: 'Reproduz a estrutura desta sessão (aquecimento, série, retorno à calma)' },
+                { n: 4, text: 'Send to watch — chega ao Garmin Connect e sincroniza' },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">
                   <span className="shrink-0 w-6 h-6 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
                   <p className="text-sm text-[var(--text-secondary)]">{text}</p>
                 </div>
               ))}
-            </div>
-
-            <div className="border-t border-[var(--border)]" />
-
-            {/* iOS */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">🍎</span>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">iPhone <span className="text-yellow-400 text-xs font-normal">(limitação iOS)</span></p>
-              </div>
-              <div className="flex gap-3 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/15 text-xs text-[var(--text-secondary)] leading-relaxed">
-                <span className="shrink-0">⚠️</span>
-                <p>A app Garmin Connect no iOS não suporta abertura direta de ficheiros .tcx. A integração nativa está em desenvolvimento e ficará disponível em breve.</p>
-              </div>
-              <p className="text-xs text-[var(--text-muted)]">Usa antes o método do computador (abaixo) — funciona e envia o treino para o relógio. Em alternativa, segue o treino pela app TrainAI: tens todas as instruções, pace e zonas visíveis no ecrã.</p>
-            </div>
-
-            <div className="border-t border-[var(--border)]" />
-
-            {/* Computador */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">💻</span>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">Computador <span className="text-green-400 text-xs font-normal">(iOS + Android)</span></p>
-              </div>
-              {[
-                { n: 1, text: 'Descarrega o ficheiro .tcx para o computador' },
-                { n: 2, text: 'Abre connect.garmin.com e inicia sessão' },
-                { n: 3, text: 'Treino e planeamento → Treinos → Importar' },
-                { n: 4, text: 'Agenda o treino no calendário e sincroniza o relógio' },
-              ].map(({ n, text }) => (
-                <div key={n} className="flex items-start gap-3">
-                  <span className="shrink-0 w-6 h-6 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
-                  <p className="text-sm text-[var(--text-secondary)]">{text}</p>
-                </div>
-              ))}
+              <p className="text-xs text-[var(--text-muted)]">Mais simples: segue o treino por aqui no telemóvel — tens a estrutura, o pace e as zonas no ecrã.</p>
             </div>
 
             <div className="border-t border-[var(--border)]" />
@@ -168,27 +146,8 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
               </div>
               <div className="flex gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/15 text-xs text-[var(--text-secondary)] leading-relaxed">
                 <span className="shrink-0">🚫</span>
-                <p>Não faças upload destes ficheiros no Strava — dá sempre <strong className="text-[var(--text-primary)]">&quot;Error Processing Data&quot;</strong>. O Strava só aceita atividades já realizadas, com GPS e tempos; estes ficheiros são treinos <em>planeados</em>. O Strava continua a servir para o sentido inverso: regista o treino no relógio e ele aparece aqui automaticamente.</p>
+                <p>Não faças upload destes ficheiros no Strava — dá sempre <strong className="text-[var(--text-primary)]">&quot;Error Processing Data&quot;</strong>, porque o Strava só aceita atividades já realizadas. No sentido inverso continua a funcionar: regista o treino no relógio e ele aparece aqui sozinho.</p>
               </div>
-            </div>
-
-            <div className="border-t border-[var(--border)]" />
-
-            {/* Outros relógios */}
-            <div className="space-y-2">
-              <p className="text-xs font-semibold text-[var(--text-primary)]">Outros relógios</p>
-              {[
-                { icon: "🟢", label: "Polar", note: "Aceita .tcx via Polar Flow (web ou app)" },
-                { icon: "🟢", label: "Suunto", note: "Aceita .tcx via Suunto app ou web" },
-                { icon: "🔴", label: "Apple Watch", note: "Não suporta .tcx" },
-                { icon: "🔴", label: "COROS / Wahoo", note: "Não suportam .tcx" },
-              ].map(({ icon, label, note }) => (
-                <div key={label} className="flex items-center gap-2 text-xs text-[var(--text-secondary)]">
-                  <span>{icon}</span>
-                  <span className="font-medium text-[var(--text-primary)] w-20 shrink-0">{label}</span>
-                  <span className="text-[var(--text-muted)]">{note}</span>
-                </div>
-              ))}
             </div>
 
             </div>{/* end scrollable */}
