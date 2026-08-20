@@ -1,4 +1,4 @@
-const CACHE_VERSION = "trainai-v3";
+const CACHE_VERSION = "trainai-v4";
 const STATIC_CACHE = `${CACHE_VERSION}-static`;
 const DYNAMIC_CACHE = `${CACHE_VERSION}-dynamic`;
 
@@ -78,17 +78,24 @@ self.addEventListener("fetch", e => {
     return;
   }
 
-  // Pages: stale-while-revalidate
+  // Pages and RSC payloads: network-first. These are per-athlete and change after
+  // every sync, so serving a stale copy shows yesterday's data until a reload.
+  // The cache is kept purely as an offline fallback.
   e.respondWith(
-    caches.open(DYNAMIC_CACHE).then(async cache => {
-      const cached = await cache.match(request);
-      const fetchPromise = fetch(request).then(r => {
-        if (r.ok) cache.put(request, r.clone());
+    fetch(request)
+      .then(r => {
+        if (r.ok) {
+          const copy = r.clone();
+          caches.open(DYNAMIC_CACHE).then(c => c.put(request, copy));
+        }
         return r;
-      }).catch(() => cached ?? caches.match("/offline") ?? new Response("Offline", { status: 503 }));
-
-      return cached ?? fetchPromise;
-    })
+      })
+      .catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        const offline = await caches.match("/offline");
+        return offline ?? new Response("Offline", { status: 503 });
+      })
   );
 });
 
