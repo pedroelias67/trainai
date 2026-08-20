@@ -1,6 +1,13 @@
+import Link from "next/link";
+
 interface LogoProps {
   size?: number;
   className?: string;
+}
+
+interface LogoFullProps extends LogoProps {
+  /** When set, the logo becomes a link to this route. */
+  href?: string;
 }
 
 export function LogoIcon({ size = 36, className = "" }: LogoProps) {
@@ -23,8 +30,8 @@ export function LogoIcon({ size = 36, className = "" }: LogoProps) {
   );
 }
 
-export function LogoFull({ size = 36, className = "" }: LogoProps) {
-  return (
+export function LogoFull({ size = 36, className = "", href }: LogoFullProps) {
+  const logo = (
     <div className={`flex items-center gap-2.5 ${className}`}>
       <LogoIcon size={size} />
       <span
@@ -34,5 +41,13 @@ export function LogoFull({ size = 36, className = "" }: LogoProps) {
         Train<span className="text-green-400">AI</span>
       </span>
     </div>
+  );
+
+  if (!href) return logo;
+
+  return (
+    <Link href={href} className="inline-flex rounded-lg transition-opacity hover:opacity-80">
+      {logo}
+    </Link>
   );
 }

@@ -151,7 +151,7 @@ export default async function FitnessPage() {
     <div className="min-h-screen bg-[var(--bg-base)]">
       <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-[var(--bg-base)]/80 px-6 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <LogoFull size={30} />
+          <LogoFull size={30} href="/dashboard" />
           <nav className="hidden md:flex items-center gap-1">
             {NAV_ITEMS.map((item) => (
               <Link key={item.href} href={item.href}
