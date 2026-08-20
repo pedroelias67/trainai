@@ -24,7 +24,7 @@ async function triggerDownload(url: string, filename: string) {
   setTimeout(() => URL.revokeObjectURL(href), 2000);
 }
 
-export function GarminExportButton({ sessionId, weekId }: { sessionId: string; weekId: string }) {
+export function WorkoutExportButton({ sessionId, weekId }: { sessionId: string; weekId: string }) {
   const [showHelp, setShowHelp] = useState(false);
   const [loading, setLoading] = useState<"session" | "week" | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -58,10 +58,10 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
           onClick={() => setShowHelp(true)}
           disabled={loading !== null}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] transition-all text-xs font-medium disabled:opacity-50"
-          title="Exportar para o Garmin"
+          title="Exportar treino"
         >
           <DownloadIcon />
-          {loading ? "A descarregar..." : "Garmin"}
+          {loading ? "A descarregar..." : "Exportar"}
         </button>
       </div>
 
@@ -70,7 +70,7 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
           onClick={(e) => { if (e.target === e.currentTarget) setShowHelp(false); }}>
           <div className="w-full max-w-md bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl flex flex-col max-h-[85vh]">
             <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-[var(--border)] shrink-0">
-              <h2 className="text-[var(--text-primary)] font-semibold text-base">Exportar para o Garmin</h2>
+              <h2 className="text-[var(--text-primary)] font-semibold text-base">Exportar treino</h2>
               <button onClick={() => setShowHelp(false)} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors">
                 <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth={2}>
                   <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
@@ -100,7 +100,7 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
 
             <div className="flex gap-3 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-xs text-[var(--text-secondary)] leading-relaxed">
               <span className="text-lg shrink-0">⚠️</span>
-              <p><strong className="text-[var(--text-primary)]">O Garmin Connect não importa estes ficheiros.</strong> Nem em connect.garmin.com, nem pela app no telemóvel: a Garmin só aceita treinos planeados através da sua API, não por upload de .tcx. O nosso pedido de acesso já foi submetido e aguarda aprovação da Garmin — assim que for aprovado, os treinos passam a ser enviados diretamente para o teu relógio, sem ficheiros pelo meio. Até lá, vê as alternativas abaixo.</p>
+              <p><strong className="text-[var(--text-primary)]">Nenhum relógio importa este ficheiro diretamente.</strong> Tanto a Garmin como a Huawei só aceitam treinos planeados pelos seus próprios canais, não por upload. O download serve para arquivo — para treinar, segue o método abaixo.</p>
             </div>
 
             {/* O que é este ficheiro */}
@@ -113,27 +113,64 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
 
             <div className="border-t border-[var(--border)]" />
 
-            {/* Alternativa que funciona */}
+            {/* Método universal */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">⌚</span>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">Pôr o treino no relógio hoje</p>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Como fazer este treino <span className="text-green-400 text-xs font-normal">(qualquer relógio)</span></p>
               </div>
-              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                O <strong className="text-[var(--text-primary)]">Intervals.icu</strong> liga-se ao Garmin Connect e envia treinos planeados para o relógio. Ressalva honesta: constróis o treino lá a partir do que vês neste ecrã — a ponte não lê o nosso ficheiro.
-              </p>
               {[
-                { n: 1, text: 'Cria conta em intervals.icu e liga o Garmin em Settings → Integrations' },
-                { n: 2, text: 'Calendar → Add → Workout, no dia do treino' },
-                { n: 3, text: 'Reproduz a estrutura desta sessão (aquecimento, série, retorno à calma)' },
-                { n: 4, text: 'Send to watch — chega ao Garmin Connect e sincroniza' },
+                { n: 1, text: 'Abre esta sessão no telemóvel — tens a estrutura, o pace-alvo e as zonas' },
+                { n: 2, text: 'Se tiver séries, configura os intervalos no relógio (ex: 5x3min)' },
+                { n: 3, text: 'Corre normalmente, com o relógio a registar' },
+                { n: 4, text: 'Liga o Strava e a atividade volta sozinha para aqui, com análise' },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">
                   <span className="shrink-0 w-6 h-6 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
                   <p className="text-sm text-[var(--text-secondary)]">{text}</p>
                 </div>
               ))}
-              <p className="text-xs text-[var(--text-muted)]">Mais simples: segue o treino por aqui no telemóvel — tens a estrutura, o pace e as zonas no ecrã.</p>
+              <div className="flex gap-3 p-3 rounded-xl bg-green-500/5 border border-green-500/15 text-xs text-[var(--text-secondary)] leading-relaxed">
+                <span className="shrink-0">✅</span>
+                <p>O passo 4 é o que importa: o registo do treino chega cá automaticamente e alimenta o relatório semanal, independentemente da marca do relógio.</p>
+              </div>
+            </div>
+
+            <div className="border-t border-[var(--border)]" />
+
+            {/* Garmin */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">🔵</span>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Garmin</p>
+              </div>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                O envio direto dos treinos para o relógio está a caminho: o pedido de acesso à API da Garmin já foi submetido e aguarda aprovação. Até lá, o <strong className="text-[var(--text-primary)]">Intervals.icu</strong> serve de ponte — liga-se ao Garmin Connect em <em>Settings → Integrations</em>, crias lá o treino em <em>Calendar → Add → Workout</em> e envias para o relógio. Ressalva: reconstróis a estrutura a partir do que vês neste ecrã, porque a ponte não lê o nosso ficheiro.
+              </p>
+            </div>
+
+            <div className="border-t border-[var(--border)]" />
+
+            {/* Huawei */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="text-lg">🔴</span>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Huawei</p>
+              </div>
+              <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+                O Huawei Health só sincroniza para o relógio os planos criados dentro dele, e não há forma de importar treinos de fora. Configura os intervalos no próprio relógio, em <em>Definições do modo de treino → Treino por intervalos</em>, e liga o Strava para o registo voltar para aqui:
+              </p>
+              {[
+                { n: 1, text: 'Huawei Health → Eu → Gestão de privacidade' },
+                { n: 2, text: 'Partilha de dados e autorização → Strava → Ligar' },
+                { n: 3, text: 'Em Atividades, aqui na app, liga também o Strava' },
+              ].map(({ n, text }) => (
+                <div key={n} className="flex items-start gap-3">
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
+                  <p className="text-sm text-[var(--text-secondary)]">{text}</p>
+                </div>
+              ))}
+              <p className="text-xs text-[var(--text-muted)]">A ligação ao Strava só existe em alguns países, e só sincroniza corrida, caminhada e ciclismo ao ar livre — treinos indoor ficam de fora.</p>
             </div>
 
             <div className="border-t border-[var(--border)]" />

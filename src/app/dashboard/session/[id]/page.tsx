@@ -5,7 +5,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { LogoFull } from "@/components/ui/Logo";
-import { GarminExportButton } from "@/components/dashboard/GarminHelpModal";
+import { WorkoutExportButton } from "@/components/dashboard/WorkoutExportModal";
 import { SessionJournal } from "@/components/dashboard/SessionJournal";
 import NutritionPlan from "@/components/dashboard/NutritionPlan";
 import { WorkoutTimer } from "@/components/dashboard/WorkoutTimer";
@@ -80,7 +80,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <GarminExportButton sessionId={session.id} weekId={session.weekId} />
+              <WorkoutExportButton sessionId={session.id} weekId={session.weekId} />
               <span className={`px-3 py-1 rounded-full text-xs font-medium border ${sessionTypeColors[session.sessionType] ?? "bg-zinc-500/10 text-[var(--text-secondary)] border-zinc-500/20"}`}>
                 {sessionTypeLabels[session.sessionType]}
               </span>
