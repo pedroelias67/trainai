@@ -212,11 +212,54 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
     }
   }, []);
 
-  // Register SW
+  // Register SW, then keep it fresh. A tab left open for hours would otherwise
+  // keep running the worker it registered with, missing every deploy since.
   useEffect(() => {
-    if ("serviceWorker" in navigator) {
-      navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
+    if (!("serviceWorker" in navigator)) return;
+
+    // A page that was already controlled and then sees a new worker take over is
+    // running against a newer deploy than it was loaded with. Reload it — but
+    // only while hidden, so we never discard something being typed. On the very
+    // first visit there is no previous controller, and claim() is not a deploy.
+    const hadController = !!navigator.serviceWorker.controller;
+    let registration: ServiceWorkerRegistration | undefined;
+    let pendingReload = false;
+    let reloading = false;
+
+    const reload = () => {
+      if (reloading) return;
+      reloading = true;
+      window.location.reload();
+    };
+
+    const onControllerChange = () => {
+      if (!hadController) return;
+      pendingReload = true;
+      if (document.visibilityState === "hidden") reload();
+    };
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        if (pendingReload) reload();
+        return;
+      }
+      registration?.update().catch(() => {});
+    };
+
+    navigator.serviceWorker
+      .register("/sw.js")
+      .then(reg => { registration = reg; })
+      .catch(() => {});
+
+    navigator.serviceWorker.addEventListener("controllerchange", onControllerChange);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    const interval = setInterval(() => registration?.update().catch(() => {}), 30 * 60 * 1000);
+
+    return () => {
+      navigator.serviceWorker.removeEventListener("controllerchange", onControllerChange);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      clearInterval(interval);
+    };
   }, []);
 
   const handleRefresh = useCallback(() => {
