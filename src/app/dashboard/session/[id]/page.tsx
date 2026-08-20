@@ -234,6 +234,9 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             sessionType={session.sessionType}
             plannedDuration={session.plannedDuration}
             sessionName={session.name}
+            warmup={session.warmup}
+            mainSet={session.mainSet}
+            cooldown={session.cooldown}
           />
         )}
 

@@ -2,63 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { haptic } from "@/components/PWAProvider";
-
-type Phase = {
-  label: string;
-  duration: number; // seconds, 0 = open-ended
-  color: string;
-};
-
-function buildPhases(sessionType: string, plannedDuration: number | null): Phase[] {
-  // plannedDuration is stored in minutes (the plan writes plannedDurationMin);
-  // every phase below is in seconds.
-  const total = (plannedDuration ?? 60) * 60;
-
-  const phaseMap: Record<string, Phase[]> = {
-    EASY: [
-      { label: "Aquecimento", duration: Math.round(total * 0.15), color: "#22c55e" },
-      { label: "Corrida fácil", duration: Math.round(total * 0.75), color: "#3b82f6" },
-      { label: "Arrefecimento", duration: Math.round(total * 0.10), color: "#a1a1aa" },
-    ],
-    LONG: [
-      { label: "Aquecimento", duration: Math.round(total * 0.10), color: "#22c55e" },
-      { label: "Corrida longa", duration: Math.round(total * 0.80), color: "#3b82f6" },
-      { label: "Arrefecimento", duration: Math.round(total * 0.10), color: "#a1a1aa" },
-    ],
-    RECOVERY: [
-      { label: "Corrida suave", duration: total, color: "#52525b" },
-    ],
-    TEMPO: [
-      { label: "Aquecimento", duration: Math.round(total * 0.20), color: "#22c55e" },
-      { label: "Tempo", duration: Math.round(total * 0.60), color: "#f97316" },
-      { label: "Arrefecimento", duration: Math.round(total * 0.20), color: "#a1a1aa" },
-    ],
-    INTERVALS: [
-      { label: "Aquecimento", duration: Math.round(total * 0.20), color: "#22c55e" },
-      { label: "Intervalos", duration: Math.round(total * 0.60), color: "#ef4444" },
-      { label: "Arrefecimento", duration: Math.round(total * 0.20), color: "#a1a1aa" },
-    ],
-    SWIM: [
-      { label: "Aquecimento", duration: Math.round(total * 0.20), color: "#06b6d4" },
-      { label: "Série principal", duration: Math.round(total * 0.60), color: "#3b82f6" },
-      { label: "Arrefecimento", duration: Math.round(total * 0.20), color: "#a1a1aa" },
-    ],
-    BRICK: [
-      { label: "Bicicleta", duration: Math.round(total * 0.65), color: "#eab308" },
-      { label: "Transição T2", duration: 180, color: "#a855f7" },
-      { label: "Corrida", duration: Math.round(total * 0.32), color: "#f97316" },
-    ],
-    STRENGTH: [
-      { label: "Aquecimento", duration: 600, color: "#22c55e" },
-      // Fixed 10min warmup + 5min stretching: keep the main block positive on
-      // sessions shorter than that.
-      { label: "Força", duration: Math.max(total - 900, 300), color: "#a855f7" },
-      { label: "Alongamentos", duration: 300, color: "#a1a1aa" },
-    ],
-  };
-
-  return phaseMap[sessionType] ?? [{ label: "Treino", duration: total, color: "#22c55e" }];
-}
+import { buildPhases } from "@/lib/workout-phases";
 
 function fmt(secs: number): string {
   const h = Math.floor(secs / 3600);
@@ -72,12 +16,18 @@ export function WorkoutTimer({
   sessionType,
   plannedDuration,
   sessionName,
+  warmup = null,
+  mainSet = null,
+  cooldown = null,
 }: {
   sessionType: string;
   plannedDuration: number | null;
   sessionName: string;
+  warmup?: string | null;
+  mainSet?: string | null;
+  cooldown?: string | null;
 }) {
-  const phases = buildPhases(sessionType, plannedDuration);
+  const phases = buildPhases(sessionType, plannedDuration, { warmup, mainSet, cooldown });
   const [active, setActive] = useState(false);
   const [phaseIdx, setPhaseIdx] = useState(0);
   const [elapsed, setElapsed] = useState(0); // seconds in current phase
@@ -137,22 +87,34 @@ export function WorkoutTimer({
     <div className="card">
       <h2 className="font-semibold text-white mb-4">Temporizador</h2>
 
-      {/* Phase list */}
+      {/* Phase list — segments track duration, and labels are dropped once an
+          interval set makes them too narrow to read */}
       <div className="flex gap-1 mb-5">
         {phases.map((p, i) => (
-          <div key={i} className="flex-1 flex flex-col items-center gap-1">
+          <div
+            key={i}
+            className="flex flex-col items-center gap-1 min-w-0"
+            style={{ flexGrow: Math.max(p.duration, 1), flexBasis: 0 }}
+          >
             <div
               className={`h-1.5 w-full rounded-full transition-all duration-300 ${
                 i < phaseIdx ? "opacity-40" : i === phaseIdx ? "opacity-100" : "opacity-20"
               }`}
               style={{ backgroundColor: p.color }}
             />
-            <span className={`text-[10px] ${i === phaseIdx ? "text-white" : "text-[var(--text-faint)]"}`}>
-              {p.label}
-            </span>
+            {phases.length <= 4 && (
+              <span className={`text-[10px] truncate ${i === phaseIdx ? "text-white" : "text-[var(--text-faint)]"}`}>
+                {p.label}
+              </span>
+            )}
           </div>
         ))}
       </div>
+      {phases.length > 4 && (
+        <p className="text-[10px] text-[var(--text-faint)] text-center -mt-3 mb-4">
+          Fase {phaseIdx + 1} de {phases.length}
+        </p>
+      )}
 
       {/* Circular timer */}
       <div className="flex flex-col items-center gap-4 py-2">
