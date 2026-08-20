@@ -41,13 +41,21 @@ self.addEventListener("activate", e => {
   );
 });
 
-// ── Fetch: stale-while-revalidate for pages, network-first for API ───────────
+// Workout exports (.tcx and .zip) served with Content-Disposition: attachment
+const DOWNLOAD_PATHS = /\/export-tcx(-zip)?$/;
+
+// ── Fetch: network-first for pages and API, cache-first for build assets ─────
 self.addEventListener("fetch", e => {
   const { request } = e;
   const url = new URL(request.url);
 
   // Only handle same-origin GET requests
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
+
+  // File downloads must reach the network untouched: a response handed back
+  // through respondWith() does not reliably trigger the browser's download
+  // handling (Safari drops it), and there is nothing worth caching here.
+  if (DOWNLOAD_PATHS.test(url.pathname)) return;
 
   // Skip Next.js internals
   if (url.pathname.startsWith("/_next/")) {
