@@ -10,7 +10,9 @@ type Phase = {
 };
 
 function buildPhases(sessionType: string, plannedDuration: number | null): Phase[] {
-  const total = plannedDuration ?? 3600;
+  // plannedDuration is stored in minutes (the plan writes plannedDurationMin);
+  // every phase below is in seconds.
+  const total = (plannedDuration ?? 60) * 60;
 
   const phaseMap: Record<string, Phase[]> = {
     EASY: [
@@ -48,7 +50,9 @@ function buildPhases(sessionType: string, plannedDuration: number | null): Phase
     ],
     STRENGTH: [
       { label: "Aquecimento", duration: 600, color: "#22c55e" },
-      { label: "Força", duration: total - 900, color: "#a855f7" },
+      // Fixed 10min warmup + 5min stretching: keep the main block positive on
+      // sessions shorter than that.
+      { label: "Força", duration: Math.max(total - 900, 300), color: "#a855f7" },
       { label: "Alongamentos", duration: 300, color: "#a1a1aa" },
     ],
   };
