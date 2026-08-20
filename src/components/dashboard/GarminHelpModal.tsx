@@ -134,33 +134,42 @@ export function GarminExportButton({ sessionId, weekId }: { sessionId: string; w
                 <span className="shrink-0">⚠️</span>
                 <p>A app Garmin Connect no iOS não suporta abertura direta de ficheiros .tcx. A integração nativa está em desenvolvimento e ficará disponível em breve.</p>
               </div>
-              <p className="text-xs text-[var(--text-muted)]">Alternativa: segue o treino pela app TrainAI no telemóvel — tens todas as instruções, pace e zonas visíveis no ecrã.</p>
+              <p className="text-xs text-[var(--text-muted)]">Usa antes o método do computador (abaixo) — funciona e envia o treino para o relógio. Em alternativa, segue o treino pela app TrainAI: tens todas as instruções, pace e zonas visíveis no ecrã.</p>
             </div>
 
             <div className="border-t border-[var(--border)]" />
 
-            {/* Via Strava */}
+            {/* Computador */}
             <div className="space-y-3">
               <div className="flex items-center gap-2 mb-2">
-                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-orange-400 shrink-0"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">Via Strava <span className="text-orange-400 text-xs font-normal">(iOS + Android)</span></p>
-              </div>
-              <div className="flex gap-3 p-3 rounded-xl bg-orange-500/5 border border-orange-500/15 text-xs text-[var(--text-secondary)] leading-relaxed">
-                <span className="shrink-0">💡</span>
-                <p>Se tiveres o Strava ligado ao Garmin Connect, os treinos registados no Strava sincronizam automaticamente com o Garmin.</p>
+                <span className="text-lg">💻</span>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Computador <span className="text-green-400 text-xs font-normal">(iOS + Android)</span></p>
               </div>
               {[
                 { n: 1, text: 'Descarrega o ficheiro .tcx para o computador' },
-                { n: 2, text: 'Acede a strava.com → Dashboard → + → Carregar atividade' },
-                { n: 3, text: 'Faz upload do ficheiro .tcx' },
-                { n: 4, text: 'O Strava sincroniza automaticamente com o Garmin Connect' },
+                { n: 2, text: 'Abre connect.garmin.com e inicia sessão' },
+                { n: 3, text: 'Treino e planeamento → Treinos → Importar' },
+                { n: 4, text: 'Agenda o treino no calendário e sincroniza o relógio' },
               ].map(({ n, text }) => (
                 <div key={n} className="flex items-start gap-3">
-                  <span className="shrink-0 w-6 h-6 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
                   <p className="text-sm text-[var(--text-secondary)]">{text}</p>
                 </div>
               ))}
-              <p className="text-xs text-[var(--text-muted)]">Para ativar a sincronização: Garmin Connect → Definições → Apps e dispositivos ligados → Strava.</p>
+            </div>
+
+            <div className="border-t border-[var(--border)]" />
+
+            {/* Strava — não serve para treinos planeados */}
+            <div className="space-y-3">
+              <div className="flex items-center gap-2 mb-2">
+                <svg viewBox="0 0 24 24" className="w-5 h-5 fill-orange-400 shrink-0"><path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169"/></svg>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">Strava <span className="text-red-400 text-xs font-normal">(não funciona)</span></p>
+              </div>
+              <div className="flex gap-3 p-3 rounded-xl bg-red-500/5 border border-red-500/15 text-xs text-[var(--text-secondary)] leading-relaxed">
+                <span className="shrink-0">🚫</span>
+                <p>Não faças upload destes ficheiros no Strava — dá sempre <strong className="text-[var(--text-primary)]">&quot;Error Processing Data&quot;</strong>. O Strava só aceita atividades já realizadas, com GPS e tempos; estes ficheiros são treinos <em>planeados</em>. O Strava continua a servir para o sentido inverso: regista o treino no relógio e ele aparece aqui automaticamente.</p>
+              </div>
             </div>
 
             <div className="border-t border-[var(--border)]" />
