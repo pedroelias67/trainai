@@ -88,6 +88,9 @@ model Athlete {
   stravaAccessToken  String?
   stravaRefreshToken String?
   stravaTokenExpiry  DateTime?
+  // Intervals.icu bridge: pushes planned workouts on to Garmin, COROS, Suunto and Wahoo
+  intervalsIcuApiKey    String?
+  intervalsIcuAthleteId String?
   pushSubscription Json?
   theme           String    @default("dark")
   createdAt       DateTime  @default(now())
