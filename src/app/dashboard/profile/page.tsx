@@ -8,6 +8,7 @@ import { LogoFull } from "@/components/ui/Logo";
 import NotificationSettings from "@/components/dashboard/NotificationSettings";
 import ThemeToggle from "@/components/dashboard/ThemeToggle";
 import { DeleteAccount } from "@/components/dashboard/DeleteAccount";
+import { WatchCompatibility } from "@/components/dashboard/WatchCompatibility";
 
 const fitnessLabels: Record<string, string> = {
   BEGINNER: "Iniciante", INTERMEDIATE: "Intermédio", ADVANCED: "Avançado", ELITE: "Elite",
@@ -146,6 +147,9 @@ export default async function ProfilePage() {
             ) : (
               <Link href="/api/strava/connect" className="btn-primary text-xs py-2">Conectar</Link>
             )}
+          </div>
+          <div className="mt-4">
+            <WatchCompatibility />
           </div>
         </div>
 

@@ -80,7 +80,7 @@ export default function HomePage() {
             {
               step: "02",
               title: "Conecta o Strava",
-              desc: "Liga o Strava (que sincroniza com Garmin automaticamente). Os dados chegam em segundos após cada treino.",
+              desc: "Funciona com Garmin, COROS, Suunto, Polar, Wahoo e outros — qualquer relógio que sincronize com o Strava. Os dados chegam em segundos após cada treino.",
               icon: "⚡",
             },
             {

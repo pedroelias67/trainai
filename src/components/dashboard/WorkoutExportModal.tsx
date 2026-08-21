@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { WatchCompatibility } from "@/components/dashboard/WatchCompatibility";
 
 const DownloadIcon = () => (
   <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-none stroke-current" strokeWidth={2}>
@@ -98,9 +99,11 @@ export function WorkoutExportButton({ sessionId, weekId }: { sessionId: string; 
 
             <div className="border-t border-[var(--border)]" />
 
+            <WatchCompatibility />
+
             <div className="flex gap-3 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-xs text-[var(--text-secondary)] leading-relaxed">
               <span className="text-lg shrink-0">⚠️</span>
-              <p><strong className="text-[var(--text-primary)]">Nenhum relógio importa este ficheiro diretamente.</strong> Tanto a Garmin como a Huawei só aceitam treinos planeados pelos seus próprios canais, não por upload. O download serve para arquivo — para treinar, segue o método abaixo.</p>
+              <p><strong className="text-[var(--text-primary)]">O que ainda não é automático é o sentido inverso:</strong> enviar o treino planeado para o relógio. Nenhuma marca aceita este ficheiro por upload — só pelos seus próprios canais. O download serve para arquivo; para treinar, segue o método abaixo.</p>
             </div>
 
             {/* O que é este ficheiro */}

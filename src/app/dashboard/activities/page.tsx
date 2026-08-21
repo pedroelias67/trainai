@@ -5,6 +5,7 @@ import Link from "next/link";
 import { LogoFull } from "@/components/ui/Logo";
 import { SyncButton } from "@/components/dashboard/SyncButton";
 import ActivitiesList from "@/components/dashboard/ActivitiesList";
+import { WatchCompatibility } from "@/components/dashboard/WatchCompatibility";
 
 
 export default async function ActivitiesPage() {
@@ -87,13 +88,16 @@ export default async function ActivitiesPage() {
         )}
 
         {activities.length === 0 ? (
-          <div className="card text-center py-20">
+          <div className="card text-center py-16">
             <p className="text-4xl mb-4">⚡</p>
             <h2 className="text-xl font-bold text-white mb-2">Sem atividades ainda</h2>
             <p className="text-[var(--text-muted)] text-sm mb-2">Liga o Strava para sincronizar os teus treinos automaticamente</p>
             {!athlete.stravaConnected && (
               <Link href="/api/strava/connect" className="btn-primary inline-block mt-4">Conectar Strava</Link>
             )}
+            <div className="max-w-md mx-auto mt-8 text-left">
+              <WatchCompatibility />
+            </div>
           </div>
         ) : (
           <ActivitiesList activities={activities.map((a) => ({ ...a, date: a.date.toISOString() }))} />
