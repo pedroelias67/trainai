@@ -143,6 +143,7 @@ export default async function PlanPage() {
                       defaultOpen={defaultOpen}
                       header={weekHeader}
                       zipHref={`/api/weeks/${week.id}/export-tcx-zip`}
+                      intervalsConnected={!!athlete.intervalsIcuApiKey}
                     >
                       {/* Sessions */}
                       <PlanWeekGrid sessions={week.sessions.map((s) => ({
