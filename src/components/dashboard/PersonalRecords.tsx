@@ -40,9 +40,11 @@ export function PersonalRecords({ records, hasActivities = false }: Props) {
   const router = useRouter();
   const [calculating, setCalculating] = useState(false);
 
-  // Records are derived on sync. An athlete whose activities were imported
-  // before that existed needs a way to backfill them once.
-  const needsBackfill = records.length === 0 && hasActivities;
+  // Records are derived on sync, but they can also be stale — an athlete whose
+  // records predate a change in how they are computed needs to be able to
+  // rebuild them without waiting for the next activity to land.
+  const canRecalculate = hasActivities;
+  const isEmpty = records.length === 0;
 
   async function calculate() {
     setCalculating(true);
@@ -58,10 +60,16 @@ export function PersonalRecords({ records, hasActivities = false }: Props) {
     <div className="card mb-6">
       <div className="flex items-center justify-between gap-3 mb-1">
         <h2 className="font-bold text-white">Records Pessoais</h2>
-        {needsBackfill && (
+        {canRecalculate && (
           <button onClick={calculate} disabled={calculating}
-            className="btn-primary text-xs py-1.5 px-3 shrink-0 disabled:opacity-50">
-            {calculating ? "A calcular…" : "Calcular a partir do histórico"}
+            className={
+              isEmpty
+                ? "btn-primary text-xs py-1.5 px-3 shrink-0 disabled:opacity-50"
+                : "text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors shrink-0 disabled:opacity-50"
+            }>
+            {calculating
+              ? "A calcular…"
+              : isEmpty ? "Calcular a partir do histórico" : "Recalcular"}
           </button>
         )}
       </div>

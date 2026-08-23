@@ -43,6 +43,44 @@ export function matchesDistance(actualMetres: number, targetMetres: number): boo
   return actualMetres >= targetMetres * 0.99 && actualMetres <= targetMetres * 1.05;
 }
 
+export type Split = { km: number; pace: string | null };
+
+/** "5:25/km" → 325 seconds. */
+export function paceToSeconds(pace: string | null): number | null {
+  if (!pace) return null;
+  const m = pace.match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const secs = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
+  return secs > 0 ? secs : null;
+}
+
+/**
+ * Fastest continuous stretch of `targetKm` inside a longer run, the way a watch
+ * reports a best effort. Only whole kilometre splits are used: the last split of
+ * an activity is usually a partial kilometre, and its per-km pace would count as
+ * a full one. Returns null when the run is simply not long enough.
+ */
+export function bestEffortFromSplits(
+  splits: Split[],
+  activityMetres: number,
+  targetKm: number
+): number | null {
+  const wholeKm = Math.floor(activityMetres / 1000);
+  const usable = splits
+    .slice(0, wholeKm)
+    .map(s => paceToSeconds(s.pace));
+
+  if (usable.length < targetKm || usable.some(s => s === null)) return null;
+
+  let best: number | null = null;
+  for (let i = 0; i + targetKm <= usable.length; i++) {
+    let sum = 0;
+    for (let j = i; j < i + targetKm; j++) sum += usable[j]!;
+    if (best === null || sum < best) best = sum;
+  }
+  return best;
+}
+
 async function upsertRecord(
   athleteId: string,
   distance: number,
@@ -69,7 +107,7 @@ export async function recalculatePersonalRecords(athleteId: string): Promise<str
 
   const runs = await prisma.activity.findMany({
     where: { athleteId, sport: "RUNNING", distance: { not: null }, duration: { not: null } },
-    select: { id: true, distance: true, duration: true, date: true },
+    select: { id: true, distance: true, duration: true, date: true, splits: true },
   });
 
   for (const std of STANDARD_DISTANCES) {
@@ -81,10 +119,25 @@ export async function recalculatePersonalRecords(athleteId: string): Promise<str
       // Discards GPS glitches and anything that is not running pace.
       const speedKmh = dist / 1000 / (dur / 3600);
       if (speedKmh < 5 || speedKmh > 25) continue;
-      if (!matchesDistance(dist, std.meters)) continue;
 
-      if (!best || dur < best.timeSeconds) {
-        best = { timeSeconds: dur, activityId: act.id, date: act.date };
+      // The whole activity was that distance, so its time is the record.
+      let timeSeconds: number | null = matchesDistance(dist, std.meters) ? dur : null;
+
+      // Otherwise look for the distance run as a stretch inside a longer effort.
+      // Splits are whole kilometres, so this only applies to distances that are
+      // themselves whole kilometres — summing 21 of them would be 97m short of a
+      // half marathon and would flatter the time.
+      const isWholeKm = std.meters % 1000 === 0;
+      if (timeSeconds === null && isWholeKm && dist > std.meters && Array.isArray(act.splits)) {
+        timeSeconds = bestEffortFromSplits(
+          act.splits as unknown as Split[],
+          dist,
+          std.meters / 1000
+        );
+      }
+
+      if (timeSeconds !== null && (!best || timeSeconds < best.timeSeconds)) {
+        best = { timeSeconds, activityId: act.id, date: act.date };
       }
     }
 
