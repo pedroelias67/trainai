@@ -6,6 +6,8 @@ import { LogoFull } from "@/components/ui/Logo";
 import { format, subDays, isSameDay, startOfWeek, startOfMonth, subMonths } from "date-fns";
 import { monthlyStats } from "@/lib/monthly-stats";
 import { MonthlySummary } from "@/components/dashboard/MonthlySummary";
+import { estimateVO2max, effortsFromActivities, vo2maxRating } from "@/lib/vo2max";
+import { VO2maxCard } from "@/components/dashboard/VO2maxCard";
 import { pt } from "date-fns/locale";
 import { FitnessChart } from "@/components/dashboard/FitnessChart";
 import { PersonalRecords } from "@/components/dashboard/PersonalRecords";
@@ -71,6 +73,12 @@ export default async function FitnessPage() {
     select: { date: true, sport: true, distance: true, duration: true, elevationGain: true },
   });
   const months = monthlyStats(monthlyActivities, 12);
+
+  const vo2max = estimateVO2max(effortsFromActivities(monthlyActivities));
+  const age = athlete.dateOfBirth
+    ? new Date().getFullYear() - athlete.dateOfBirth.getFullYear()
+    : null;
+  const vo2maxRatingLabel = vo2max ? vo2maxRating(vo2max.value, age, athlete.gender) : null;
 
   const personalRecords = await prisma.personalRecord.findMany({
     where: { athleteId: athlete.id },
@@ -207,6 +215,7 @@ export default async function FitnessPage() {
         />
 
         <div className="mt-6 space-y-4">
+          <VO2maxCard estimate={vo2max} rating={vo2maxRatingLabel} />
           <MonthlySummary months={months} />
           <MonthlyVolumeChart activities={monthlyActivities.map(a => ({
             date: a.date.toISOString(),
