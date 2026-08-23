@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { subDays } from "date-fns";
 
 interface PR {
@@ -14,6 +16,8 @@ interface PR {
 
 interface Props {
   records: PR[];
+  /** Whether there is any run history to derive records from. */
+  hasActivities?: boolean;
 }
 
 const DISTANCES = [
@@ -31,12 +35,36 @@ function formatTime(seconds: number): string {
   return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-export function PersonalRecords({ records }: Props) {
+export function PersonalRecords({ records, hasActivities = false }: Props) {
   const thirtyDaysAgo = subDays(new Date(), 30);
+  const router = useRouter();
+  const [calculating, setCalculating] = useState(false);
+
+  // Records are derived on sync. An athlete whose activities were imported
+  // before that existed needs a way to backfill them once.
+  const needsBackfill = records.length === 0 && hasActivities;
+
+  async function calculate() {
+    setCalculating(true);
+    try {
+      await fetch("/api/personal-records", { method: "POST" });
+      router.refresh();
+    } finally {
+      setCalculating(false);
+    }
+  }
 
   return (
     <div className="card mb-6">
-      <h2 className="font-bold text-white mb-4">Records Pessoais</h2>
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <h2 className="font-bold text-white">Records Pessoais</h2>
+        {needsBackfill && (
+          <button onClick={calculate} disabled={calculating}
+            className="btn-primary text-xs py-1.5 px-3 shrink-0 disabled:opacity-50">
+            {calculating ? "A calcular…" : "Calcular a partir do histórico"}
+          </button>
+        )}
+      </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {DISTANCES.map(({ meters, label }) => {
           const pr = records.find((r) => r.distance === meters);

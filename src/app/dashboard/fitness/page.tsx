@@ -205,7 +205,9 @@ export default async function FitnessPage() {
           pace: r.pace,
           date: r.date.toISOString(),
           activityId: r.activityId,
-        }))} />
+        }))}
+          hasActivities={monthlyActivities.some(a => a.sport === "RUNNING" && a.distance && a.duration)}
+        />
 
         <FitnessChart
           data={chartData}

@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getRecentStravaActivities, refreshStravaToken } from "@/lib/strava";
 import { syncStravaActivity } from "@/lib/sync-activity";
+import { recalculatePersonalRecords } from "@/lib/personal-records";
 
 export async function POST() {
   const cookieStore = await cookies();
@@ -39,5 +40,17 @@ export async function POST() {
     synced++;
   }
 
-  return NextResponse.json({ synced });
+  // Records are derived from the full activity history, so they only stay
+  // current if this runs whenever new activities land.
+  let records: string[] = [];
+  if (synced > 0) {
+    try {
+      records = await recalculatePersonalRecords(athlete.id);
+    } catch (err) {
+      // A failure here must not lose the activities that were just imported.
+      console.error("Personal records recalculation failed:", err);
+    }
+  }
+
+  return NextResponse.json({ synced, records: records.length });
 }
