@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LogoFull } from "@/components/ui/Logo";
-import { format, subDays, isSameDay, startOfWeek } from "date-fns";
+import { format, subDays, isSameDay, startOfWeek, startOfMonth, subMonths } from "date-fns";
+import { monthlyStats } from "@/lib/monthly-stats";
+import { MonthlySummary } from "@/components/dashboard/MonthlySummary";
 import { pt } from "date-fns/locale";
 import { FitnessChart } from "@/components/dashboard/FitnessChart";
 import { PersonalRecords } from "@/components/dashboard/PersonalRecords";
@@ -57,6 +59,18 @@ export default async function FitnessPage() {
     },
   });
   if (!athlete) redirect("/onboarding");
+
+  // The monthly views span a year, so they cannot be served from the 90-day
+  // window the fitness charts use — that silently emptied their oldest months.
+  const monthlyActivities = await prisma.activity.findMany({
+    where: {
+      athleteId: athlete.id,
+      date: { gte: startOfMonth(subMonths(new Date(), 11)) },
+    },
+    orderBy: { date: "asc" },
+    select: { date: true, sport: true, distance: true, duration: true, elevationGain: true },
+  });
+  const months = monthlyStats(monthlyActivities, 12);
 
   const personalRecords = await prisma.personalRecord.findMany({
     where: { athleteId: athlete.id },
@@ -193,7 +207,8 @@ export default async function FitnessPage() {
         />
 
         <div className="mt-6 space-y-4">
-          <MonthlyVolumeChart activities={athlete.activities.map(a => ({
+          <MonthlySummary months={months} />
+          <MonthlyVolumeChart activities={monthlyActivities.map(a => ({
             date: a.date.toISOString(),
             sport: a.sport,
             distance: a.distance,
