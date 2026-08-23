@@ -1,9 +1,6 @@
 "use client";
 
-// Riegel formula: T2 = T1 × (D2/D1)^1.06
-function riegel(knownTimeSecs: number, knownDistM: number, targetDistM: number): number {
-  return knownTimeSecs * Math.pow(targetDistM / knownDistM, 1.06);
-}
+import { riegel, pickReferenceRecord, formatRaceDistance } from "@/lib/race-prediction";
 
 function formatTime(secs: number): string {
   const h = Math.floor(secs / 3600);
@@ -51,13 +48,14 @@ export function RacePrediction({ records, recentBestPaceSec, recentBestDistM, ta
   let bestDistM: number | null = null;
   let source = "";
 
-  if (records.length > 0) {
-    const sorted = [...records].sort((a, b) =>
-      Math.abs(a.distance * 1000 - target.meters) - Math.abs(b.distance * 1000 - target.meters)
-    );
-    bestTimeSecs = sorted[0].timeSeconds;
-    bestDistM = sorted[0].distance * 1000;
-    source = `baseado no teu recorde de ${sorted[0].distance}km`;
+  // PersonalRecord.distance is already in metres — multiplying it by 1000 here
+  // was turning a 5km record into 5000km and collapsing every prediction to
+  // under a second.
+  const reference = pickReferenceRecord(records, target.meters);
+  if (reference) {
+    bestTimeSecs = reference.timeSeconds;
+    bestDistM = reference.distance;
+    source = `baseado no teu recorde de ${formatRaceDistance(reference.distance)}`;
   } else if (recentBestPaceSec && recentBestDistM && recentBestDistM >= 3000) {
     bestTimeSecs = recentBestPaceSec * (recentBestDistM / 1000);
     bestDistM = recentBestDistM;
