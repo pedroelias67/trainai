@@ -3,6 +3,9 @@ import {
   vdot,
   estimateVO2max,
   effortsFromActivities,
+  vo2maxFromRun,
+  estimateFromHeartRate,
+  bestVO2maxEstimate,
   vo2maxRating,
   type EffortRecord,
 } from "@/lib/vo2max";
@@ -81,6 +84,101 @@ describe("estimateVO2max", () => {
 
   it("returns nothing rather than a fabricated number", () => {
     expect(estimateVO2max([], NOW)).toBeNull();
+  });
+});
+
+describe("vo2maxFromRun", () => {
+  const hr = { restingHR: 50, maxHR: 190 };
+
+  it("reproduces the watch's reading from pace and heart rate", () => {
+    // 17km in 95min at 150bpm — the run that showed 43 on the Garmin.
+    expect(vo2maxFromRun(17000, 95 * 60, 150, hr)).toBeCloseTo(43.9, 1);
+  });
+
+  it("rates the same pace higher when the heart rate is lower", () => {
+    const easy = vo2maxFromRun(10000, 55 * 60, 140, hr)!;
+    const strained = vo2maxFromRun(10000, 55 * 60, 170, hr)!;
+    expect(easy).toBeGreaterThan(strained);
+  });
+
+  it("skips runs too easy to extrapolate from", () => {
+    // At 60bpm the athlete is barely above resting; dividing by that reserve
+    // would turn a gentle jog into a world-class number.
+    expect(vo2maxFromRun(10000, 60 * 60, 60, hr)).toBeNull();
+  });
+
+  it("refuses to work without both heart rates", () => {
+    expect(vo2maxFromRun(10000, 3300, 150, { restingHR: null, maxHR: 190 })).toBeNull();
+    expect(vo2maxFromRun(10000, 3300, 150, { restingHR: 50, maxHR: null })).toBeNull();
+  });
+});
+
+describe("estimateFromHeartRate", () => {
+  const hr = { restingHR: 50, maxHR: 190 };
+  const run = (date: string, metres: number, mins: number, avgHR: number) =>
+    ({ date: new Date(date), sport: "RUNNING", distance: metres, duration: mins * 60, avgHR });
+
+  it("takes the median so one odd reading cannot set the number", () => {
+    const out = estimateFromHeartRate([
+      run("2026-08-01", 10000, 55, 155),
+      run("2026-08-05", 10000, 55, 155),
+      run("2026-08-10", 10000, 30, 155), // implausibly fast, e.g. a GPS error
+      run("2026-08-15", 10000, 55, 155),
+      run("2026-08-20", 10000, 55, 155),
+    ], hr, NOW);
+
+    const clean = vo2maxFromRun(10000, 55 * 60, 155, hr)!;
+    expect(out!.value).toBeCloseTo(clean, 1);
+  });
+
+  it("needs a few runs before reporting anything", () => {
+    expect(estimateFromHeartRate([run("2026-08-01", 10000, 55, 155)], hr, NOW)).toBeNull();
+  });
+
+  it("ignores rides and runs without heart rate", () => {
+    const out = estimateFromHeartRate([
+      { date: new Date("2026-08-01"), sport: "CYCLING", distance: 40000, duration: 3600, avgHR: 150 },
+      { date: new Date("2026-08-02"), sport: "RUNNING", distance: 10000, duration: 3300, avgHR: null },
+      run("2026-08-03", 10000, 55, 155),
+    ], hr, NOW);
+    expect(out).toBeNull();
+  });
+});
+
+describe("bestVO2maxEstimate", () => {
+  const hr = { restingHR: 50, maxHR: 190 };
+  const run = (date: string, metres: number, mins: number, avgHR: number | null) =>
+    ({ date: new Date(date), sport: "RUNNING", distance: metres, duration: mins * 60, avgHR });
+
+  it("prefers heart rate when efforts were submaximal", () => {
+    // Training runs: VDOT reads them as a floor, heart rate sees past it.
+    const runs = [
+      run("2026-08-01", 17000, 95, 150),
+      run("2026-08-05", 10000, 56, 150),
+      run("2026-08-10", 12000, 68, 150),
+    ];
+    const out = bestVO2maxEstimate(runs, hr, NOW)!;
+    expect(out.method).toBe("heart-rate-reserve");
+    expect(out.value).toBeGreaterThan(40);
+  });
+
+  it("lets a genuinely maximal effort win", () => {
+    const runs = [
+      run("2026-08-01", 10000, 60, 150),
+      run("2026-08-05", 10000, 60, 150),
+      run("2026-08-10", 10000, 60, 150),
+      run("2026-08-15", 5000, 18, 185), // a real race
+    ];
+    expect(bestVO2maxEstimate(runs, hr, NOW)!.method).toBe("performance");
+  });
+
+  it("still works from performance alone when heart rates are unknown", () => {
+    const out = bestVO2maxEstimate(
+      [run("2026-08-01", 5000, 20, null)],
+      { restingHR: null, maxHR: null },
+      NOW
+    );
+    expect(out!.method).toBe("performance");
   });
 });
 

@@ -1,19 +1,39 @@
-// VO2max estimation, from performance only.
+// VO2max estimation.
 //
-// Jack Daniels' VDOT derives VO2max from a hard effort's distance and time, and
-// is what running watches approximate. The heart-rate ratio (15.3 × HRmax/HRrest)
-// was considered and rejected: its ±10-15% error compounds with the fact that
-// most athletes only estimate their true HRmax, and a wrong number carries more
-// authority than no number. When there is no qualifying effort, this returns
-// nothing and the UI says what to run.
+// Two methods, because they answer different questions:
+//
+//   Heart-rate reserve — reads pace against heart rate on ordinary training
+//   runs. Since %HRR approximates %VO2max, a run's oxygen cost divided by its
+//   share of heart-rate reserve extrapolates to the maximum. This is roughly
+//   what a running watch does, and it needs no maximal effort.
+//
+//   VDOT — Daniels' formula, which answers "if this effort were maximal, what
+//   would your VO2max be". Exact when the athlete actually raced, and a floor
+//   otherwise: a 5K run at training pace reports the fitness that pace proves,
+//   not the fitness the athlete has.
+//
+// The heart-rate method leads because most athletes never race. VDOT is used
+// when it comes out higher, which can only happen if an effort really was close
+// to maximal.
+//
+// Not to be confused with the bare ratio 15.3 × HRmax/HRrest, which ignores
+// running data entirely and is not used here.
+
+export type VO2maxMethod = "heart-rate-reserve" | "performance";
 
 export type VO2maxEstimate = {
   value: number;
+  method: VO2maxMethod;
   /** Human-readable provenance, so the number is never unexplained. */
   source: string;
   date: Date;
   confidence: "alta" | "média";
 };
+
+/** Oxygen cost of running at a given velocity, in m/min (Daniels). */
+export function vo2AtVelocity(metresPerMin: number): number {
+  return -4.6 + 0.182258 * metresPerMin + 0.000104 * metresPerMin * metresPerMin;
+}
 
 /**
  * Daniels' VDOT. Valid for efforts run at or near maximum, across the range his
@@ -34,6 +54,88 @@ export function vdot(distanceMetres: number, timeSeconds: number): number | null
   if (percentMax <= 0) return null;
   const result = vo2 / percentMax;
   return result > 0 && result < 100 ? Math.round(result * 10) / 10 : null;
+}
+
+export type HeartRates = { restingHR: number | null; maxHR: number | null };
+
+export type HeartRateRun = {
+  date: Date | string;
+  sport: string;
+  distance: number | null; // metres
+  duration: number | null; // seconds
+  avgHR: number | null;
+};
+
+/**
+ * VO2max implied by one run's pace and heart rate.
+ *
+ * Runs well below half of heart-rate reserve are rejected: the extrapolation to
+ * maximum becomes long enough that a few beats of drift swing the answer wildly.
+ */
+export function vo2maxFromRun(
+  metres: number,
+  seconds: number,
+  avgHR: number,
+  hr: HeartRates
+): number | null {
+  const { restingHR, maxHR } = hr;
+  if (!restingHR || !maxHR || maxHR <= restingHR) return null;
+  if (metres <= 0 || seconds <= 0) return null;
+
+  const reserve = (avgHR - restingHR) / (maxHR - restingHR);
+  if (reserve < 0.5 || reserve > 1) return null;
+
+  const velocity = metres / (seconds / 60);
+  const vo2 = vo2AtVelocity(velocity);
+  if (vo2 <= 0) return null;
+
+  const result = vo2 / reserve;
+  return result > 20 && result < 90 ? Math.round(result * 10) / 10 : null;
+}
+
+function median(values: number[]): number {
+  const sorted = [...values].sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  return sorted.length % 2 === 0 ? (sorted[mid - 1] + sorted[mid]) / 2 : sorted[mid];
+}
+
+/**
+ * Median across recent runs rather than the best of them: a single run with a
+ * misread heart rate would otherwise set the number, and it would only ever
+ * ratchet upward.
+ */
+export function estimateFromHeartRate(
+  runs: HeartRateRun[],
+  hr: HeartRates,
+  now = new Date(),
+  windowDays = 90
+): VO2maxEstimate | null {
+  const cutoff = new Date(now.getTime() - windowDays * 24 * 60 * 60 * 1000);
+
+  const values: number[] = [];
+  let latest: Date | null = null;
+
+  for (const run of runs) {
+    if (run.sport !== "RUNNING" || !run.distance || !run.duration || !run.avgHR) continue;
+    const when = new Date(run.date);
+    if (when < cutoff) continue;
+
+    const value = vo2maxFromRun(run.distance, run.duration, run.avgHR, hr);
+    if (value === null) continue;
+
+    values.push(value);
+    if (!latest || when > latest) latest = when;
+  }
+
+  if (values.length < 3 || !latest) return null;
+
+  return {
+    value: Math.round(median(values) * 10) / 10,
+    method: "heart-rate-reserve",
+    source: `${values.length} treinos dos últimos ${windowDays} dias, por pace e FC`,
+    date: latest,
+    confidence: values.length >= 8 ? "alta" : "média",
+  };
 }
 
 export type EffortRecord = {
@@ -92,11 +194,30 @@ export function estimateVO2max(
   const ageMonths = (now.getTime() - when.getTime()) / (1000 * 60 * 60 * 24 * 30.4);
   return {
     value: best.value,
+    method: "performance",
     source: `${formatDistance(best.record.distance)} em ${formatTime(best.record.timeSeconds)}`,
     date: when,
     // A performance from months ago describes the shape you had then.
     confidence: ageMonths <= 3 ? "alta" : "média",
   };
+}
+
+/**
+ * Combines both readings. VDOT only wins when it exceeds the heart-rate estimate,
+ * which requires an effort close to maximal — exactly the case VDOT is exact for.
+ */
+export function bestVO2maxEstimate(
+  runs: HeartRateRun[],
+  hr: HeartRates,
+  now = new Date()
+): VO2maxEstimate | null {
+  const fromHeartRate = estimateFromHeartRate(runs, hr, now);
+  const fromPerformance = estimateVO2max(effortsFromActivities(runs), now);
+
+  if (fromHeartRate && fromPerformance) {
+    return fromPerformance.value > fromHeartRate.value ? fromPerformance : fromHeartRate;
+  }
+  return fromHeartRate ?? fromPerformance;
 }
 
 /**

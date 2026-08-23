@@ -6,7 +6,7 @@ import { LogoFull } from "@/components/ui/Logo";
 import { format, subDays, isSameDay, startOfWeek, startOfMonth, subMonths } from "date-fns";
 import { monthlyStats } from "@/lib/monthly-stats";
 import { MonthlySummary } from "@/components/dashboard/MonthlySummary";
-import { estimateVO2max, effortsFromActivities, vo2maxRating } from "@/lib/vo2max";
+import { bestVO2maxEstimate, vo2maxRating } from "@/lib/vo2max";
 import { VO2maxCard } from "@/components/dashboard/VO2maxCard";
 import { pt } from "date-fns/locale";
 import { FitnessChart } from "@/components/dashboard/FitnessChart";
@@ -70,11 +70,14 @@ export default async function FitnessPage() {
       date: { gte: startOfMonth(subMonths(new Date(), 11)) },
     },
     orderBy: { date: "asc" },
-    select: { date: true, sport: true, distance: true, duration: true, elevationGain: true },
+    select: { date: true, sport: true, distance: true, duration: true, elevationGain: true, avgHR: true },
   });
   const months = monthlyStats(monthlyActivities, 12);
 
-  const vo2max = estimateVO2max(effortsFromActivities(monthlyActivities));
+  const vo2max = bestVO2maxEstimate(monthlyActivities, {
+    restingHR: athlete.restingHR,
+    maxHR: athlete.maxHR,
+  });
   const age = athlete.dateOfBirth
     ? new Date().getFullYear() - athlete.dateOfBirth.getFullYear()
     : null;
