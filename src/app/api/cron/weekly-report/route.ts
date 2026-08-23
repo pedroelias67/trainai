@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { analyzeWeekAndAdapt, suggestSessionAdaptations } from "@/lib/claude";
 import { sendWeeklyReportEmail } from "@/lib/email";
+import * as Sentry from "@sentry/nextjs";
 import { differenceInWeeks } from "date-fns";
 import { startOfWeek, endOfWeek, subWeeks, subDays, startOfDay } from "date-fns";
 
@@ -109,6 +110,7 @@ export async function GET(req: NextRequest) {
       });
 
       // Auto-adapt NEXT week's sessions based on this analysis
+      let adaptationFailed = false;
       try {
         const nextWeek = await prisma.trainingWeek.findFirst({
           where: { planId: week.planId, weekNumber: week.weekNumber + 1 },
@@ -161,7 +163,14 @@ export async function GET(req: NextRequest) {
           });
         }
       } catch (adaptErr) {
+        // The report is still worth sending, but the athlete must not be left
+        // assuming next week was adjusted when it was not.
+        adaptationFailed = true;
         console.error("Adaptation error:", adaptErr);
+        Sentry.captureException(adaptErr, {
+          tags: { job: "weekly-report", stage: "adaptation" },
+          extra: { athleteId: athlete.id, weekId: week.id, weekNumber: week.weekNumber },
+        });
       }
 
       // Send push notification if athlete has subscription
@@ -205,14 +214,23 @@ export async function GET(req: NextRequest) {
           nextWeekAdaptations: analysis.nextWeekAdjustments ?? null,
           eventName: week.plan.event.name,
           weeksToEvent,
+          adaptationFailed,
         });
       } catch (emailErr) {
         console.error("Weekly email error:", emailErr);
+        Sentry.captureException(emailErr, {
+          tags: { job: "weekly-report", stage: "email" },
+          extra: { athleteId: athlete.id, weekId: week.id },
+        });
       }
 
       generated++;
     } catch (err) {
       console.error(`Weekly report error for week ${week.id}:`, err);
+      Sentry.captureException(err, {
+        tags: { job: "weekly-report", stage: "week" },
+        extra: { weekId: week.id },
+      });
     }
   }
 

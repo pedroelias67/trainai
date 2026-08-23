@@ -92,6 +92,8 @@ export async function sendWeeklyReportEmail(
     nextWeekAdaptations: string | null;
     eventName: string;
     weeksToEvent: number;
+    /** Next week's sessions could not be adjusted — say so rather than let it pass unnoticed. */
+    adaptationFailed?: boolean;
   }
 ) {
   const completionPct = data.plannedSessions > 0
@@ -130,6 +132,13 @@ export async function sendWeeklyReportEmail(
 
         ${emailInfoBox("✦ Análise do Treinador IA", data.aiSummary)}
         ${data.nextWeekAdaptations ? emailInfoBox(`Semana ${data.weekNumber + 1} — Ajustes`, data.nextWeekAdaptations, "#3b82f6") : ""}
+        ${data.adaptationFailed
+          ? emailInfoBox(
+              "Atenção",
+              `Não foi possível ajustar automaticamente as sessões da semana ${data.weekNumber + 1} desta vez. O plano mantém-se como estava — segue a análise acima ao executá-lo. Já fomos notificados.`,
+              "#eab308"
+            )
+          : ""}
 
         ${emailDivider()}
         <p style="margin:0 0 16px;font-size:13px;color:#52525b;text-align:center">
