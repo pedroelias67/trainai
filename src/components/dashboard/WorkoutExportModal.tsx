@@ -148,7 +148,10 @@ export function WorkoutExportButton({ sessionId, weekId }: { sessionId: string; 
                 <p className="text-sm font-semibold text-[var(--text-primary)]">Garmin</p>
               </div>
               <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                O envio direto dos treinos para o relógio está a caminho: o pedido de acesso à API da Garmin já foi submetido e aguarda aprovação. Até lá, o <strong className="text-[var(--text-primary)]">Intervals.icu</strong> serve de ponte — liga-se ao Garmin Connect em <em>Settings → Integrations</em>, crias lá o treino em <em>Calendar → Add → Workout</em> e envias para o relógio. Ressalva: reconstróis a estrutura a partir do que vês neste ecrã, porque a ponte não lê o nosso ficheiro.
+                Já não precisas de ficheiros: liga o <strong className="text-[var(--text-primary)]">Intervals.icu</strong> no teu Perfil e cada semana do plano ganha um botão para enviar os treinos diretamente para o relógio. Serve igualmente para COROS, Suunto e Wahoo.
+              </p>
+              <p className="text-xs text-[var(--text-muted)]">
+                A integração direta com a Garmin depende do programa de developers deles, que está suspenso por tempo indeterminado. A ponte não espera por isso.
               </p>
             </div>
 
