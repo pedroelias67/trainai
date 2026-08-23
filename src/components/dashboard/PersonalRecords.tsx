@@ -56,7 +56,7 @@ export function PersonalRecords({ records, hasActivities = false }: Props) {
 
   return (
     <div className="card mb-6">
-      <div className="flex items-center justify-between gap-3 mb-4">
+      <div className="flex items-center justify-between gap-3 mb-1">
         <h2 className="font-bold text-white">Records Pessoais</h2>
         {needsBackfill && (
           <button onClick={calculate} disabled={calculating}
@@ -65,6 +65,9 @@ export function PersonalRecords({ records, hasActivities = false }: Props) {
           </button>
         )}
       </div>
+      <p className="text-xs text-[var(--text-muted)] mb-4">
+        Tempos que correste de facto. Para distâncias que ainda não fizeste, vê a previsão de prova no Dashboard.
+      </p>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         {DISTANCES.map(({ meters, label }) => {
           const pr = records.find((r) => r.distance === meters);
@@ -90,7 +93,10 @@ export function PersonalRecords({ records, hasActivities = false }: Props) {
                   )}
                 </>
               ) : (
-                <p className="text-2xl text-zinc-700 font-bold mt-2">—</p>
+                <>
+                  <p className="text-2xl text-zinc-700 font-bold mt-2">—</p>
+                  <p className="text-[10px] text-[var(--text-faint)] mt-1">ainda não corrida</p>
+                </>
               )}
             </div>
           );

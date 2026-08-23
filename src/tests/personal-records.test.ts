@@ -1,35 +1,30 @@
 import { describe, it, expect } from "vitest";
-import { riegelTime, canProject, formatPace } from "@/lib/personal-records";
+import { matchesDistance, formatPace } from "@/lib/personal-records";
 
-describe("riegelTime", () => {
-  it("returns the same time for the same distance", () => {
-    expect(riegelTime(5000, 1200, 5000)).toBeCloseTo(1200, 5);
+describe("matchesDistance", () => {
+  it("accepts an activity that really covers the distance", () => {
+    expect(matchesDistance(5000, 5000)).toBe(true);
+    expect(matchesDistance(5120, 5000)).toBe(true);   // race run slightly long
+    expect(matchesDistance(4960, 5000)).toBe(true);   // GPS undershoot
+    expect(matchesDistance(21300, 21097)).toBe(true);
   });
 
-  it("projects a slower pace over a longer distance", () => {
-    // A 20:00 5K projects to roughly 41:35 over 10K — slower per km, as expected.
-    const tenK = riegelTime(5000, 20 * 60, 10000);
-    expect(tenK).toBeGreaterThan(40 * 60);
-    expect(tenK).toBeLessThan(43 * 60);
-    expect(tenK / 10).toBeGreaterThan((20 * 60) / 5);
-  });
-});
-
-describe("canProject", () => {
-  it("allows projections within a sane multiple", () => {
-    expect(canProject(5000, 5000)).toBe(true);
-    expect(canProject(5000, 10000)).toBe(true);
-    expect(canProject(10000, 21097)).toBe(true);
-    expect(canProject(21097, 42195)).toBe(true);
+  it("never credits a distance the athlete did not run", () => {
+    // The bug this guards: a 10K producing a half-marathon "record".
+    expect(matchesDistance(10000, 21097)).toBe(false);
+    expect(matchesDistance(17000, 21097)).toBe(false);
+    expect(matchesDistance(21097, 42195)).toBe(false);
   });
 
-  it("refuses to extrapolate a marathon from a short run", () => {
-    expect(canProject(2000, 42195)).toBe(false);
-    expect(canProject(5000, 42195)).toBe(false);
+  it("does not credit a short distance from a much longer run", () => {
+    // The 5K split inside a marathon is not the marathon's total time.
+    expect(matchesDistance(42195, 5000)).toBe(false);
+    expect(matchesDistance(10000, 5000)).toBe(false);
   });
 
-  it("refuses to infer a short PR from a very long run", () => {
-    expect(canProject(42195, 5000)).toBe(false);
+  it("rejects an activity meaningfully short of the distance", () => {
+    expect(matchesDistance(4800, 5000)).toBe(false);
+    expect(matchesDistance(20000, 21097)).toBe(false);
   });
 });
 

@@ -1,8 +1,9 @@
 // Derives personal records from activity history.
 //
-// Runners rarely race the standard distances exactly, so running records are
-// extrapolated with Riegel from every activity and the best projection wins.
-// Triathlon records use the real total time, since those are raced as such.
+// A record is something the athlete actually ran. Only activities that genuinely
+// cover the distance count, using their real time — no extrapolation. Predicted
+// times for distances not yet raced belong to the race predictor on the
+// dashboard, and calling those "records" would misrepresent them.
 
 import { prisma } from "@/lib/prisma";
 import { Sport } from "@prisma/client";
@@ -31,18 +32,15 @@ export function formatPace(secondsPerKm: number): string {
   return `${mins}:${String(secs).padStart(2, "0")}/km`;
 }
 
-/** Riegel: T2 = T1 × (D2/D1)^1.06 */
-export function riegelTime(knownDist: number, knownTimeSec: number, targetDist: number): number {
-  return knownTimeSec * Math.pow(targetDist / knownDist, 1.06);
-}
-
 /**
- * Extrapolating a marathon from a 2km jog is meaningless, so an activity only
- * projects on to distances within a sane multiple of what was actually run.
+ * Whether an activity really covers a standard distance. GPS undershoots a
+ * little, and races are run a few percent long by taking wide lines, so a
+ * narrow band around the target is allowed. The recorded time is then used as
+ * it stands — never scaled — so a record can only ever be honest or slightly
+ * pessimistic, never flattering.
  */
-export function canProject(actualMetres: number, targetMetres: number): boolean {
-  const ratio = targetMetres / actualMetres;
-  return ratio >= 0.25 && ratio <= 4;
+export function matchesDistance(actualMetres: number, targetMetres: number): boolean {
+  return actualMetres >= targetMetres * 0.99 && actualMetres <= targetMetres * 1.05;
 }
 
 async function upsertRecord(
@@ -83,11 +81,10 @@ export async function recalculatePersonalRecords(athleteId: string): Promise<str
       // Discards GPS glitches and anything that is not running pace.
       const speedKmh = dist / 1000 / (dur / 3600);
       if (speedKmh < 5 || speedKmh > 25) continue;
-      if (!canProject(dist, std.meters)) continue;
+      if (!matchesDistance(dist, std.meters)) continue;
 
-      const timeSeconds = riegelTime(dist, dur, std.meters);
-      if (!best || timeSeconds < best.timeSeconds) {
-        best = { timeSeconds, activityId: act.id, date: act.date };
+      if (!best || dur < best.timeSeconds) {
+        best = { timeSeconds: dur, activityId: act.id, date: act.date };
       }
     }
 
@@ -95,6 +92,16 @@ export async function recalculatePersonalRecords(athleteId: string): Promise<str
     await upsertRecord(athleteId, std.meters, best.timeSeconds, best.timeSeconds / (std.meters / 1000), best.activityId, best.date);
     updated.push(std.name);
   }
+
+  // Records from extrapolation should not survive the switch to real distances.
+  const realDistances = STANDARD_DISTANCES.map(s => s.meters);
+  await prisma.personalRecord.deleteMany({
+    where: {
+      athleteId,
+      distance: { in: realDistances },
+      NOT: { distance: { in: STANDARD_DISTANCES.filter(s => updated.includes(s.name)).map(s => s.meters) } },
+    },
+  });
 
   const triathlons = await prisma.activity.findMany({
     where: { athleteId, sport: { in: TRIATHLON_SPORTS }, duration: { not: null } },
