@@ -6,7 +6,7 @@ import { analyzeWeekAndAdapt, suggestSessionAdaptations } from "@/lib/claude";
 import { sendWeeklyReportEmail } from "@/lib/email";
 import * as Sentry from "@sentry/nextjs";
 import { differenceInWeeks } from "date-fns";
-import { startOfWeek, endOfWeek, subWeeks, subDays, startOfDay } from "date-fns";
+import { startOfWeek, endOfWeek, subDays, startOfDay } from "date-fns";
 
 // Called by Vercel Cron every Sunday at 20:00
 export async function GET(req: NextRequest) {
@@ -15,15 +15,23 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const lastWeekStart = startOfWeek(subWeeks(new Date(), 1), { weekStartsOn: 1 });
-  const lastWeekEnd = endOfWeek(subWeeks(new Date(), 1), { weekStartsOn: 1 });
+  // The job runs on Sunday evening, so the week being reported on is the one
+  // now ending — not subWeeks(now, 1), which pointed at the week before that
+  // and matched nothing for a plan in its first week.
+  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
 
-  // Find all active training weeks that ended last week
+  // Matching on startDate alone: a week that starts inside the window ends
+  // inside it by construction, and comparing endDate meant relying on two
+  // separately computed timestamps agreeing to the millisecond — which they
+  // only do while the server happens to run in UTC.
   const allWeeks = await prisma.trainingWeek.findMany({
     where: {
-      startDate: { gte: lastWeekStart, lte: lastWeekEnd },
-      endDate: { lte: lastWeekEnd },
+      startDate: { gte: weekStart, lte: weekEnd },
       weeklyReport: null, // only weeks without a report
+      // Archived plans still hold weeks covering these dates; reporting on a
+      // plan the athlete has replaced would be noise.
+      plan: { status: "ACTIVE" },
     },
     include: {
       sessions: true,
