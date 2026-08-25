@@ -289,16 +289,21 @@ export default async function DashboardPage() {
                   <h2 className="text-xs font-medium text-[var(--text-muted)] uppercase tracking-widest mb-4">Amanhã</h2>
                   <div className="space-y-2">
                     {tomorrowSessions.map((session) => (
-                      <div key={session.id} className="flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-subtle)]">
-                        <span className="text-lg">{sportIcon[session.sport] ?? "🏃"}</span>
-                        <div>
+                      <Link key={session.id} href={`/dashboard/session/${session.id}`}
+                        className="group flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-subtle)] border border-transparent hover:border-[var(--border-hover)] hover:bg-[var(--bg-hover)] transition-all">
+                        <span className="text-lg shrink-0">{sportIcon[session.sport] ?? "🏃"}</span>
+                        <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-white">{session.name}</p>
                           <p className="text-xs text-[var(--text-muted)]">
-                            {session.plannedDistance ? `${session.plannedDistance}km` : ""}
+                            {sessionTypeLabels[session.sessionType]}
+                            {session.plannedDistance ? ` · ${session.plannedDistance}km` : ""}
                             {session.plannedDuration ? ` · ${session.plannedDuration}min` : ""}
                           </p>
                         </div>
-                      </div>
+                        <svg className="w-4 h-4 text-[var(--text-faint)] group-hover:text-[var(--text-secondary)] transition-colors shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
+                        </svg>
+                      </Link>
                     ))}
                   </div>
                 </div>
