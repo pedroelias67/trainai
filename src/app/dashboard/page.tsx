@@ -21,9 +21,10 @@ async function getDashboardData(userId: string) {
         where: { status: "ACTIVE" },
         include: {
           event: true,
+          // All of them: the dashboard needs whichever week today falls in, and
+          // taking the first two by number meant it could only ever show week 1.
           weeks: {
             orderBy: { weekNumber: "asc" },
-            take: 2,
             include: { sessions: { orderBy: { date: "asc" } } },
           },
         },
@@ -107,13 +108,25 @@ export default async function DashboardPage() {
   const recentBestDistM = bestRecentActivity?.distance ?? null;
 
   const activePlan = athlete.trainingPlans[0];
-  const currentWeek = activePlan?.weeks[0];
+  const now = new Date();
+
+  // The week today actually falls in. plan.currentWeek is the fallback, since it
+  // is maintained by a cron and can lag; the first week is the last resort.
+  const currentWeek =
+    activePlan?.weeks.find(w => new Date(w.startDate) <= now && now <= new Date(w.endDate)) ??
+    activePlan?.weeks.find(w => w.weekNumber === activePlan.currentWeek) ??
+    activePlan?.weeks[0];
+
   // A cancelled session is one the athlete removed: it belongs in neither the day
   // cards nor the week's totals. The plan page and calendar still list it struck
   // through, which is where restoring it lives.
   const weekSessions = currentWeek?.sessions.filter((s) => !s.cancelled) ?? [];
-  const todaySessions = weekSessions.filter((s) => isToday(new Date(s.date)));
-  const tomorrowSessions = weekSessions.filter((s) => isTomorrow(new Date(s.date)));
+
+  // Today and tomorrow are read across every week, so the Sunday-to-Monday
+  // boundary does not hide tomorrow's session.
+  const allSessions = activePlan?.weeks.flatMap(w => w.sessions).filter(s => !s.cancelled) ?? [];
+  const todaySessions = allSessions.filter((s) => isToday(new Date(s.date)));
+  const tomorrowSessions = allSessions.filter((s) => isTomorrow(new Date(s.date)));
 
   const daysToEvent = activePlan
     ? Math.ceil((new Date(activePlan.event.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
