@@ -141,17 +141,70 @@ export function WorkoutExportButton({ sessionId, weekId }: { sessionId: string; 
 
             <div className="border-t border-[var(--border)]" />
 
-            {/* Garmin */}
+            {/* Enviar para o relógio via Intervals.icu */}
             <div className="space-y-3">
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-lg">🔵</span>
-                <p className="text-sm font-semibold text-[var(--text-primary)]">Garmin</p>
+              <div className="flex items-center gap-2">
+                <span className="text-lg">📲</span>
+                <p className="text-sm font-semibold text-[var(--text-primary)]">
+                  Receber os treinos no relógio <span className="text-green-400 text-xs font-normal">(Garmin, COROS, Suunto, Wahoo)</span>
+                </p>
               </div>
+
               <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
-                Já não precisas de ficheiros: liga o <strong className="text-[var(--text-primary)]">Intervals.icu</strong> no teu Perfil e cada semana do plano ganha um botão para enviar os treinos diretamente para o relógio. Serve igualmente para COROS, Suunto e Wahoo.
+                Estas marcas não aceitam treinos vindos diretamente de aplicações como esta. Quem faz a
+                entrega é o <strong className="text-[var(--text-primary)]">Intervals.icu</strong>, um serviço
+                gratuito que serve de ponte:
               </p>
-              <p className="text-xs text-[var(--text-muted)]">
-                A integração direta com a Garmin depende do programa de developers deles, que está suspenso por tempo indeterminado. A ponte não espera por isso.
+
+              <div className="flex items-center justify-center gap-2 py-2 text-xs">
+                <span className="px-2.5 py-1.5 rounded-lg bg-green-500/10 border border-green-500/20 text-green-400 font-medium">TrainAI</span>
+                <span className="text-[var(--text-faint)]">→</span>
+                <span className="px-2.5 py-1.5 rounded-lg bg-[var(--bg-hover)] border border-[var(--border-hover)] text-[var(--text-secondary)]">Intervals.icu</span>
+                <span className="text-[var(--text-faint)]">→</span>
+                <span className="px-2.5 py-1.5 rounded-lg bg-[var(--bg-hover)] border border-[var(--border-hover)] text-[var(--text-secondary)]">relógio</span>
+              </div>
+
+              <p className="text-xs font-semibold text-[var(--text-primary)] pt-1">
+                Preparar — só na primeira vez, cerca de 5 minutos
+              </p>
+              {[
+                { n: 1, text: "Cria uma conta gratuita em intervals.icu." },
+                { n: 2, text: "Lá dentro, liga o teu relógio: ícone do perfil → Settings → Integrations. Escolhe a tua marca na lista e carrega em Connect. Vai abrir a página da marca para iniciares sessão — usa a mesma conta do relógio." },
+                { n: 3, text: "Continua em Settings e desce até ao fundo da página, a Developer Settings. Copia a API key que aparece ali." },
+                { n: 4, text: "Volta aqui à app: Perfil → Integrações → Intervals.icu → Ligar, e cola a chave. Se estiver certa, fica ligado de imediato." },
+              ].map(({ n, text }) => (
+                <div key={n} className="flex items-start gap-3">
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{text}</p>
+                </div>
+              ))}
+
+              <p className="text-xs font-semibold text-[var(--text-primary)] pt-2">
+                Depois disso — um clique por semana
+              </p>
+              {[
+                { n: 5, text: "Na página do Plano, cada semana passa a ter um botão “⌚ Enviar”. Carrega nele e os treinos dessa semana seguem para o calendário do Intervals.icu." },
+                { n: 6, text: "O Intervals.icu entrega-os ao relógio na sincronização seguinte — em geral na manhã do próprio dia do treino." },
+                { n: 7, text: "No relógio, encontra-os em Treino → Treinos guardados, ou no equivalente da tua marca. Segues a estrutura no pulso, com os alvos de pace e de frequência cardíaca." },
+              ].map(({ n, text }) => (
+                <div key={n} className="flex items-start gap-3">
+                  <span className="shrink-0 w-6 h-6 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-xs font-bold flex items-center justify-center mt-0.5">{n}</span>
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{text}</p>
+                </div>
+              ))}
+
+              <div className="flex gap-3 p-3 rounded-xl bg-green-500/5 border border-green-500/15 text-xs text-[var(--text-secondary)] leading-relaxed">
+                <span className="shrink-0">💡</span>
+                <p>
+                  Podes carregar em “Enviar” as vezes que quiseres: cada treino é identificado, por isso
+                  reenviar a mesma semana <strong className="text-[var(--text-primary)]">atualiza</strong> o
+                  calendário em vez de criar duplicados. Útil se o plano for adaptado a meio da semana.
+                </p>
+              </div>
+
+              <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+                Só é preciso esta ponte porque o programa de developers da Garmin está suspenso por tempo
+                indeterminado. Quando reabrir, o envio passa a ser direto e este passo desaparece.
               </p>
             </div>
 

@@ -70,11 +70,29 @@ export function IntervalsConnect({ connected }: { connected: boolean }) {
 
       {showForm && !connected && (
         <form onSubmit={connect} className="mt-4 space-y-3">
-          <ol className="text-xs text-[var(--text-secondary)] space-y-1 list-decimal list-inside">
-            <li>Cria conta gratuita em intervals.icu e liga lá o teu relógio</li>
-            <li>Vai a Settings → Developer Settings e copia a API key</li>
-            <li>Cola-a aqui em baixo</li>
+          <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
+            O Intervals.icu é um serviço gratuito que entrega os treinos ao teu relógio — a Garmin, a COROS
+            e as outras não os aceitam vindos diretamente daqui. Configura-se uma vez:
+          </p>
+          <ol className="text-xs text-[var(--text-secondary)] space-y-2">
+            {[
+              "Cria uma conta gratuita em intervals.icu.",
+              "Liga lá o relógio: ícone do perfil → Settings → Integrations → escolhe a tua marca → Connect. Inicia sessão com a mesma conta do relógio.",
+              "Ainda em Settings, desce até ao fundo, a Developer Settings, e copia a API key.",
+              "Cola-a aqui em baixo.",
+            ].map((text, i) => (
+              <li key={i} className="flex items-start gap-2.5">
+                <span className="shrink-0 w-5 h-5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-bold flex items-center justify-center mt-px">
+                  {i + 1}
+                </span>
+                <span className="leading-relaxed">{text}</span>
+              </li>
+            ))}
           </ol>
+          <p className="text-xs text-[var(--text-faint)] leading-relaxed">
+            Feito isto, cada semana do Plano ganha um botão para enviar os treinos. A chave fica guardada
+            e podes desligar quando quiseres.
+          </p>
           <input
             type="password"
             value={apiKey}
