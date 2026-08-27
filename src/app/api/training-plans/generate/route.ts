@@ -1,4 +1,6 @@
 export const dynamic = "force-dynamic";
+// Calls Claude: the Hobby plan's default cut these off well before the model replies.
+export const maxDuration = 60;
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
