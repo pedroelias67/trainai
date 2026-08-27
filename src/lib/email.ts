@@ -166,7 +166,7 @@ export async function sendInviteEmail(email: string, token: string, inviterName:
         ${emailStatGrid([
           { value: "IA", label: "Claude AI" },
           { value: "PWA", label: "Funciona offline" },
-          { value: "Garmin", label: "Exportação TCX" },
+          { value: "⌚", label: "Treinos no relógio" },
         ])}
         ${emailButton(url, "Aceitar convite →")}
         ${emailText("Convite válido por 7 dias.", true)}

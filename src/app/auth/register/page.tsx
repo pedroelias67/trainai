@@ -24,7 +24,13 @@ function RegisterForm() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const [account, setAccount] = useState({ name: "", email: "", password: "" });
+  // An invite can be bound to an address, and registering with a different one
+  // is rejected. Carrying it over from the link saves guessing which one it was.
+  const [account, setAccount] = useState({
+    name: "",
+    email: searchParams.get("email") ?? "",
+    password: "",
+  });
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [athlete, setAthlete] = useState({
     dateOfBirth: "",

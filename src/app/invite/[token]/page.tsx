@@ -6,7 +6,7 @@ import { LogoFull } from "@/components/ui/Logo";
 const FEATURES = [
   { icon: "🤖", title: "Plano gerado por IA", desc: "Claude analisa o teu perfil e cria um plano de treino 100% personalizado para o teu evento." },
   { icon: "📊", title: "Adaptação automática", desc: "Cada semana a IA analisa o teu desempenho e ajusta o plano em tempo real." },
-  { icon: "⌚", title: "Exportação para Garmin", desc: "Exporta os teus treinos estruturados diretamente para o relógio Garmin em formato TCX." },
+  { icon: "⌚", title: "Treinos no relógio", desc: "Envia os treinos da semana para Garmin, COROS, Suunto ou Wahoo através do Intervals.icu." },
   { icon: "🍎", title: "Nutrição personalizada", desc: "Plano de nutrição com calorias, macros e refeições adaptados ao teu treino." },
   { icon: "🔄", title: "Sincronização Strava", desc: "Liga o Strava e as atividades aparecem automaticamente, sem trabalho manual." },
   { icon: "📱", title: "App móvel (PWA)", desc: "Instala no telemóvel e usa offline, com notificações de treino e temporizador integrado." },
