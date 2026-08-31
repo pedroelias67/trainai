@@ -60,14 +60,14 @@ export async function sendWelcomeEmail(email: string, name: string) {
           ${[
             { n: "1", title: "Cria o teu evento", desc: "Escolhe uma corrida ou triatlo e a IA gera o plano." },
             { n: "2", title: "Liga o Strava", desc: "Sincronização automática após cada treino." },
-            { n: "3", title: "Exporta para o Garmin", desc: "Treinos estruturados diretamente no relógio." },
+            { n: "3", title: "Recebe os treinos no relógio", desc: "Garmin, COROS, Suunto ou Wahoo, através do Intervals.icu." },
           ].map(s => `
             <tr><td style="padding-bottom:12px">
               <div style="display:flex;align-items:flex-start;gap:12px">
                 <div style="width:24px;height:24px;border-radius:50%;background:#22c55e;color:#000;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${s.n}</div>
                 <div>
                   <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:#ffffff">${s.title}</p>
-                  <p style="margin:0;font-size:12px;color:#71717a">${s.desc}</p>
+                  <p style="margin:0;font-size:12px;color:#82828b">${s.desc}</p>
                 </div>
               </div>
             </td></tr>
@@ -121,7 +121,7 @@ export async function sendWeeklyReportEmail(
         ${distancePct !== null ? `
           <div style="margin-bottom:20px">
             <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <span style="font-size:12px;color:#71717a">Volume: ${data.actualDistance.toFixed(1)} / ${data.plannedDistance?.toFixed(1)} km</span>
+              <span style="font-size:12px;color:#82828b">Volume: ${data.actualDistance.toFixed(1)} / ${data.plannedDistance?.toFixed(1)} km</span>
               <span style="font-size:12px;color:#22c55e;font-weight:600">${distancePct}%</span>
             </div>
             <div style="background:#1a1a1a;border-radius:4px;height:5px;overflow:hidden">
@@ -141,7 +141,7 @@ export async function sendWeeklyReportEmail(
           : ""}
 
         ${emailDivider()}
-        <p style="margin:0 0 16px;font-size:13px;color:#52525b;text-align:center">
+        <p style="margin:0 0 16px;font-size:13px;color:#8b8b93;text-align:center">
           🎯 ${data.eventName} — faltam <strong style="color:#ffffff">${data.weeksToEvent}</strong> semanas
         </p>
 

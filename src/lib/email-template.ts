@@ -35,7 +35,7 @@ export function emailShell({
                 </div>
               </td>
               <td align="right">
-                <span style="font-size:11px;color:#52525b;text-transform:uppercase;letter-spacing:1px">O teu treinador IA</span>
+                <span style="font-size:11px;color:#8b8b93;text-transform:uppercase;letter-spacing:1px">O teu treinador IA</span>
               </td>
             </tr>
           </table>
@@ -50,15 +50,15 @@ export function emailShell({
         <tr><td style="padding-top:24px;text-align:center">
           <table width="100%" cellpadding="0" cellspacing="0" role="presentation">
             <tr><td style="padding-bottom:12px;border-bottom:1px solid #1a1a1a">
-              <a href="${BASE_URL}/dashboard" style="color:#52525b;text-decoration:none;font-size:12px;margin:0 8px">Dashboard</a>
-              <a href="${BASE_URL}/privacy" style="color:#52525b;text-decoration:none;font-size:12px;margin:0 8px">Privacidade</a>
-              <a href="${BASE_URL}/status" style="color:#52525b;text-decoration:none;font-size:12px;margin:0 8px">Estado</a>
-              <a href="mailto:pedro@trainai.pedroelias.com" style="color:#52525b;text-decoration:none;font-size:12px;margin:0 8px">Suporte</a>
+              <a href="${BASE_URL}/dashboard" style="color:#8b8b93;text-decoration:none;font-size:12px;margin:0 8px">Dashboard</a>
+              <a href="${BASE_URL}/privacy" style="color:#8b8b93;text-decoration:none;font-size:12px;margin:0 8px">Privacidade</a>
+              <a href="${BASE_URL}/status" style="color:#8b8b93;text-decoration:none;font-size:12px;margin:0 8px">Estado</a>
+              <a href="mailto:pedro@trainai.pedroelias.com" style="color:#8b8b93;text-decoration:none;font-size:12px;margin:0 8px">Suporte</a>
             </td></tr>
             <tr><td style="padding-top:12px">
-              <p style="margin:0;font-size:11px;color:#3f3f46;line-height:1.6">
+              <p style="margin:0;font-size:11px;color:#82828b;line-height:1.6">
                 TrainAI · Plataforma de treino com IA para corredores e triatletas<br>
-                Se não quiseres receber estes emails, <a href="${BASE_URL}/dashboard/profile" style="color:#3f3f46;text-decoration:underline">gere as notificações</a>.
+                Se não quiseres receber estes emails, <a href="${BASE_URL}/dashboard/profile" style="color:#82828b;text-decoration:underline">gere as notificações</a>.
               </p>
             </td></tr>
           </table>
@@ -94,7 +94,7 @@ export function emailSubheading(text: string): string {
 }
 
 export function emailText(text: string, muted = false): string {
-  return `<p style="margin:0 0 16px;font-size:14px;color:${muted ? "#71717a" : "#a1a1aa"};line-height:1.7">${text}</p>`;
+  return `<p style="margin:0 0 16px;font-size:14px;color:${muted ? "#82828b" : "#a1a1aa"};line-height:1.7">${text}</p>`;
 }
 
 export function emailBadge(text: string): string {
@@ -108,7 +108,7 @@ export function emailStatGrid(stats: { label: string; value: string }[]): string
   const cells = stats.map(s => `
     <td style="background:#0a0a0a;border:1px solid #1a1a1a;border-radius:10px;padding:14px;text-align:center;width:${Math.floor(100 / stats.length)}%">
       <p style="margin:0 0 4px;font-size:24px;font-weight:800;color:#ffffff;letter-spacing:-1px">${s.value}</p>
-      <p style="margin:0;font-size:11px;color:#52525b;text-transform:uppercase;letter-spacing:0.5px">${s.label}</p>
+      <p style="margin:0;font-size:11px;color:#8b8b93;text-transform:uppercase;letter-spacing:0.5px">${s.label}</p>
     </td>
   `).join('<td style="width:6px"></td>');
   return `<table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:20px"><tr>${cells}</tr></table>`;
