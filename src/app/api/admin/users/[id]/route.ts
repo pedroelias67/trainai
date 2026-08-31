@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { deleteAccountData } from "@/lib/delete-account";
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "pedroelias67@gmail.com";
 async function requireAdmin() {
   const cookieStore = await cookies();
@@ -32,7 +33,17 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ error: "Acesso negado" }, { status: 403 });
   }
   const { id } = await params;
-  // Cascade: Prisma handles athlete/activities via onDelete: Cascade
-  await prisma.user.delete({ where: { id } });
+
+  // Deleting the user and trusting the cascade fails on any account holding a
+  // plan: TrainingPlan → Event and WeeklyReport → TrainingWeek are required
+  // relations, so Prisma leaves them as Restrict.
+  const alvo = await prisma.user.findUnique({ where: { id }, select: { email: true } });
+  if (!alvo) return NextResponse.json({ error: "Utilizador não encontrado" }, { status: 404 });
+
+  if (alvo.email === ADMIN_EMAIL) {
+    return NextResponse.json({ error: "Não podes eliminar a conta de administrador" }, { status: 400 });
+  }
+
+  await deleteAccountData(id);
   return NextResponse.json({ ok: true });
 }
