@@ -5,11 +5,17 @@ export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { analyzeWeekAndAdapt, suggestSessionAdaptations } from "@/lib/claude";
+import { analyzeWeekAndAdapt, suggestSessionAdaptations, detailSessions } from "@/lib/claude";
 import { sendWeeklyReportEmail } from "@/lib/email";
 import * as Sentry from "@sentry/nextjs";
 import { differenceInWeeks } from "date-fns";
 import { startOfWeek, endOfWeek, subDays, startOfDay } from "date-fns";
+
+// Work is stopped at this point and handed to a fresh invocation, leaving room
+// within the 300s limit to finish the athlete in progress.
+const BUDGET_MS = 200_000;
+// Bounds the self-continuation, so a persistent failure cannot loop forever.
+const MAX_DEPTH = 10;
 
 // Called by Vercel Cron every Sunday at 20:00
 export async function GET(req: NextRequest) {
@@ -17,6 +23,9 @@ export async function GET(req: NextRequest) {
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  const startedAt = Date.now();
+  const depth = Number(new URL(req.url).searchParams.get("depth") ?? 0);
 
   // The job runs on Sunday evening, so the week being reported on is the one
   // now ending — not subWeeks(now, 1), which pointed at the week before that
@@ -58,8 +67,19 @@ export async function GET(req: NextRequest) {
   });
 
   let generated = 0;
+  let restantes = false;
 
   for (const week of weeks) {
+    // Each athlete costs three model calls — analysis, detailing, adaptation —
+    // so a handful of them would exceed the function limit and the last ones
+    // would be cut off silently, mid-loop. Stop before that and hand the rest
+    // to a fresh invocation; athletes already done drop out of the query, so
+    // the continuation picks up exactly where this left off.
+    if (Date.now() - startedAt > BUDGET_MS) {
+      restantes = true;
+      break;
+    }
+
     const athlete = week.plan.athlete;
     try {
       const activities = await prisma.activity.findMany({
@@ -127,6 +147,67 @@ export async function GET(req: NextRequest) {
           where: { planId: week.planId, weekNumber: week.weekNumber + 1 },
           include: { sessions: { where: { cancelled: false, completed: false } } },
         });
+        // Write the coaching for the week that is about to start, before the
+        // adaptation runs. Doing it afterwards would overwrite the coachTip the
+        // adaptation uses to explain each adjustment — and Sunday evening is
+        // when the athlete looks ahead, so it should be ready by then.
+        if (nextWeek) {
+          const porDetalhar = nextWeek.sessions.filter(s => !s.mainSet);
+          if (porDetalhar.length > 0) {
+            try {
+              const details = await detailSessions({
+                athlete: {
+                  name: athlete.user.name ?? "Atleta",
+                  age: 30,
+                  gender: athlete.gender ?? "MALE",
+                  fitnessLevel: athlete.fitnessLevel,
+                  weeklyHours: athlete.weeklyHours ?? 8,
+                  maxHR: athlete.maxHR ?? undefined,
+                  ltPace: athlete.ltPace ?? undefined,
+                },
+                event: {
+                  name: week.plan.event.name,
+                  sport: week.plan.event.sport,
+                  distance: week.plan.event.distance,
+                  date: week.plan.event.date.toISOString().split("T")[0],
+                  goalType: week.plan.event.goalType,
+                  goalTime: week.plan.event.goalTime ?? undefined,
+                },
+                weekFocus: nextWeek.focus,
+                sessions: porDetalhar.map(s => ({
+                  id: s.id, name: s.name, sport: s.sport, sessionType: s.sessionType,
+                  dayOfWeek: s.dayOfWeek, plannedDistance: s.plannedDistance,
+                  plannedDuration: s.plannedDuration, plannedPace: s.plannedPace,
+                })),
+              });
+              const permitidos = new Set(porDetalhar.map(s => s.id));
+              for (const d of details) {
+                if (!permitidos.has(d.id)) continue;
+                await prisma.trainingSession.update({
+                  where: { id: d.id },
+                  data: {
+                    shortDescription: d.shortDescription ?? null,
+                    warmup: d.warmup ?? null,
+                    mainSet: d.mainSet ?? null,
+                    cooldown: d.cooldown ?? null,
+                    coachTip: d.coachTip ?? null,
+                    rpe: d.rpe ?? null,
+                    keyFocus: d.keyFocus ?? null,
+                    ...(d.zones ? { plannedZones: d.zones } : {}),
+                  },
+                });
+              }
+            } catch (detailErr) {
+              // The athlete can still fetch it by opening the session.
+              console.error("Next week detailing failed:", detailErr);
+              Sentry.captureException(detailErr, {
+                tags: { job: "weekly-report", stage: "detailing" },
+                extra: { athleteId: athlete.id, weekId: nextWeek.id },
+              });
+            }
+          }
+        }
+
         if (nextWeek && !nextWeek.adaptationsApplied && nextWeek.sessions.length > 0) {
           const wellnessLogs = await prisma.wellnessLog.findMany({
             where: { athleteId: athlete.id, date: { gte: subDays(startOfDay(new Date()), 7) } },
@@ -245,5 +326,18 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ generated, weeks: weeks.length });
+  if (restantes && depth < MAX_DEPTH && process.env.NEXTAUTH_URL) {
+    // Dispatch the continuation and abort locally: waiting for it would nest
+    // the remaining work inside this invocation's budget, which is the problem
+    // being solved. The receiving invocation runs on its own.
+    await fetch(
+      `${process.env.NEXTAUTH_URL}/api/cron/weekly-report?depth=${depth + 1}`,
+      {
+        headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
+        signal: AbortSignal.timeout(2000),
+      }
+    ).catch(() => {});
+  }
+
+  return NextResponse.json({ generated, weeks: weeks.length, depth, restantes });
 }
