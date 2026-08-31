@@ -5,7 +5,7 @@ export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { generateTrainingPlan } from "@/lib/claude";
+import { generatePlanSkeleton, detailSessions } from "@/lib/claude";
 import { cookies } from "next/headers";
 import { differenceInWeeks } from "date-fns";
 
@@ -41,7 +41,27 @@ export async function POST(req: NextRequest) {
       ? new Date().getFullYear() - athlete.dateOfBirth.getFullYear()
       : 30;
 
-    const planJson = await generateTrainingPlan({
+    const athleteContext = {
+      name: user.name ?? "Atleta",
+      age,
+      gender: athlete.gender ?? "MALE",
+      fitnessLevel: athlete.fitnessLevel,
+      weeklyHours: athlete.weeklyHours ?? 8,
+      maxHR: athlete.maxHR ?? undefined,
+      ltPace: athlete.ltPace ?? undefined,
+    };
+    const eventContext = {
+      name: event.name,
+      sport: event.sport,
+      distance: event.distance,
+      date: event.date.toISOString().split("T")[0],
+      goalType: event.goalType,
+      goalTime: event.goalTime ?? undefined,
+    };
+
+    // Structure first — seconds rather than minutes — so the athlete gets a
+    // browsable plan straight away. The prose follows, one week at a time.
+    const planJson = await generatePlanSkeleton({
       athlete: {
         name: user.name ?? "Atleta",
         age,
@@ -203,10 +223,50 @@ export async function POST(req: NextRequest) {
           }),
         },
       },
-      include: { weeks: { include: { sessions: true } } },
+      include: { weeks: { orderBy: { weekNumber: "asc" }, include: { sessions: true } } },
     });
 
-    return NextResponse.json(plan, { status: 201 });
+    // Detail the first week now, so the athlete opens a finished week rather
+    // than a set of bare titles. Later weeks are filled in when they are opened.
+    // A failure here leaves the plan intact — the detail can be fetched again.
+    let firstWeekDetailed = false;
+    const firstWeek = plan.weeks[0];
+    if (firstWeek && firstWeek.sessions.length > 0) {
+      try {
+        const details = await detailSessions({
+          athlete: athleteContext,
+          event: eventContext,
+          weekFocus: firstWeek.focus,
+          sessions: firstWeek.sessions.map(s => ({
+            id: s.id, name: s.name, sport: s.sport, sessionType: s.sessionType,
+            dayOfWeek: s.dayOfWeek, plannedDistance: s.plannedDistance,
+            plannedDuration: s.plannedDuration, plannedPace: s.plannedPace,
+          })),
+        });
+        const permitidos = new Set(firstWeek.sessions.map(s => s.id));
+        for (const d of details) {
+          if (!permitidos.has(d.id)) continue;
+          await prisma.trainingSession.update({
+            where: { id: d.id },
+            data: {
+              shortDescription: d.shortDescription ?? null,
+              warmup: d.warmup ?? null,
+              mainSet: d.mainSet ?? null,
+              cooldown: d.cooldown ?? null,
+              coachTip: d.coachTip ?? null,
+              rpe: d.rpe ?? null,
+              keyFocus: d.keyFocus ?? null,
+              ...(d.zones ? { plannedZones: d.zones } : {}),
+            },
+          });
+        }
+        firstWeekDetailed = true;
+      } catch (detailErr) {
+        console.error("First week detailing failed:", detailErr);
+      }
+    }
+
+    return NextResponse.json({ ...plan, firstWeekDetailed }, { status: 201 });
   } catch (err) {
     console.error("Generate plan error:", err);
     return NextResponse.json({ error: "Erro ao gerar plano" }, { status: 500 });

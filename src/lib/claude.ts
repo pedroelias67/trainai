@@ -330,3 +330,151 @@ Responde APENAS com JSON válido (array), sem markdown.`;
   const text = content.text.replace(/^```(?:json)?\r?\n?/i, "").replace(/\r?\n?```\s*$/i, "").trim();
   return JSON.parse(text);
 }
+
+// ── Two-phase plan generation ────────────────────────────────────────────────
+//
+// Writing every session in full takes the model around four minutes, which the
+// athlete waits through during onboarding before seeing anything at all. The
+// structure alone takes about 17 seconds, and a week's worth of detail about 40.
+// So the plan is produced in two phases: the skeleton first, so the plan exists
+// and is browsable, then the prose for one week at a time.
+
+const DIAS_PT = ["", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
+
+function calendarRules(athlete: TrainingPlanRequest["athlete"]): string {
+  const dias = athlete.trainingDaysPerWeek ?? 5;
+  const longo = athlete.longRunDay && athlete.longRunDay > 0 ? athlete.longRunDay : 7;
+  const preferidos = athlete.preferredDays?.length
+    ? `\nDIAS PERMITIDOS: apenas ${athlete.preferredDays.map(d => `${d}=${DIAS_PT[d]}`).join(", ")}. Nenhuma sessão fora destes dias.`
+    : "";
+
+  return `REGRAS DE CALENDÁRIO (invioláveis):
+- Cada semana tem EXATAMENTE ${dias} sessões.
+- O tipo LONG vai em dayOfWeek=${longo} (${DIAS_PT[longo]}).
+- Nunca INTERVALS ou TEMPO em dias seguidos; nunca LONG no dia seguinte a um desses.
+- dayOfWeek: 1=Segunda … 7=Domingo.${preferidos}`;
+}
+
+/** Structure only: no prose, so this returns in seconds rather than minutes. */
+export async function generatePlanSkeleton(request: TrainingPlanRequest): Promise<string> {
+  const prompt = `És um treinador de elite de corrida e triatlo. Cria a ESTRUTURA de um plano de treino.
+
+ATLETA: ${request.athlete.name}, ${request.athlete.age} anos, ${request.athlete.gender}
+Nível: ${request.athlete.fitnessLevel} | ${request.athlete.weeklyHours}h disponíveis por semana
+${request.athlete.maxHR ? `FC máxima: ${request.athlete.maxHR} bpm` : ""}
+${request.athlete.ltPace ? `Pace de limiar: ${request.athlete.ltPace}` : ""}
+
+EVENTO: ${request.event.name} — ${request.event.distance} (${request.event.sport}) em ${request.event.date}
+Objetivo: ${request.event.goalType}${request.event.goalTime ? ` em ${request.event.goalTime}` : ""}
+Data de hoje: ${request.currentDate} | Semanas disponíveis: ${request.weeksUntilEvent}
+
+${calendarRules(request.athlete)}
+
+PRINCÍPIOS: 80% do volume em Z1-Z2; progressão máxima de 10% por semana; uma semana de recuperação
+a cada 3 de carga; taper nas últimas 2 semanas; especificidade crescente até ao evento.
+
+Gera as PRIMEIRAS 4 SEMANAS. Para cada sessão indica APENAS os campos abaixo — sem descrições,
+sem aquecimento, sem dicas. Esse detalhe é pedido depois, à parte.
+
+sessionType: apenas EASY, TEMPO, INTERVALS, LONG, RECOVERY, STRENGTH, BRICK, SWIM ou RACE
+sport: apenas RUNNING, CYCLING ou SWIMMING
+
+Responde APENAS com JSON válido, sem markdown:
+{
+  "planName": "nome do plano",
+  "periodization": "filosofia e fases do plano em 2-3 frases",
+  "coachNotes": "nota do treinador ao atleta sobre a abordagem, 3-4 frases",
+  "weeks": [
+    {
+      "weekNumber": 1,
+      "focus": "foco da semana numa linha",
+      "coachMessage": "mensagem do treinador para a semana, 1-2 frases",
+      "totalDistanceKm": 42,
+      "totalDurationMin": 280,
+      "sessions": [
+        { "dayOfWeek": 2, "sport": "RUNNING", "sessionType": "EASY", "name": "Corrida Base Z2",
+          "plannedDistanceKm": 8, "plannedDurationMin": 55, "plannedPace": "6:45/km", "isPriority": false }
+      ]
+    }
+  ]
+}`;
+
+  const message = await claude.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 8000,
+    messages: [{ role: "user", content: prompt }],
+  });
+  const content = message.content[0];
+  if (content.type !== "text") throw new Error("Resposta inesperada da IA");
+  return content.text.replace(/^```(?:json)?\r?\n?/i, "").replace(/\r?\n?```\s*$/i, "").trim();
+}
+
+export interface SessionDetail {
+  id: string;
+  shortDescription: string;
+  warmup: string;
+  mainSet: string;
+  cooldown: string;
+  coachTip: string;
+  rpe: string;
+  keyFocus: string;
+  zones?: Record<string, number>;
+}
+
+/**
+ * Fills in the prose for a batch of sessions, normally one week at a time —
+ * about 7 seconds per session, so a week lands in well under a minute.
+ */
+export async function detailSessions(params: {
+  athlete: TrainingPlanRequest["athlete"];
+  event: TrainingPlanRequest["event"];
+  weekFocus: string | null;
+  sessions: Array<{
+    id: string; name: string; sport: string; sessionType: string; dayOfWeek: number;
+    plannedDistance: number | null; plannedDuration: number | null; plannedPace: string | null;
+  }>;
+}): Promise<SessionDetail[]> {
+  const zonas = params.athlete.maxHR
+    ? `Zonas de FC (FC máx ${params.athlete.maxHR}): Z1 <${Math.round(params.athlete.maxHR * 0.6)}, Z2 ${Math.round(params.athlete.maxHR * 0.6)}-${Math.round(params.athlete.maxHR * 0.7)}, Z3 ${Math.round(params.athlete.maxHR * 0.7)}-${Math.round(params.athlete.maxHR * 0.8)}, Z4 ${Math.round(params.athlete.maxHR * 0.8)}-${Math.round(params.athlete.maxHR * 0.9)}, Z5 >${Math.round(params.athlete.maxHR * 0.9)} bpm.`
+    : "Sem FC máxima conhecida: usa esforço percebido (RPE 1-10) como referência.";
+
+  const prompt = `És um treinador de elite. Detalha cada uma destas sessões de treino.
+
+ATLETA: ${params.athlete.name}, nível ${params.athlete.fitnessLevel}
+EVENTO ALVO: ${params.event.name} — ${params.event.distance} em ${params.event.date}
+${params.weekFocus ? `FOCO DA SEMANA: ${params.weekFocus}` : ""}
+${zonas}
+
+SESSÕES:
+${JSON.stringify(params.sessions, null, 2)}
+
+Para cada sessão devolve o detalhe. Sê concreto e conciso — 1 a 2 frases por campo.
+Quando usares um termo técnico pela primeira vez (strides, fartlek, taper, VO2max, limiar, RPE,
+cadência), explica-o brevemente entre parênteses.
+
+Responde APENAS com JSON válido, um array com um objeto por sessão, sem markdown:
+[
+  {
+    "id": "id-da-sessão-tal-como-recebido",
+    "shortDescription": "uma linha sobre o propósito da sessão",
+    "warmup": "o que fazer no aquecimento",
+    "mainSet": "a série principal, com estrutura e alvos",
+    "cooldown": "retorno à calma e alongamentos",
+    "coachTip": "conselho do treinador para esta sessão",
+    "rpe": "ex: 6-7/10 — desconfortável mas sustentável",
+    "keyFocus": "o aspeto técnico a trabalhar",
+    "zones": { "z1": 20, "z2": 60, "z3": 20, "z4": 0, "z5": 0 }
+  }
+]`;
+
+  const message = await claude.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 8000,
+    messages: [{ role: "user", content: prompt }],
+  });
+  const content = message.content[0];
+  if (content.type !== "text") throw new Error("Resposta inesperada da IA");
+  const texto = content.text.replace(/^```(?:json)?\r?\n?/i, "").replace(/\r?\n?```\s*$/i, "").trim();
+  const parsed = JSON.parse(texto);
+  return Array.isArray(parsed) ? parsed : [];
+}

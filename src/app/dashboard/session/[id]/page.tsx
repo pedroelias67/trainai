@@ -9,6 +9,7 @@ import { WorkoutExportButton } from "@/components/dashboard/WorkoutExportModal";
 import { SessionJournal } from "@/components/dashboard/SessionJournal";
 import NutritionPlan from "@/components/dashboard/NutritionPlan";
 import { WorkoutTimer } from "@/components/dashboard/WorkoutTimer";
+import { SessionDetailLoader } from "@/components/dashboard/SessionDetailLoader";
 
 const sessionTypeColors: Record<string, string> = {
   EASY: "bg-green-500/10 text-green-400 border-green-500/20",
@@ -143,7 +144,13 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           </div>
         )}
 
+        {/* A skeleton session has targets but no coaching yet — fetch it on arrival */}
+        {!session.mainSet && !session.cancelled && (
+          <SessionDetailLoader weekId={session.weekId} />
+        )}
+
         {/* Workout structure */}
+        {session.mainSet && (
         <div className="card space-y-5">
           <h2 className="font-semibold text-white">Estrutura do Treino</h2>
 
@@ -168,6 +175,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             </div>
           )}
         </div>
+        )}
 
         {/* Nutrition Plan */}
         <NutritionPlan sessionId={session.id} />
