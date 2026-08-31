@@ -94,7 +94,16 @@ export default function OnboardingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ eventId: eventData.id }),
       });
-      if (!planRes.ok) throw new Error("Erro ao gerar plano");
+      // Any non-2xx used to collapse into one message, which hid a platform
+      // timeout behind what looked like an application error.
+      if (!planRes.ok) {
+        const detalhe = await planRes.json().catch(() => null);
+        throw new Error(
+          planRes.status === 504
+            ? "A geração demorou mais do que o permitido e foi interrompida. O teu perfil e evento ficaram guardados — tenta gerar de novo a partir do plano."
+            : detalhe?.error ?? `Erro ao gerar plano (${planRes.status})`
+        );
+      }
 
       setStep("done");
       setTimeout(() => router.push("/dashboard"), 2500);

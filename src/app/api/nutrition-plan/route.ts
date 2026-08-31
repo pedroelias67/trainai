@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
-// Calls Claude: the Hobby plan's default cut these off well before the model replies.
-export const maxDuration = 60;
+// Generating a plan takes the model ~3-4 minutes. 300s is the Hobby ceiling;
+// the 60s written here previously was well under it and cut generation short.
+export const maxDuration = 300;
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
 import { cookies } from "next/headers";
