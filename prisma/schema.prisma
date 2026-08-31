@@ -92,7 +92,9 @@ model Athlete {
   intervalsIcuApiKey    String?
   intervalsIcuAthleteId String?
   pushSubscription Json?
-  theme           String    @default("dark")
+  // "system" until the athlete picks one, so a first visit can follow the device.
+  // Existing rows hold "dark", which now correctly means a deliberate choice.
+  theme           String    @default("system")
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 

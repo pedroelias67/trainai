@@ -2,7 +2,9 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 
-type Theme = 'dark' | 'dim' | 'light';
+export type Theme = 'dark' | 'dim' | 'light';
+/** "system" means the athlete has not chosen yet, so the device decides. */
+export type ThemePreference = Theme | 'system';
 
 interface ThemeContextType {
   theme: Theme;
@@ -26,23 +28,47 @@ function getCookie(name: string): string | undefined {
     ?.split('=')[1];
 }
 
+function systemTheme(): Theme {
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
 export function ThemeProvider({
   children,
-  initialTheme = 'dark',
+  initialTheme = 'system',
 }: {
   children: React.ReactNode;
-  initialTheme?: Theme;
+  initialTheme?: ThemePreference;
 }) {
-  const [theme, setThemeState] = useState<Theme>(initialTheme);
+  const [preference, setPreference] = useState<ThemePreference>(initialTheme);
+  const [theme, setThemeState] = useState<Theme>(
+    initialTheme === 'system' ? 'dark' : initialTheme
+  );
 
   useEffect(() => {
-    const cookieTheme = getCookie('trainai_theme') as Theme | undefined;
-    const resolved = cookieTheme || initialTheme;
+    const cookie = getCookie('trainai_theme') as ThemePreference | undefined;
+    const pref = cookie ?? initialTheme;
+    const resolved = pref === 'system' ? systemTheme() : pref;
+    setPreference(pref);
     setThemeState(resolved);
     document.documentElement.setAttribute('data-theme', resolved);
   }, [initialTheme]);
 
+  // Track the device only while no explicit choice has been made, so someone
+  // who picked dark keeps it when their phone switches to light at sunrise.
+  useEffect(() => {
+    if (preference !== 'system') return;
+    const mq = window.matchMedia('(prefers-color-scheme: light)');
+    const onChange = () => {
+      const resolved: Theme = mq.matches ? 'light' : 'dark';
+      setThemeState(resolved);
+      document.documentElement.setAttribute('data-theme', resolved);
+    };
+    mq.addEventListener('change', onChange);
+    return () => mq.removeEventListener('change', onChange);
+  }, [preference]);
+
   const setTheme = (newTheme: Theme) => {
+    setPreference(newTheme);
     setThemeState(newTheme);
     document.documentElement.setAttribute('data-theme', newTheme);
     document.cookie = `trainai_theme=${newTheme}; path=/; max-age=${60 * 60 * 24 * 365}; SameSite=Lax`;
