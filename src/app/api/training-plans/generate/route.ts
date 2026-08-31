@@ -8,7 +8,6 @@ import { prisma } from "@/lib/prisma";
 import { generatePlanSkeleton, detailSessions } from "@/lib/claude";
 import { HORIZON_WEEKS } from "@/lib/plan-horizon";
 import { cookies } from "next/headers";
-import { differenceInWeeks } from "date-fns";
 
 export async function POST(req: NextRequest) {
   try {
@@ -31,11 +30,18 @@ export async function POST(req: NextRequest) {
     }
 
     const today = new Date();
-    const weeksUntilEvent = differenceInWeeks(event.date, today);
+    // Counted in days and rounded up: differenceInWeeks truncates, so an event
+    // thirteen days away came out as one week and lost half the preparation.
+    const diasAteEvento = Math.ceil((event.date.getTime() - today.getTime()) / (24 * 60 * 60 * 1000));
 
-    if (weeksUntilEvent < 4) {
-      return NextResponse.json({ error: "Evento demasiado próximo (mínimo 4 semanas)" }, { status: 400 });
+    if (diasAteEvento < 3) {
+      return NextResponse.json(
+        { error: "O evento é demasiado próximo para preparar um plano. São precisos pelo menos 3 dias." },
+        { status: 400 }
+      );
     }
+
+    const weeksUntilEvent = Math.max(1, Math.ceil(diasAteEvento / 7));
 
     const user = athlete.user;
     const age = athlete.dateOfBirth

@@ -352,7 +352,9 @@ function calendarRules(athlete: TrainingPlanRequest["athlete"]): string {
 
   return `REGRAS DE CALENDÁRIO (invioláveis):
 - Cada semana tem EXATAMENTE ${dias} sessões.
-- O tipo LONG vai em dayOfWeek=${longo} (${DIAS_PT[longo]}).
+- Quando a semana incluir um treino LONG, ele vai em dayOfWeek=${longo} (${DIAS_PT[longo]}).
+  Isto define onde o longo cai, não que tenha de existir: semanas de recuperação
+  ou de taper podem não ter nenhum.
 - Nunca INTERVALS ou TEMPO em dias seguidos; nunca LONG no dia seguinte a um desses.
 - dayOfWeek: 1=Segunda … 7=Domingo.${preferidos}`;
 }
@@ -372,8 +374,13 @@ Data de hoje: ${request.currentDate} | Semanas disponíveis: ${request.weeksUnti
 
 ${calendarRules(request.athlete)}
 
-PRINCÍPIOS: 80% do volume em Z1-Z2; progressão máxima de 10% por semana; uma semana de recuperação
-a cada 3 de carga; taper nas últimas 2 semanas; especificidade crescente até ao evento.
+${request.weeksUntilEvent <= 3
+  ? `ATENÇÃO — PLANO CURTO: só há ${request.weeksUntilEvent} semana(s) até ao evento. Não há tempo para
+ganhar forma, e tentá-lo só traria fadiga à linha de partida. Este plano é de AFINAÇÃO: mantém o
+volume baixo, inclui um ou dois estímulos curtos ao ritmo de prova para o corpo o recordar, e prioriza
+a chegada descansado. Nada de treinos longos nem de progressões de volume.`
+  : `PRINCÍPIOS: 80% do volume em Z1-Z2; progressão máxima de 10% por semana; uma semana de recuperação
+a cada 3 de carga; taper nas últimas 2 semanas; especificidade crescente até ao evento.`}
 
 Gera as PRIMEIRAS ${request.weeksToGenerate ?? 4} SEMANAS. Para cada sessão indica APENAS os campos abaixo — sem
 descrições, sem aquecimento, sem dicas. Esse detalhe é pedido depois, à parte.
