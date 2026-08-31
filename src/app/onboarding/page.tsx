@@ -4,7 +4,16 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/ui/Logo";
 
-type Step = "profile" | "event" | "done";
+type Step = "profile" | "event" | "availability" | "done";
+
+const STEPS = [
+  { id: "profile", label: "Perfil" },
+  { id: "event", label: "Evento" },
+  { id: "availability", label: "Disponibilidade" },
+] as const;
+
+// 1=Segunda ... 7=Domingo, matching TrainingSession.dayOfWeek
+const DAYS_OF_WEEK = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
 
 const FITNESS_LEVELS = [
   { value: "BEGINNER", label: "Iniciante", desc: "Menos de 1 ano de treino regular" },
@@ -57,6 +66,23 @@ export default function OnboardingPage() {
     goalTime: "",
   });
 
+  // Asked before the plan is generated: supplying these afterwards would mean
+  // regenerating from scratch, and generation takes minutes.
+  const [preferredDays, setPreferredDays] = useState<number[]>([2, 4, 6, 7]);
+  const [longRunDay, setLongRunDay] = useState(7);
+
+  function toggleDay(day: number) {
+    setPreferredDays(prev => {
+      if (prev.includes(day)) {
+        if (prev.length <= 2) return prev; // a plan needs somewhere to put sessions
+        const next = prev.filter(d => d !== day);
+        if (day === longRunDay) setLongRunDay(next[next.length - 1]);
+        return next;
+      }
+      return [...prev, day].sort((a, b) => a - b);
+    });
+  }
+
   async function handleProfileSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -76,6 +102,8 @@ export default function OnboardingPage() {
     }
   }
 
+  const [eventId, setEventId] = useState<string | null>(null);
+
   async function handleEventSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -88,11 +116,36 @@ export default function OnboardingPage() {
       });
       if (!eventRes.ok) throw new Error("Erro ao criar evento");
       const eventData = await eventRes.json();
+      setEventId(eventData.id);
+      setStep("availability");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro inesperado");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAvailabilitySubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!eventId) { setError("Evento em falta. Recomeça o processo."); return; }
+    setLoading(true);
+    setError("");
+    try {
+      const prefRes = await fetch("/api/athletes/profile", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          preferredDays,
+          longRunDay,
+          trainingDaysPerWeek: preferredDays.length,
+        }),
+      });
+      if (!prefRes.ok) throw new Error("Erro ao guardar disponibilidade");
 
       const planRes = await fetch("/api/training-plans/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ eventId: eventData.id }),
+        body: JSON.stringify({ eventId }),
       });
       // Any non-2xx used to collapse into one message, which hid a platform
       // timeout behind what looked like an application error.
@@ -126,23 +179,27 @@ export default function OnboardingPage() {
         {/* Steps indicator */}
         {step !== "done" && (
           <div className="flex items-center gap-3 mb-10">
-            {(["profile", "event"] as const).map((s, i) => (
-              <div key={s} className="flex items-center gap-3 flex-1">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
-                  step === s
-                    ? "bg-green-500 text-black"
-                    : s === "profile" && step === "event"
-                    ? "bg-green-500/20 text-green-400"
-                    : "bg-[var(--bg-hover)] text-[var(--text-faint)]"
-                }`}>
-                  {s === "profile" && step === "event" ? "✓" : i + 1}
+            {STEPS.map(({ id, label }, i) => {
+              const atual = STEPS.findIndex(s => s.id === step);
+              const concluido = atual > i;
+              return (
+                <div key={id} className="flex items-center gap-2 flex-1">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 transition-all ${
+                    step === id
+                      ? "bg-green-500 text-black"
+                      : concluido
+                      ? "bg-green-500/20 text-green-400"
+                      : "bg-[var(--bg-hover)] text-[var(--text-faint)]"
+                  }`}>
+                    {concluido ? "✓" : i + 1}
+                  </div>
+                  <span className={`text-xs font-medium ${step === id ? "text-white" : "text-[var(--text-faint)]"}`}>
+                    {label}
+                  </span>
+                  {i < STEPS.length - 1 && <div className="flex-1 h-px bg-[#222] ml-1" />}
                 </div>
-                <span className={`text-xs font-medium ${step === s ? "text-white" : "text-[var(--text-faint)]"}`}>
-                  {s === "profile" ? "Perfil" : "Evento"}
-                </span>
-                {i === 0 && <div className="flex-1 h-px bg-[#222] ml-1" />}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
 
@@ -316,12 +373,89 @@ export default function OnboardingPage() {
               )}
 
               <button type="submit" disabled={loading} className="btn-primary w-full py-3.5">
+                {loading ? "A guardar…" : "Continuar →"}
+              </button>
+            </form>
+          </div>
+        )}
+
+        {step === "availability" && (
+          <div className="card">
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-white">Quando podes treinar?</h1>
+              <p className="text-[var(--text-muted)] text-sm mt-1">
+                O plano é construído à volta destes dias. Podes mudá-los depois, mas isso obriga a gerar tudo de novo.
+              </p>
+            </div>
+
+            <form onSubmit={handleAvailabilitySubmit} className="space-y-6">
+              <div>
+                <label className="label">
+                  Dias disponíveis —{" "}
+                  <span className="text-green-400 normal-case font-semibold">{preferredDays.length} por semana</span>
+                </label>
+                <div className="grid grid-cols-7 gap-1.5 mt-3">
+                  {DAYS_OF_WEEK.map((dia, i) => {
+                    const val = i + 1;
+                    const escolhido = preferredDays.includes(val);
+                    return (
+                      <button key={val} type="button" onClick={() => toggleDay(val)}
+                        className={`py-3 rounded-xl text-xs font-medium border transition-all ${
+                          escolhido
+                            ? "bg-green-500/20 text-green-400 border-green-500/40"
+                            : "bg-[var(--bg-hover)] text-[var(--text-faint)] border-[var(--border-hover)] hover:border-[var(--border-strong)]"
+                        }`}>
+                        {dia.slice(0, 3)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <label className="label">Dia do treino longo</label>
+                <p className="text-xs text-[var(--text-faint)] mb-3">
+                  A sessão mais longa da semana. Escolhe o dia em que tens mais tempo.
+                </p>
+                <div className="grid grid-cols-7 gap-1.5">
+                  {DAYS_OF_WEEK.map((dia, i) => {
+                    const val = i + 1;
+                    const disponivel = preferredDays.includes(val);
+                    return (
+                      <button key={val} type="button"
+                        onClick={() => {
+                          if (!disponivel) setPreferredDays(prev => [...prev, val].sort((a, b) => a - b));
+                          setLongRunDay(val);
+                        }}
+                        className={`py-3 rounded-xl text-xs font-medium border transition-all ${
+                          longRunDay === val
+                            ? "bg-green-500 text-black border-green-500"
+                            : disponivel
+                            ? "bg-green-500/10 text-green-400 border-green-500/20 hover:border-green-500/40"
+                            : "bg-[var(--bg-hover)] text-[var(--text-faint)] border-[var(--border-hover)]"
+                        }`}>
+                        {dia.slice(0, 3)}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="flex gap-3 p-3 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border)] text-xs text-[var(--text-secondary)] leading-relaxed">
+                <span className="shrink-0">⏳</span>
+                <p>
+                  A criação do plano demora alguns minutos — o treinador IA escreve cada sessão em detalhe.
+                  Deixa esta página aberta até terminar.
+                </p>
+              </div>
+
+              <button type="submit" disabled={loading} className="btn-primary w-full py-3.5">
                 {loading ? (
                   <span className="flex items-center justify-center gap-2">
                     <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
                       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" strokeDasharray="30 70" />
                     </svg>
-                    A gerar plano com IA… pode demorar 30s
+                    A criar o teu plano… pode demorar alguns minutos
                   </span>
                 ) : "Gerar plano de treino →"}
               </button>
