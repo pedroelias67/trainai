@@ -31,6 +31,8 @@ export interface TrainingPlanRequest {
   };
   currentDate: string;
   weeksUntilEvent: number;
+  /** How many weeks to materialise now; the rest are added as the athlete advances. */
+  weeksToGenerate?: number;
 }
 
 export interface WeeklyAnalysisRequest {
@@ -373,8 +375,8 @@ ${calendarRules(request.athlete)}
 PRINCÍPIOS: 80% do volume em Z1-Z2; progressão máxima de 10% por semana; uma semana de recuperação
 a cada 3 de carga; taper nas últimas 2 semanas; especificidade crescente até ao evento.
 
-Gera as PRIMEIRAS 4 SEMANAS. Para cada sessão indica APENAS os campos abaixo — sem descrições,
-sem aquecimento, sem dicas. Esse detalhe é pedido depois, à parte.
+Gera as PRIMEIRAS ${request.weeksToGenerate ?? 4} SEMANAS. Para cada sessão indica APENAS os campos abaixo — sem
+descrições, sem aquecimento, sem dicas. Esse detalhe é pedido depois, à parte.
 
 sessionType: apenas EASY, TEMPO, INTERVALS, LONG, RECOVERY, STRENGTH, BRICK, SWIM ou RACE
 sport: apenas RUNNING, CYCLING ou SWIMMING
@@ -477,4 +479,81 @@ Responde APENAS com JSON válido, um array com um objeto por sessão, sem markdo
   const texto = content.text.replace(/^```(?:json)?\r?\n?/i, "").replace(/\r?\n?```\s*$/i, "").trim();
   const parsed = JSON.parse(texto);
   return Array.isArray(parsed) ? parsed : [];
+}
+
+/**
+ * Adds the next stretch of weeks to a plan that already exists.
+ *
+ * Plans are built on a rolling horizon rather than in full: only the next few
+ * weeks are ever materialised, and this tops them up as the athlete advances.
+ * The weeks already written are summarised into the prompt so the periodisation
+ * continues from where it stands instead of restarting at base building — and
+ * so the taper still lands on the event rather than wherever this batch ends.
+ */
+export async function extendPlanSkeleton(params: {
+  athlete: TrainingPlanRequest["athlete"];
+  event: TrainingPlanRequest["event"];
+  totalWeeks: number;
+  fromWeek: number;
+  toWeek: number;
+  previousWeeks: Array<{ weekNumber: number; focus: string | null; totalDistanceKm: number | null }>;
+}): Promise<string> {
+  const historico = params.previousWeeks.length
+    ? params.previousWeeks
+        .map(w => `  Semana ${w.weekNumber}: ${w.focus ?? "sem foco definido"}${w.totalDistanceKm ? ` (${w.totalDistanceKm}km)` : ""}`)
+        .join("\n")
+    : "  (nenhuma ainda)";
+
+  const semanasAteEvento = params.totalWeeks - params.toWeek;
+
+  const prompt = `És um treinador de elite. Este atleta já tem um plano em curso e precisas de acrescentar as próximas semanas.
+
+ATLETA: ${params.athlete.name}, ${params.athlete.age} anos, nível ${params.athlete.fitnessLevel}
+${params.athlete.weeklyHours}h disponíveis por semana${params.athlete.maxHR ? ` | FC máxima ${params.athlete.maxHR} bpm` : ""}
+
+EVENTO: ${params.event.name} — ${params.event.distance} em ${params.event.date}
+O plano tem ${params.totalWeeks} semanas no total.
+
+SEMANAS JÁ PLANEADAS:
+${historico}
+
+${calendarRules(params.athlete)}
+
+Gera as semanas ${params.fromWeek} a ${params.toWeek}, continuando a progressão acima — não recomeces
+pela base. Depois da semana ${params.toWeek} faltarão ${semanasAteEvento} semanas até ao evento:
+${semanasAteEvento <= 2
+  ? "estas semanas são de TAPER, com redução de 40-50% do volume e alguma intensidade mantida."
+  : semanasAteEvento <= 5
+  ? "estás na fase específica — o treino deve aproximar-se do ritmo e das exigências da prova."
+  : "estás em fase de construção — aumenta o volume progressivamente, no máximo 10% por semana, com uma semana de recuperação a cada 3 de carga."}
+
+Indica APENAS os campos abaixo por sessão — sem descrições nem dicas, que são pedidas depois.
+sessionType: apenas EASY, TEMPO, INTERVALS, LONG, RECOVERY, STRENGTH, BRICK, SWIM ou RACE
+sport: apenas RUNNING, CYCLING ou SWIMMING
+
+Responde APENAS com JSON válido, sem markdown:
+{
+  "weeks": [
+    {
+      "weekNumber": ${params.fromWeek},
+      "focus": "foco da semana numa linha",
+      "coachMessage": "mensagem do treinador para a semana, 1-2 frases",
+      "totalDistanceKm": 45,
+      "totalDurationMin": 300,
+      "sessions": [
+        { "dayOfWeek": 2, "sport": "RUNNING", "sessionType": "EASY", "name": "Corrida Base Z2",
+          "plannedDistanceKm": 8, "plannedDurationMin": 55, "plannedPace": "6:45/km", "isPriority": false }
+      ]
+    }
+  ]
+}`;
+
+  const message = await claude.messages.create({
+    model: CLAUDE_MODEL,
+    max_tokens: 8000,
+    messages: [{ role: "user", content: prompt }],
+  });
+  const content = message.content[0];
+  if (content.type !== "text") throw new Error("Resposta inesperada da IA");
+  return content.text.replace(/^```(?:json)?\r?\n?/i, "").replace(/\r?\n?```\s*$/i, "").trim();
 }

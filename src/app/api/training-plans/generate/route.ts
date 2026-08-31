@@ -6,6 +6,7 @@ export const maxDuration = 300;
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generatePlanSkeleton, detailSessions } from "@/lib/claude";
+import { HORIZON_WEEKS } from "@/lib/plan-horizon";
 import { cookies } from "next/headers";
 import { differenceInWeeks } from "date-fns";
 
@@ -86,6 +87,9 @@ export async function POST(req: NextRequest) {
       },
       currentDate: today.toISOString().split("T")[0],
       weeksUntilEvent,
+      // Only the horizon is written now; the Monday job tops it up each week, so
+      // a plan for an event months away costs the same to create as a short one.
+      weeksToGenerate: Math.min(weeksUntilEvent, HORIZON_WEEKS),
     });
 
     const planData = JSON.parse(planJson);
