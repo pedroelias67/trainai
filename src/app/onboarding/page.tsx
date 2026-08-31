@@ -114,7 +114,12 @@ export default function OnboardingPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(event),
       });
-      if (!eventRes.ok) throw new Error("Erro ao criar evento");
+      if (!eventRes.ok) {
+        // The endpoint validates the date and the enums and says which failed;
+        // collapsing that into one message hid the reason from the athlete.
+        const detalhe = await eventRes.json().catch(() => null);
+        throw new Error(detalhe?.error ?? "Erro ao criar evento");
+      }
       const eventData = await eventRes.json();
       setEventId(eventData.id);
       setStep("availability");
