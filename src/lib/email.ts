@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import {
   emailShell, emailButton, emailHeading, emailText,
-  emailBadge, emailStatGrid, emailInfoBox, emailDivider, emailSubheading,
+  emailBadge, emailStatGrid, emailInfoBox, emailDivider, emailSubheading, EMAIL_COLORS,
 } from "./email-template";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -64,10 +64,10 @@ export async function sendWelcomeEmail(email: string, name: string) {
           ].map(s => `
             <tr><td style="padding-bottom:12px">
               <div style="display:flex;align-items:flex-start;gap:12px">
-                <div style="width:24px;height:24px;border-radius:50%;background:#22c55e;color:#000;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${s.n}</div>
+                <div style="width:24px;height:24px;border-radius:50%;background:${EMAIL_COLORS.ACCENT};color:#ffffff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${s.n}</div>
                 <div>
-                  <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:#ffffff">${s.title}</p>
-                  <p style="margin:0;font-size:12px;color:#82828b">${s.desc}</p>
+                  <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:${EMAIL_COLORS.HEADING}">${s.title}</p>
+                  <p style="margin:0;font-size:12px;color:${EMAIL_COLORS.MUTED}">${s.desc}</p>
                 </div>
               </div>
             </td></tr>
@@ -121,28 +121,28 @@ export async function sendWeeklyReportEmail(
         ${distancePct !== null ? `
           <div style="margin-bottom:20px">
             <div style="display:flex;justify-content:space-between;margin-bottom:6px">
-              <span style="font-size:12px;color:#82828b">Volume: ${data.actualDistance.toFixed(1)} / ${data.plannedDistance?.toFixed(1)} km</span>
-              <span style="font-size:12px;color:#22c55e;font-weight:600">${distancePct}%</span>
+              <span style="font-size:12px;color:${EMAIL_COLORS.MUTED}">Volume: ${data.actualDistance.toFixed(1)} / ${data.plannedDistance?.toFixed(1)} km</span>
+              <span style="font-size:12px;color:${EMAIL_COLORS.ACCENT};font-weight:600">${distancePct}%</span>
             </div>
-            <div style="background:#1a1a1a;border-radius:4px;height:5px;overflow:hidden">
-              <div style="background:#22c55e;width:${distancePct}%;height:100%;border-radius:4px"></div>
+            <div style="background:${EMAIL_COLORS.BORDER};border-radius:4px;height:5px;overflow:hidden">
+              <div style="background:${EMAIL_COLORS.ACCENT};width:${distancePct}%;height:100%;border-radius:4px"></div>
             </div>
           </div>
         ` : ""}
 
         ${emailInfoBox("✦ Análise do Treinador IA", data.aiSummary)}
-        ${data.nextWeekAdaptations ? emailInfoBox(`Semana ${data.weekNumber + 1} — Ajustes`, data.nextWeekAdaptations, "#3b82f6") : ""}
+        ${data.nextWeekAdaptations ? emailInfoBox(`Semana ${data.weekNumber + 1} — Ajustes`, data.nextWeekAdaptations, "#1d4ed8") : ""}
         ${data.adaptationFailed
           ? emailInfoBox(
               "Atenção",
               `Não foi possível ajustar automaticamente as sessões da semana ${data.weekNumber + 1} desta vez. O plano mantém-se como estava — segue a análise acima ao executá-lo. Já fomos notificados.`,
-              "#eab308"
+              "#a16207"
             )
           : ""}
 
         ${emailDivider()}
-        <p style="margin:0 0 16px;font-size:13px;color:#8b8b93;text-align:center">
-          🎯 ${data.eventName} — faltam <strong style="color:#ffffff">${data.weeksToEvent}</strong> semanas
+        <p style="margin:0 0 16px;font-size:13px;color:${EMAIL_COLORS.MUTED};text-align:center">
+          🎯 ${data.eventName} — faltam <strong style="color:${EMAIL_COLORS.HEADING}">${data.weeksToEvent}</strong> semanas
         </p>
 
         ${emailButton(`${BASE_URL}/dashboard`, "Ver Dashboard →")}
@@ -162,7 +162,7 @@ export async function sendInviteEmail(email: string, token: string, inviterName:
       content: `
         ${emailBadge("Convite exclusivo")}
         ${emailHeading("Foste convidado! 🎉")}
-        ${emailText(`<strong style="color:#fff">${inviterName}</strong> convidou-te para o TrainAI — planos de treino personalizados com inteligência artificial para corredores e triatletas.`)}
+        ${emailText(`<strong style="color:${EMAIL_COLORS.HEADING}">${inviterName}</strong> convidou-te para o TrainAI — planos de treino personalizados com inteligência artificial para corredores e triatletas.`)}
         ${emailStatGrid([
           { value: "IA", label: "Claude AI" },
           { value: "PWA", label: "Funciona offline" },
@@ -203,7 +203,7 @@ export async function sendFeedbackEmail(data: {
         ])}
         ${emailInfoBox("Mensagem", data.message)}
         ${emailDivider()}
-        ${emailText(`<strong style="color:#fff">De:</strong> ${data.name} &lt;${data.email}&gt;`, true)}
+        ${emailText(`<strong style="color:${EMAIL_COLORS.HEADING}">De:</strong> ${data.name} &lt;${data.email}&gt;`, true)}
       `,
     }),
   });
