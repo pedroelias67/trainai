@@ -6,6 +6,7 @@ import { LogoFull } from "@/components/ui/Logo";
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths } from "date-fns";
 import { pt } from "date-fns/locale";
 import CalendarGrid from "@/components/dashboard/CalendarGrid";
+import { SESSION_TYPES } from "@/lib/session-types";
 
 const SESSION_TYPE_COLORS: Record<string, string> = {
   EASY: "bg-green-500/10 text-green-400 border-green-500/20",
@@ -19,10 +20,6 @@ const SESSION_TYPE_COLORS: Record<string, string> = {
   RACE: "bg-rose-500/10 text-rose-400 border-rose-500/20",
 };
 
-const SESSION_TYPE_LABELS: Record<string, string> = {
-  EASY: "Fácil", TEMPO: "Tempo", INTERVALS: "Intervalos", LONG: "Longo",
-  RECOVERY: "Recuperação", STRENGTH: "Força", BRICK: "Brick", SWIM: "Natação", RACE: "Corrida",
-};
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -158,8 +155,12 @@ export default async function CalendarPage({
 
         {/* Legend */}
         <div className="mt-6 flex flex-wrap gap-3">
-          {Object.entries(SESSION_TYPE_LABELS).map(([type, label]) => (
-            <div key={type} className={`text-xs px-2 py-1 rounded border ${SESSION_TYPE_COLORS[type]}`}>
+          {Object.entries(SESSION_TYPES).map(([type, { label, description }]) => (
+            <div
+              key={type}
+              title={description}
+              className={`text-xs px-2 py-1 rounded border cursor-help ${SESSION_TYPE_COLORS[type]}`}
+            >
               {label}
             </div>
           ))}

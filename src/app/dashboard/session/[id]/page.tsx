@@ -10,6 +10,7 @@ import { SessionJournal } from "@/components/dashboard/SessionJournal";
 import NutritionPlan from "@/components/dashboard/NutritionPlan";
 import { WorkoutTimer } from "@/components/dashboard/WorkoutTimer";
 import { SessionDetailLoader } from "@/components/dashboard/SessionDetailLoader";
+import { sessionTypeLabel, sessionTypeDescription } from "@/lib/session-types";
 
 const sessionTypeColors: Record<string, string> = {
   EASY: "bg-green-500/10 text-green-400 border-green-500/20",
@@ -23,10 +24,6 @@ const sessionTypeColors: Record<string, string> = {
   RACE: "bg-rose-500/10 text-rose-400 border-rose-500/20",
 };
 
-const sessionTypeLabels: Record<string, string> = {
-  EASY: "Fácil", LONG: "Longo", TEMPO: "Tempo", INTERVALS: "Intervalos",
-  RECOVERY: "Recuperação", STRENGTH: "Força", BRICK: "Brick", SWIM: "Natação", RACE: "Corrida",
-};
 
 const sportIcons: Record<string, string> = {
   RUNNING: "🏃", CYCLING: "🚴", SWIMMING: "🏊",
@@ -83,10 +80,18 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             <div className="flex items-center gap-2">
               <WorkoutExportButton sessionId={session.id} weekId={session.weekId} />
               <span className={`px-3 py-1 rounded-full text-xs font-medium border ${sessionTypeColors[session.sessionType] ?? "bg-zinc-500/10 text-[var(--text-secondary)] border-zinc-500/20"}`}>
-                {sessionTypeLabels[session.sessionType]}
+                {sessionTypeLabel(session.sessionType)}
               </span>
             </div>
           </div>
+
+          {/* What this kind of session is for — "Brick" and "Tempo" mean nothing
+              to someone new to the sport, and the plan is full of them. */}
+          {sessionTypeDescription(session.sessionType) && (
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed -mt-2 mb-4">
+              {sessionTypeDescription(session.sessionType)}
+            </p>
+          )}
 
           {/* Planned metrics */}
           <div className="grid grid-cols-3 gap-3 pt-5 border-t border-[var(--border)]">

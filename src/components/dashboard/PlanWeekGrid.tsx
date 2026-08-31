@@ -7,6 +7,7 @@ import { pt } from "date-fns/locale";
 import { SessionEditDrawer } from "./SessionEditDrawer";
 import { SessionActions } from "./SessionActions";
 import { haptic } from "@/components/PWAProvider";
+import { sessionTypeLabel, sessionTypeDescription } from "@/lib/session-types";
 
 type Session = {
   id: string;
@@ -28,10 +29,6 @@ type Props = {
   sessions: Session[];
 };
 
-const SESSION_TYPE_LABELS: Record<string, string> = {
-  EASY: "Fácil", TEMPO: "Tempo", INTERVALS: "Intervalos", LONG: "Longo",
-  RECOVERY: "Recuperação", STRENGTH: "Força", BRICK: "Brick", SWIM: "Natação", RACE: "Corrida",
-};
 const SESSION_TYPE_COLORS: Record<string, string> = {
   EASY: "bg-green-500/10 text-green-400 border-green-500/20",
   LONG: "bg-blue-500/10 text-blue-400 border-blue-500/20",
@@ -95,8 +92,8 @@ export function PlanWeekGrid({ sessions }: Props) {
                       </span>
                     ) : (
                       <>
-                        <span className={`text-xs px-1.5 py-0.5 rounded border ${SESSION_TYPE_COLORS[session.sessionType] ?? "bg-zinc-500/10 text-[var(--text-secondary)] border-zinc-500/20"}`}>
-                          {SESSION_TYPE_LABELS[session.sessionType]}
+                        <span title={sessionTypeDescription(session.sessionType) ?? ""} className={`text-xs px-1.5 py-0.5 rounded border ${SESSION_TYPE_COLORS[session.sessionType] ?? "bg-zinc-500/10 text-[var(--text-secondary)] border-zinc-500/20"}`}>
+                          {sessionTypeLabel(session.sessionType)}
                         </span>
                         {session.plannedDistance && (
                           <span className="text-xs text-[var(--text-faint)]">{session.plannedDistance}km</span>

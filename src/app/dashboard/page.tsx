@@ -10,6 +10,7 @@ import { WellnessCheckin } from "@/components/dashboard/WellnessCheckin";
 import RecentActivitiesFeed from "@/components/dashboard/RecentActivitiesFeed";
 import { OnboardingTour } from "@/components/dashboard/OnboardingTour";
 import { WeeklyLoadChart, PaceEvolutionChart } from "@/components/dashboard/TrainingCharts";
+import { sessionTypeLabel, sessionTypeDescription } from "@/lib/session-types";
 
 async function getDashboardData(userId: string) {
   return prisma.athlete.findUnique({
@@ -66,10 +67,6 @@ async function getPersonalRecords(athleteId: string) {
   });
 }
 
-const sessionTypeLabels: Record<string, string> = {
-  EASY: "Fácil", TEMPO: "Tempo", INTERVALS: "Intervalos", LONG: "Longo",
-  RECOVERY: "Recuperação", STRENGTH: "Força", BRICK: "Brick", SWIM: "Natação", RACE: "Corrida",
-};
 
 const sportLabels: Record<string, string> = {
   RUNNING: "Corrida", CYCLING: "Ciclismo", SWIMMING: "Natação",
@@ -265,7 +262,7 @@ export default async function DashboardPage() {
                         <div className="flex-1 min-w-0">
                           <p className="font-medium text-white text-sm">{session.name}</p>
                           <p className="text-xs text-[var(--text-muted)] mt-0.5">
-                            {sportLabels[session.sport]} · {sessionTypeLabels[session.sessionType]}
+                            {sportLabels[session.sport]} · {sessionTypeLabel(session.sessionType)}
                             {session.plannedDistance ? ` · ${session.plannedDistance}km` : ""}
                             {session.plannedDuration ? ` · ${session.plannedDuration}min` : ""}
                           </p>
@@ -295,7 +292,7 @@ export default async function DashboardPage() {
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-medium text-white">{session.name}</p>
                           <p className="text-xs text-[var(--text-muted)]">
-                            {sessionTypeLabels[session.sessionType]}
+                            {sessionTypeLabel(session.sessionType)}
                             {session.plannedDistance ? ` · ${session.plannedDistance}km` : ""}
                             {session.plannedDuration ? ` · ${session.plannedDuration}min` : ""}
                           </p>

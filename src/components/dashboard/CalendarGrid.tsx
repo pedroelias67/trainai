@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { format, isSameDay, isSameMonth } from "date-fns";
+import { sessionTypeLabel, sessionTypeDescription } from "@/lib/session-types";
 
 const SESSION_TYPE_COLORS: Record<string, string> = {
   EASY: "bg-green-500/10 text-green-400 border-green-500/20",
@@ -17,10 +18,6 @@ const SESSION_TYPE_COLORS: Record<string, string> = {
   RACE: "bg-rose-500/10 text-rose-400 border-rose-500/20",
 };
 
-const SESSION_TYPE_LABELS: Record<string, string> = {
-  EASY: "Fácil", TEMPO: "Tempo", INTERVALS: "Intervalos", LONG: "Longo",
-  RECOVERY: "Recuperação", STRENGTH: "Força", BRICK: "Brick", SWIM: "Natação", RACE: "Corrida",
-};
 
 const SPORT_ICON: Record<string, string> = {
   RUNNING: "🏃", CYCLING: "🚴", SWIMMING: "🏊",
@@ -195,11 +192,12 @@ export default function CalendarGrid({ days, sessions, activities, currentMonth 
                       } ${isSelected ? "ring-2 ring-[var(--accent)] ring-offset-1 ring-offset-[var(--bg-base)]" : ""} ${
                         session.cancelled ? "opacity-40 line-through" : ""
                       } ${SESSION_TYPE_COLORS[session.sessionType] ?? "bg-zinc-500/10 text-[var(--text-secondary)] border-zinc-500/20"}`}
+                    title={`${session.name}${sessionTypeDescription(session.sessionType) ? ` — ${sessionTypeDescription(session.sessionType)}` : ""}`}
                     >
                       <span className="mr-1">{SPORT_ICON[session.sport] ?? "🏃"}</span>
                       {session.completed && <span className="text-green-400 mr-1">✓</span>}
                       {session.isPriority && <span className="mr-0.5">⭐</span>}
-                      {SESSION_TYPE_LABELS[session.sessionType] ?? session.name}
+                      {sessionTypeLabel(session.sessionType)}
                     </Link>
 
                     {/* Move button for mobile / alternative to drag */}
