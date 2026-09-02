@@ -58,17 +58,40 @@ export function formatDuration(secs: number): string {
   return s === 0 ? `${m}m` : `${m}m${s}s`;
 }
 
-/** Only a well-formed pace is passed through; anything else falls back to zones. */
+/**
+ * Pulls a pace target out of whatever the coach wrote.
+ *
+ * Requiring the whole field to be exactly "5:02/km" threw away most of them:
+ * plans say "5:02/km nas repetições" or give a band, "4:58-5:05/km". Both are
+ * usable, and a band is better — Intervals.icu takes a range directly, which is
+ * closer to how the session is meant to be run. Ranges are emitted slowest
+ * first, matching their format.
+ */
 export function normalisePace(pace: string | null): string | null {
   if (!pace) return null;
-  const m = pace.trim().match(/^(\d{1,2}:\d{2})\s*\/\s*(km|mi)$/i);
-  return m ? `${m[1]}/${m[2].toLowerCase()}` : null;
+
+  const range = pace.match(/(\d{1,2}):(\d{2})\s*[-–—]\s*(\d{1,2}):(\d{2})\s*\/\s*(km|mi)/i);
+  if (range) {
+    const a = parseInt(range[1], 10) * 60 + parseInt(range[2], 10);
+    const b = parseInt(range[3], 10) * 60 + parseInt(range[4], 10);
+    const unit = range[5].toLowerCase();
+    const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+    return `${fmt(Math.max(a, b))}-${fmt(Math.min(a, b))}/${unit}`;
+  }
+
+  const single = pace.match(/(\d{1,2}:\d{2})\s*\/\s*(km|mi)/i);
+  return single ? `${single[1]}/${single[2].toLowerCase()}` : null;
 }
 
 export function buildWorkoutDescription(session: PlannedSession): string {
   const total = (session.plannedDuration ?? 60) * 60;
   const zone = TYPE_TO_ZONE[session.sessionType] ?? "Z2";
-  const pace = session.sport === "RUNNING" ? normalisePace(session.plannedPace) : null;
+  // The pace often sits in the main set rather than the dedicated field, which
+  // is where the band lives too.
+  const pace =
+    session.sport === "RUNNING"
+      ? normalisePace(session.plannedPace) ?? normalisePace(session.mainSet)
+      : null;
   const workTarget = pace ? `${pace} Pace` : `${zone} HR`;
 
   const spec = parseIntervals(session.mainSet);

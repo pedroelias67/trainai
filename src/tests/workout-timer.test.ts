@@ -58,6 +58,39 @@ describe("parseIntervals", () => {
   it("returns null without a main set", () => {
     expect(parseIntervals(null)).toBeNull();
   });
+
+  // Taken from a session that reached a watch as one 27-minute block because
+  // none of these phrasings were recognised.
+  describe("phrasings the coach actually writes", () => {
+    it("reads a set spelled out in words", () => {
+      expect(parseIntervals(
+        "2 repetições de 10min ao ritmo objetivo da corrida (4:58-5:05/km). " +
+        "FC alvo: 140-155 bpm (Z4). Recuperação entre repetições: 3min corrida Z1"
+      )).toEqual({ reps: 2, workSecs: 600, restSecs: 180 });
+    });
+
+    it("accepts séries and blocos as well as x", () => {
+      expect(parseIntervals("4 séries de 6min no limiar, com 2min de recuperação."))
+        .toEqual({ reps: 4, workSecs: 360, restSecs: 120 });
+      expect(parseIntervals("3 blocos de 8min a ritmo de prova, 2min de trote entre eles."))
+        .toEqual({ reps: 3, workSecs: 480, restSecs: 120 });
+    });
+
+    it("finds a recovery separated from its keyword by other words", () => {
+      // The digit in "Z1" used to cut the search short.
+      expect(parseIntervals(
+        "2x8 minutos ao ritmo de prova — 5:00-5:05/km. 3 minutos de corrida Z1 de recuperação."
+      )?.restSecs).toBe(180);
+    });
+
+    it("does not mistake the work interval for the recovery", () => {
+      expect(parseIntervals("4x5min a 4:30/km. Sem indicação de pausa.")?.restSecs).toBeNull();
+    });
+
+    it("does not read a pace as a duration", () => {
+      expect(parseIntervals("3x10min a 5:05/km, recuperação de 90s.")?.restSecs).toBe(90);
+    });
+  });
 });
 
 describe("buildPhases", () => {

@@ -55,21 +55,58 @@ export function parseIntervals(
     }
   }
 
-  const rep = mainSet.match(/(\d{1,2})\s*[x×]\s*\(?\s*(\d{1,3})\s*(min\w*|'|s\w*)/i);
+  // "5x3min" and the same thing spelled out — the coach writes both, and only
+  // the first was ever recognised.
+  const rep =
+    mainSet.match(/(\d{1,2})\s*[x×]\s*\(?\s*(\d{1,3})\s*(min\w*|'|s\w*)/i) ??
+    // \S* rather than \w+ after the stem: \w stops at the ç in "repetições".
+    mainSet.match(
+      /(\d{1,2})\s*(?:repeti\S*|s\S?ries?|blocos?|vezes)\s*(?:de\s*)?(\d{1,3})\s*(min\w*|'|s\w*)/i
+    );
   if (!rep) return null;
 
   const reps = parseInt(rep[1], 10);
   const workSecs = toSeconds(parseInt(rep[2], 10), rep[3]);
   if (!sane(reps, workSecs)) return null;
 
-  // Recovery has to be named, so a pace like "6:30/km" is never mistaken for one.
-  // Matching runs to the next digit rather than over \w+, which stops at the
-  // accents in "recuperação".
-  const rest =
-    mainSet.match(/(?:rec|descanso)[^\d]{0,15}(\d{1,3})\s*(min\w*|'|s\w*)/i) ??
-    mainSet.match(/(\d{1,3})\s*(min\w*|'|s\w*)\s*(?:de\s+)?(?:rec|descanso)/i);
+  // The span of the work interval, so it cannot be read back as the recovery.
+  const workSpan = { from: rep.index ?? 0, to: (rep.index ?? 0) + rep[0].length };
+  return { reps, workSecs, restSecs: asRest(findRecovery(mainSet, workSpan)) };
+}
 
-  return { reps, workSecs, restSecs: asRest(rest ? toSeconds(parseInt(rest[1], 10), rest[2]) : null) };
+/**
+ * The recovery duration, found by proximity to the word naming it.
+ *
+ * Matching a fixed span of characters does not survive real phrasing: in
+ * "3 minutos de corrida Z1 de recuperação" the digit in "Z1" cuts the span
+ * short. Instead every duration in the text is located, and the one nearest a
+ * recovery keyword wins — which also keeps a pace like "6:30/km" out, since no
+ * such keyword sits beside it.
+ */
+function findRecovery(text: string, workSpan: { from: number; to: number }): number | null {
+  const keywords = [...text.matchAll(/rec(?:upera\w*)?|descanso|pausa|trote/gi)].map(m => m.index ?? 0);
+  if (keywords.length === 0) return null;
+
+  const durations = [...text.matchAll(/(\d{1,3})\s*(min\w*|'|s\w*)/gi)]
+    // Skip the seconds half of a pace such as "5:05/km" — the digits directly
+    // after a colon. Only the character immediately before counts: allowing a
+    // gap also excluded "repetições: 3min", where the colon belongs to the
+    // sentence rather than to a time.
+    .filter(m => text[(m.index ?? 0) - 1] !== ":")
+    // Never the work interval itself.
+    .filter(m => (m.index ?? 0) < workSpan.from || (m.index ?? 0) >= workSpan.to)
+    .map(m => ({ at: m.index ?? 0, secs: toSeconds(parseInt(m[1], 10), m[2]) }));
+  if (durations.length === 0) return null;
+
+  let best: { distance: number; secs: number } | null = null;
+  for (const d of durations) {
+    for (const k of keywords) {
+      const distance = Math.abs(k - d.at);
+      if (distance > 60) continue;
+      if (!best || distance < best.distance) best = { distance, secs: d.secs };
+    }
+  }
+  return best?.secs ?? null;
 }
 
 /**

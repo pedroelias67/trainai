@@ -34,9 +34,20 @@ describe("normalisePace", () => {
     expect(normalisePace("7:30 / mi")).toBe("7:30/mi");
   });
 
+  it("finds a pace inside a longer phrase", () => {
+    // Plans write "5:02/km nas repetições"; requiring the exact string threw
+    // the target away and the session fell back to heart-rate zones.
+    expect(normalisePace("5:02/km nas repetições")).toBe("5:02/km");
+  });
+
+  it("keeps a band as a range, slowest first", () => {
+    expect(normalisePace("4:58-5:05/km")).toBe("5:05-4:58/km");
+    expect(normalisePace("5:00-5:05/km, Z4 baixo")).toBe("5:05-5:00/km");
+  });
+
   it("rejects anything it cannot trust as a target", () => {
-    expect(normalisePace("5:00-5:05/km")).toBeNull();
     expect(normalisePace("confortável")).toBeNull();
+    expect(normalisePace("Z4")).toBeNull();
     expect(normalisePace(null)).toBeNull();
   });
 });
