@@ -144,9 +144,18 @@ describe("sanitiseSteps", () => {
       ] },
     ]);
     expect(out).toHaveLength(1);
-    // The two with a valid duration survive; only their unreadable targets are
-    // dropped, since a step with no target still describes real running.
-    expect(out![0].steps).toEqual([{ duration: "10m" }, { duration: "10m" }]);
+    // The two with a valid duration survive. Their unreadable targets fall back
+    // to Z1 rather than being left blank: a step with no target gives the athlete
+    // nothing on the watch, and appears to stop Intervals.icu reading further.
+    expect(out![0].steps).toEqual([
+      { duration: "10m", target: "Z1 HR" },
+      { duration: "10m", target: "Z1 HR" },
+    ]);
+  });
+
+  it("gives every step a target, including those that arrive without one", () => {
+    const out = sanitiseSteps([{ steps: [{ duration: "2m" }, { duration: "30s" }] }]);
+    expect(out![0].steps.every(s => s.target)).toBe(true);
   });
 
   it("ignores a repeat that is absent, one, or absurd", () => {

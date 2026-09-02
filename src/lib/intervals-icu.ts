@@ -67,7 +67,11 @@ export function sanitiseSteps(raw: unknown): WorkoutBlock[] | null {
       const duration = typeof s?.duration === "string" ? s.duration.trim() : "";
       if (!DURATION_RE.test(duration)) continue;
       const target = typeof s?.target === "string" ? s.target.trim() : "";
-      steps.push(TARGET_RE.test(target) ? { duration, target } : { duration });
+      // Every step gets a target. A bare "- 2m" tells the athlete to run for two
+      // minutes at nothing in particular, and appears to be where Intervals.icu
+      // stops reading the workout. Walking, mobility and stretching — which is
+      // what these untargeted steps are — belong in Z1 anyway.
+      steps.push({ duration, target: TARGET_RE.test(target) ? target : "Z1 HR" });
     }
     if (steps.length === 0) continue;
 

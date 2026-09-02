@@ -324,8 +324,10 @@ cadência), explica-o brevemente entre parênteses.
 Inclui também "steps": a mesma sessão em estrutura, para ser enviada ao relógio.
 Regras estritas para os steps, porque são lidos por uma máquina:
 - duration: "10m", "5m30s", "45s", "800mtr" ou "1km". Nada mais.
-- target: "Z1 HR" a "Z5 HR", ou um pace como "5:02/km Pace" ou "5:05-4:58/km Pace"
-  (no intervalo, o ritmo mais lento vem primeiro). Omite target quando não houver.
+- target: OBRIGATÓRIO em todos os passos. "Z1 HR" a "Z5 HR", ou um pace como
+  "5:02/km Pace" ou "5:05-4:58/km Pace" (no intervalo, o ritmo mais lento vem
+  primeiro). Caminhada, mobilidade e alongamentos levam "Z1 HR". Um passo sem
+  alvo não diz nada ao atleta no relógio.
 - Um bloco por secção. Usa "name" para "Aquecimento" e "Arrefecimento", e "repeat"
   para as séries. A série principal não precisa de "name".
 - Reproduz TUDO o que escreveste no texto, incluindo acelerações e drills dentro do
