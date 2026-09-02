@@ -198,6 +198,9 @@ model TrainingSession {
   plannedDuration Float?
   plannedPace     String?
   plannedZones    Json?
+  // Machine-readable steps for watch export, written by the AI alongside the
+  // prose. Parsing the prose loses structure — strides in a warmup, above all.
+  steps           Json?
   completed       Boolean   @default(false)
   isPriority      Boolean   @default(false)
   cancelled       Boolean   @default(false)

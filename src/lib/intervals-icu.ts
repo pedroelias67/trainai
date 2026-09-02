@@ -27,6 +27,75 @@ const TYPE_TO_ZONE: Record<string, string> = {
   RACE: "Z4",
 };
 
+/**
+ * A workout as structure rather than prose, written by the AI when it details
+ * the session. Deriving this from the coach's text loses whatever the text does
+ * not spell out in a shape the parser recognises — the strides inside a warmup
+ * being the clearest example, since they vanish into a single easy block.
+ */
+export type WorkoutStep = {
+  /** "10m", "5m30s", "45s", "800mtr", "1km" — the forms Intervals.icu parses. */
+  duration: string;
+  /** "Z2 HR", "5:02/km Pace", "5:05-4:58/km Pace". Omitted means no target. */
+  target?: string;
+};
+
+export type WorkoutBlock = {
+  /** Section heading, e.g. "Aquecimento". Omitted for the body of the session. */
+  name?: string;
+  /** Times to repeat the steps below. Absent or 1 means once. */
+  repeat?: number;
+  steps: WorkoutStep[];
+};
+
+const DURATION_RE = /^\d{1,4}(m|s|km|mtr)(\d{1,2}s)?$/;
+const TARGET_RE = /^(Z[1-5] HR|\d{1,2}:\d{2}(-\d{1,2}:\d{2})?\/(km|mi) Pace)$/;
+
+/**
+ * Keeps only what Intervals.icu will actually accept. The model writes these,
+ * and a malformed duration or target would be sent verbatim to someone's watch.
+ */
+export function sanitiseSteps(raw: unknown): WorkoutBlock[] | null {
+  if (!Array.isArray(raw)) return null;
+
+  const blocks: WorkoutBlock[] = [];
+  for (const b of raw) {
+    if (!b || typeof b !== "object" || !Array.isArray((b as any).steps)) continue;
+
+    const steps: WorkoutStep[] = [];
+    for (const s of (b as any).steps) {
+      const duration = typeof s?.duration === "string" ? s.duration.trim() : "";
+      if (!DURATION_RE.test(duration)) continue;
+      const target = typeof s?.target === "string" ? s.target.trim() : "";
+      steps.push(TARGET_RE.test(target) ? { duration, target } : { duration });
+    }
+    if (steps.length === 0) continue;
+
+    const repeat = Number((b as any).repeat);
+    blocks.push({
+      ...(typeof (b as any).name === "string" && (b as any).name.trim()
+        ? { name: (b as any).name.trim().slice(0, 40) }
+        : {}),
+      ...(Number.isInteger(repeat) && repeat > 1 && repeat <= 30 ? { repeat } : {}),
+      steps,
+    });
+  }
+
+  return blocks.length > 0 ? blocks : null;
+}
+
+/** Renders the structure in Intervals.icu's line format. */
+export function renderSteps(blocks: WorkoutBlock[]): string {
+  const out: string[] = [];
+  for (const b of blocks) {
+    if (out.length > 0) out.push("");
+    if (b.name) out.push(b.name);
+    if (b.repeat && b.repeat > 1) out.push(`${b.repeat}x`);
+    for (const s of b.steps) out.push(`- ${s.duration}${s.target ? ` ${s.target}` : ""}`);
+  }
+  return out.join("\n");
+}
+
 export type PlannedSession = {
   id: string;
   name: string;
@@ -38,6 +107,8 @@ export type PlannedSession = {
   warmup: string | null;
   mainSet: string | null;
   cooldown: string | null;
+  /** Structure written by the AI; when present it is used verbatim. */
+  steps?: unknown;
 };
 
 export type IntervalsEvent = {
@@ -84,6 +155,11 @@ export function normalisePace(pace: string | null): string | null {
 }
 
 export function buildWorkoutDescription(session: PlannedSession): string {
+  // Structure the model declared beats structure inferred from its prose, and
+  // carries detail the prose route cannot — strides, drills, distance steps.
+  const declared = sanitiseSteps(session.steps);
+  if (declared) return renderSteps(declared);
+
   const total = (session.plannedDuration ?? 60) * 60;
   const zone = TYPE_TO_ZONE[session.sessionType] ?? "Z2";
   // The pace often sits in the main set rather than the dedicated field, which

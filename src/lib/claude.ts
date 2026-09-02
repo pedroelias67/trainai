@@ -286,6 +286,8 @@ export interface SessionDetail {
   rpe: string;
   keyFocus: string;
   zones?: Record<string, number>;
+  /** Structure for the watch: parsing it back out of the prose loses detail. */
+  steps?: Array<{ name?: string; repeat?: number; steps: Array<{ duration: string; target?: string }> }>;
 }
 
 /**
@@ -319,6 +321,16 @@ Para cada sessão devolve o detalhe. Sê concreto e conciso — 1 a 2 frases por
 Quando usares um termo técnico pela primeira vez (strides, fartlek, taper, VO2max, limiar, RPE,
 cadência), explica-o brevemente entre parênteses.
 
+Inclui também "steps": a mesma sessão em estrutura, para ser enviada ao relógio.
+Regras estritas para os steps, porque são lidos por uma máquina:
+- duration: "10m", "5m30s", "45s", "800mtr" ou "1km". Nada mais.
+- target: "Z1 HR" a "Z5 HR", ou um pace como "5:02/km Pace" ou "5:05-4:58/km Pace"
+  (no intervalo, o ritmo mais lento vem primeiro). Omite target quando não houver.
+- Um bloco por secção. Usa "name" para "Aquecimento" e "Arrefecimento", e "repeat"
+  para as séries. A série principal não precisa de "name".
+- Reproduz TUDO o que escreveste no texto, incluindo acelerações e drills dentro do
+  aquecimento — é aí que o atleta fica sem orientação se forem omitidos.
+
 Responde APENAS com JSON válido, um array com um objeto por sessão, sem markdown:
 [
   {
@@ -330,7 +342,15 @@ Responde APENAS com JSON válido, um array com um objeto por sessão, sem markdo
     "coachTip": "conselho do treinador para esta sessão",
     "rpe": "ex: 6-7/10 — desconfortável mas sustentável",
     "keyFocus": "o aspeto técnico a trabalhar",
-    "zones": { "z1": 20, "z2": 60, "z3": 20, "z4": 0, "z5": 0 }
+    "zones": { "z1": 20, "z2": 60, "z3": 20, "z4": 0, "z5": 0 },
+    "steps": [
+      { "name": "Aquecimento", "steps": [{ "duration": "10m", "target": "Z1 HR" }] },
+      { "repeat": 3, "steps": [{ "duration": "80mtr", "target": "4:30/km Pace" },
+                               { "duration": "45s", "target": "Z1 HR" }] },
+      { "repeat": 5, "steps": [{ "duration": "3m", "target": "Z5 HR" },
+                               { "duration": "2m", "target": "Z1 HR" }] },
+      { "name": "Arrefecimento", "steps": [{ "duration": "10m", "target": "Z1 HR" }] }
+    ]
   }
 ]`;
 

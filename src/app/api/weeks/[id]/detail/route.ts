@@ -75,6 +75,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
         rpe: d.rpe ?? null,
         keyFocus: d.keyFocus ?? null,
         ...(d.zones ? { plannedZones: d.zones } : {}),
+        ...(d.steps ? { steps: d.steps as object } : {}),
       },
     });
     detailed++;

@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
         select: {
           id: true, name: true, sport: true, sessionType: true, date: true,
           plannedDuration: true, plannedPace: true,
-          warmup: true, mainSet: true, cooldown: true,
+          warmup: true, mainSet: true, cooldown: true, steps: true,
         },
       },
     },

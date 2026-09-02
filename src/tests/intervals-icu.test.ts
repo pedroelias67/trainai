@@ -4,6 +4,8 @@ import {
   buildCalendarEvent,
   formatDuration,
   normalisePace,
+  sanitiseSteps,
+  renderSteps,
   type PlannedSession,
 } from "@/lib/intervals-icu";
 
@@ -116,6 +118,90 @@ describe("buildWorkoutDescription", () => {
       warmup: null, mainSet: "5min.", cooldown: null,
     });
     expect(out).not.toMatch(/- 0[ms]/);
+  });
+});
+
+describe("sanitiseSteps", () => {
+  it("keeps a well-formed workout, including distance steps and repeats", () => {
+    const out = sanitiseSteps([
+      { name: "Aquecimento", steps: [{ duration: "10m", target: "Z1 HR" }] },
+      { repeat: 4, steps: [{ duration: "80mtr", target: "4:30/km Pace" }, { duration: "45s", target: "Z1 HR" }] },
+      { repeat: 2, steps: [{ duration: "10m", target: "5:05-4:58/km Pace" }, { duration: "3m", target: "Z1 HR" }] },
+    ]);
+    expect(out).toHaveLength(3);
+    expect(out![1]).toMatchObject({ repeat: 4 });
+    expect(out![2].steps[0].target).toBe("5:05-4:58/km Pace");
+  });
+
+  it("drops what Intervals.icu would not parse", () => {
+    // These would otherwise be sent verbatim to someone's watch.
+    const out = sanitiseSteps([
+      { steps: [
+        { duration: "10 minutos", target: "Z1 HR" },   // unit spelled out
+        { duration: "4x80mtr", target: "Z2 HR" },      // a repeat smuggled into a duration
+        { duration: "10m", target: "ritmo forte" },    // target not machine-readable
+        { duration: "10m", target: "Z9 HR" },          // zone out of range
+      ] },
+    ]);
+    expect(out).toHaveLength(1);
+    // The two with a valid duration survive; only their unreadable targets are
+    // dropped, since a step with no target still describes real running.
+    expect(out![0].steps).toEqual([{ duration: "10m" }, { duration: "10m" }]);
+  });
+
+  it("ignores a repeat that is absent, one, or absurd", () => {
+    expect(sanitiseSteps([{ repeat: 1, steps: [{ duration: "5m" }] }])![0].repeat).toBeUndefined();
+    expect(sanitiseSteps([{ repeat: 99, steps: [{ duration: "5m" }] }])![0].repeat).toBeUndefined();
+  });
+
+  it("returns null when nothing survives", () => {
+    expect(sanitiseSteps([{ steps: [{ duration: "uma hora" }] }])).toBeNull();
+    expect(sanitiseSteps("não é um array")).toBeNull();
+    expect(sanitiseSteps(null)).toBeNull();
+  });
+});
+
+describe("renderSteps", () => {
+  it("writes the line format Intervals.icu reads", () => {
+    expect(renderSteps([
+      { name: "Aquecimento", steps: [{ duration: "10m", target: "Z1 HR" }] },
+      { repeat: 4, steps: [{ duration: "80mtr", target: "4:30/km Pace" }, { duration: "45s", target: "Z1 HR" }] },
+      { name: "Arrefecimento", steps: [{ duration: "8m" }] },
+    ])).toBe(
+      [
+        "Aquecimento",
+        "- 10m Z1 HR",
+        "",
+        "4x",
+        "- 80mtr 4:30/km Pace",
+        "- 45s Z1 HR",
+        "",
+        "Arrefecimento",
+        "- 8m",
+      ].join("\n")
+    );
+  });
+});
+
+describe("buildWorkoutDescription with declared steps", () => {
+  it("uses the structure rather than parsing the prose", () => {
+    // The strides here exist only in the structure: the prose route flattens a
+    // warmup to a single block and loses them.
+    const out = buildWorkoutDescription({
+      ...base,
+      steps: [
+        { name: "Aquecimento", steps: [{ duration: "10m", target: "Z1 HR" }] },
+        { repeat: 4, steps: [{ duration: "80mtr", target: "4:30/km Pace" }] },
+        { repeat: 2, steps: [{ duration: "10m", target: "5:02/km Pace" }, { duration: "3m", target: "Z1 HR" }] },
+      ],
+    });
+    expect(out).toContain("4x\n- 80mtr 4:30/km Pace");
+    expect(out).toContain("2x\n- 10m 5:02/km Pace");
+  });
+
+  it("falls back to the prose when the structure is unusable", () => {
+    const out = buildWorkoutDescription({ ...base, steps: [{ steps: [{ duration: "meia hora" }] }] });
+    expect(out).toContain("5x"); // from parsing base.mainSet
   });
 });
 

@@ -194,6 +194,7 @@ export async function GET(req: NextRequest) {
                     rpe: d.rpe ?? null,
                     keyFocus: d.keyFocus ?? null,
                     ...(d.zones ? { plannedZones: d.zones } : {}),
+                ...(d.steps ? { steps: d.steps as object } : {}),
                   },
                 });
               }
