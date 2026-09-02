@@ -8,7 +8,7 @@ const BASE_URL = process.env.NEXTAUTH_URL ?? "https://trainai.pedroelias.com";
 
 const SERVICES = [
   { key: "database",  label: "Base de Dados",        desc: "PostgreSQL via Supabase" },
-  { key: "ai",        label: "Inteligência Artificial", desc: "Claude (Anthropic)" },
+  { key: "ai",        label: "Inteligência Artificial", desc: "Geração e análise de planos" },
   { key: "email",     label: "Email Transacional",    desc: "Resend" },
   { key: "push",      label: "Notificações Push",     desc: "Web Push / VAPID" },
 ] as const;

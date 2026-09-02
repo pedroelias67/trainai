@@ -164,7 +164,7 @@ export async function sendInviteEmail(email: string, token: string, inviterName:
         ${emailHeading("Foste convidado! 🎉")}
         ${emailText(`<strong style="color:${EMAIL_COLORS.HEADING}">${inviterName}</strong> convidou-te para o TrainAI — planos de treino personalizados com inteligência artificial para corredores e triatletas.`)}
         ${emailStatGrid([
-          { value: "IA", label: "Claude AI" },
+          { value: "IA", label: "Planos personalizados" },
           { value: "PWA", label: "Funciona offline" },
           { value: "⌚", label: "Treinos no relógio" },
         ])}

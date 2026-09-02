@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { LogoFull } from "@/components/ui/Logo";
 
 const FEATURES = [
-  { icon: "🤖", title: "Plano gerado por IA", desc: "Claude analisa o teu perfil e cria um plano de treino 100% personalizado para o teu evento." },
+  { icon: "🤖", title: "Plano gerado por IA", desc: "A IA analisa o teu perfil e cria um plano de treino 100% personalizado para o teu evento." },
   { icon: "📊", title: "Adaptação automática", desc: "Cada semana a IA analisa o teu desempenho e ajusta o plano em tempo real." },
   { icon: "⌚", title: "Treinos no relógio", desc: "Envia os treinos da semana para Garmin, COROS, Suunto ou Wahoo através do Intervals.icu." },
   { icon: "🍎", title: "Nutrição personalizada", desc: "Plano de nutrição com calorias, macros e refeições adaptados ao teu treino." },
@@ -71,7 +71,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
         <div className="grid grid-cols-3 gap-4 mb-16">
           {[
             { value: "100%", label: "Personalizado" },
-            { value: "IA", label: "Claude (Anthropic)" },
+            { value: "IA", label: "Planos personalizados" },
             { value: "PWA", label: "Funciona offline" },
           ].map((s) => (
             <div key={s.label} className="text-center p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
