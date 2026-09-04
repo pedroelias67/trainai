@@ -1,4 +1,5 @@
 import Anthropic from "@anthropic-ai/sdk";
+import { inferThresholdPace, zonePaceTable } from "./intervals-icu";
 
 export const claude = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -307,12 +308,21 @@ export async function detailSessions(params: {
     ? `Zonas de FC (FC máx ${params.athlete.maxHR}): Z1 <${Math.round(params.athlete.maxHR * 0.6)}, Z2 ${Math.round(params.athlete.maxHR * 0.6)}-${Math.round(params.athlete.maxHR * 0.7)}, Z3 ${Math.round(params.athlete.maxHR * 0.7)}-${Math.round(params.athlete.maxHR * 0.8)}, Z4 ${Math.round(params.athlete.maxHR * 0.8)}-${Math.round(params.athlete.maxHR * 0.9)}, Z5 >${Math.round(params.athlete.maxHR * 0.9)} bpm.`
     : "Sem FC máxima conhecida: usa esforço percebido (RPE 1-10) como referência.";
 
+  // The watch guides towards whatever a step targets, and a heart-rate target
+  // leaves the pace to the lap summary — after the step is over. Giving the
+  // model the athlete's own pace bands lets it write paces from the start.
+  const threshold = inferThresholdPace(params.athlete.ltPace ?? null, params.sessions);
+  const ritmos = threshold
+    ? `Ritmos de referência deste atleta (min/km): ${zonePaceTable(threshold)}.`
+    : "";
+
   const prompt = `És um treinador de elite. Detalha cada uma destas sessões de treino.
 
 ATLETA: ${params.athlete.name}, nível ${params.athlete.fitnessLevel}
 EVENTO ALVO: ${params.event.name} — ${params.event.distance} em ${params.event.date}
 ${params.weekFocus ? `FOCO DA SEMANA: ${params.weekFocus}` : ""}
 ${zonas}
+${ritmos}
 
 SESSÕES:
 ${JSON.stringify(params.sessions, null, 2)}
@@ -324,10 +334,14 @@ cadência), explica-o brevemente entre parênteses.
 Inclui também "steps": a mesma sessão em estrutura, para ser enviada ao relógio.
 Regras estritas para os steps, porque são lidos por uma máquina:
 - duration: "10m", "5m30s", "45s", "800mtr" ou "1km". Nada mais.
-- target: OBRIGATÓRIO em todos os passos. "Z1 HR" a "Z5 HR", ou um pace como
-  "5:02/km Pace" ou "5:05-4:58/km Pace" (no intervalo, o ritmo mais lento vem
-  primeiro). Caminhada, mobilidade e alongamentos levam "Z1 HR". Um passo sem
-  alvo não diz nada ao atleta no relógio.
+- target: OBRIGATÓRIO em todos os passos. Na CORRIDA usa sempre um pace, nunca
+  uma zona de FC: "5:02/km Pace" ou "5:05-4:58/km Pace" (no intervalo, o ritmo
+  mais lento vem primeiro). O relógio só consegue orientar para aquilo que o
+  passo define como alvo — com FC, o atleta só descobre o ritmo no resumo, já
+  depois de a fase ter terminado. Isto vale para tudo: aquecimento, acelerações,
+  recuperações entre séries e arrefecimento, e não só para a série principal.
+  Usa os ritmos de referência acima. Na natação e no ciclismo, e só aí, mantém
+  "Z1 HR" a "Z5 HR".
 - Um bloco por secção. Usa "name" para "Aquecimento" e "Arrefecimento", e "repeat"
   para as séries. A série principal não precisa de "name".
 - Reproduz TUDO o que escreveste no texto, incluindo acelerações e drills dentro do
@@ -346,12 +360,12 @@ Responde APENAS com JSON válido, um array com um objeto por sessão, sem markdo
     "keyFocus": "o aspeto técnico a trabalhar",
     "zones": { "z1": 20, "z2": 60, "z3": 20, "z4": 0, "z5": 0 },
     "steps": [
-      { "name": "Aquecimento", "steps": [{ "duration": "10m", "target": "Z1 HR" }] },
+      { "name": "Aquecimento", "steps": [{ "duration": "10m", "target": "7:00-6:20/km Pace" }] },
       { "repeat": 3, "steps": [{ "duration": "80mtr", "target": "4:30/km Pace" },
-                               { "duration": "45s", "target": "Z1 HR" }] },
-      { "repeat": 5, "steps": [{ "duration": "3m", "target": "Z5 HR" },
-                               { "duration": "2m", "target": "Z1 HR" }] },
-      { "name": "Arrefecimento", "steps": [{ "duration": "10m", "target": "Z1 HR" }] }
+                               { "duration": "45s", "target": "7:30-6:30/km Pace" }] },
+      { "repeat": 5, "steps": [{ "duration": "3m", "target": "5:05-4:55/km Pace" },
+                               { "duration": "2m", "target": "7:30-6:30/km Pace" }] },
+      { "name": "Arrefecimento", "steps": [{ "duration": "10m", "target": "7:00-6:20/km Pace" }] }
     ]
   }
 ]`;

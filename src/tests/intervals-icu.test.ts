@@ -6,6 +6,10 @@ import {
   normalisePace,
   sanitiseSteps,
   renderSteps,
+  paceMidSeconds,
+  inferThresholdPace,
+  zoneToPaceTarget,
+  retargetToPace,
   type PlannedSession,
 } from "@/lib/intervals-icu";
 
@@ -211,6 +215,126 @@ describe("buildWorkoutDescription with declared steps", () => {
   it("falls back to the prose when the structure is unusable", () => {
     const out = buildWorkoutDescription({ ...base, steps: [{ steps: [{ duration: "meia hora" }] }] });
     expect(out).toContain("5x"); // from parsing base.mainSet
+  });
+});
+
+describe("paceMidSeconds", () => {
+  it("reads a single pace and the middle of a range", () => {
+    expect(paceMidSeconds("5:00/km")).toBe(300);
+    expect(paceMidSeconds("5:10-4:50/km")).toBe(300);
+    expect(paceMidSeconds("5:02/km nas repetições")).toBe(302);
+  });
+
+  it("converts a mile pace to the kilometre it stands for", () => {
+    expect(Math.round(paceMidSeconds("8:03/mi")!)).toBe(300);
+  });
+
+  it("has nothing to read in prose", () => {
+    expect(paceMidSeconds("confortável")).toBeNull();
+    expect(paceMidSeconds(null)).toBeNull();
+  });
+});
+
+describe("inferThresholdPace", () => {
+  const session = (sessionType: string, plannedPace: string | null) =>
+    ({ sport: "RUNNING", sessionType, plannedPace });
+
+  it("takes the athlete's own threshold when they have stated one", () => {
+    expect(inferThresholdPace("5:30/km", [session("EASY", "6:00/km")])).toBe(330);
+  });
+
+  it("reads it back out of the plan when they have not", () => {
+    // A tempo session run at 5:02 is Z4, which sits at 1.015x threshold.
+    const t = inferThresholdPace(null, [
+      session("TEMPO", "5:02/km"),
+      session("EASY", "6:20/km"),
+      session("RECOVERY", "7:15/km"),
+    ]);
+    expect(Math.round(t!)).toBe(308);
+  });
+
+  it("ignores what it cannot place: other sports, paceless sessions, nonsense", () => {
+    expect(inferThresholdPace(null, [
+      { sport: "CYCLING", sessionType: "TEMPO", plannedPace: "5:00/km" },
+      session("EASY", null),
+      session("EASY", "0:30/km"), // implies a 24s/km threshold
+    ])).toBeNull();
+  });
+
+  it("falls back to the plan when the stated threshold is not a pace", () => {
+    expect(Math.round(inferThresholdPace("rápido", [session("TEMPO", "5:02/km")])!)).toBe(298);
+  });
+});
+
+describe("zoneToPaceTarget", () => {
+  it("expands a zone into the band it stands for", () => {
+    expect(zoneToPaceTarget("Z2 HR", 300)).toBe("6:36-5:45/km Pace");
+    expect(zoneToPaceTarget("Z5 HR", 300)).toBe("4:57-4:30/km Pace");
+  });
+
+  it("leaves a target that is already a pace alone", () => {
+    expect(zoneToPaceTarget("5:02/km Pace", 300)).toBe("5:02/km Pace");
+  });
+});
+
+describe("retargetToPace", () => {
+  it("converts every heart-rate step, keeping structure and paces intact", () => {
+    expect(retargetToPace([
+      { name: "Aquecimento", steps: [{ duration: "10m", target: "Z1 HR" }] },
+      { repeat: 2, steps: [
+        { duration: "10m", target: "5:02/km Pace" },
+        { duration: "5m", target: "Z1 HR" },
+      ] },
+    ], 300)).toEqual([
+      { name: "Aquecimento", steps: [{ duration: "10m", target: "7:30-6:15/km Pace" }] },
+      { repeat: 2, steps: [
+        { duration: "10m", target: "5:02/km Pace" },
+        { duration: "5m", target: "7:30-6:15/km Pace" },
+      ] },
+    ]);
+  });
+});
+
+describe("buildWorkoutDescription with a pace reference", () => {
+  // The session the athlete ran on 2 September: twelve steps, two of which
+  // carried a pace. The watch guided by heart rate for the other ten and only
+  // reported the pace once each was over.
+  const tempo: PlannedSession = {
+    ...base,
+    sessionType: "TEMPO",
+    steps: [
+      { name: "Aquecimento", steps: [{ duration: "7m", target: "Z2 HR" }] },
+      { repeat: 2, steps: [
+        { duration: "10m", target: "5:02/km Pace" },
+        { duration: "5m", target: "Z1 HR" },
+      ] },
+      { name: "Arrefecimento", steps: [{ duration: "10m", target: "Z1 HR" }] },
+    ],
+  };
+
+  it("leaves no step guiding by heart rate", () => {
+    const out = buildWorkoutDescription(tempo, 308);
+    expect(out).not.toContain("HR");
+    expect(out.match(/^- .*Pace$/gm)).toHaveLength(4);
+  });
+
+  it("keeps heart rate when there is no reference to convert against", () => {
+    expect(buildWorkoutDescription(tempo)).toContain("Z2 HR");
+  });
+
+  it("keeps heart rate off running's units for other sports", () => {
+    // 5:00/km on a bike is a number about nothing.
+    expect(buildWorkoutDescription({ ...tempo, sport: "CYCLING" }, 308)).toContain("Z2 HR");
+  });
+
+  it("converts the prose fallback too, warmup and cooldown included", () => {
+    const out = buildWorkoutDescription({ ...base, steps: undefined }, 300);
+    expect(out).not.toContain("HR");
+    expect(out).toContain("- 15m 7:30-6:15/km Pace"); // warmup, was Z1 HR
+  });
+
+  it("refuses a reference pace that cannot be right", () => {
+    expect(buildWorkoutDescription(tempo, 12)).toContain("Z2 HR");
   });
 });
 

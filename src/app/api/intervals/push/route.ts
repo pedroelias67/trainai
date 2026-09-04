@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { buildCalendarEvent, pushEvents } from "@/lib/intervals-icu";
+import { buildCalendarEvent, inferThresholdPace, pushEvents } from "@/lib/intervals-icu";
 
 /**
  * Pushes a training week's sessions to the athlete's Intervals.icu calendar,
@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
 
   const athlete = await prisma.athlete.findUnique({
     where: { userId },
-    select: { id: true, intervalsIcuApiKey: true, intervalsIcuAthleteId: true },
+    select: { id: true, intervalsIcuApiKey: true, intervalsIcuAthleteId: true, ltPace: true },
   });
   if (!athlete) return NextResponse.json({ error: "Atleta não encontrado" }, { status: 404 });
 
@@ -44,7 +44,10 @@ export async function POST(req: NextRequest) {
   });
   if (!week) return NextResponse.json({ error: "Semana não encontrada" }, { status: 404 });
 
-  const events = week.sessions.map(buildCalendarEvent);
+  // One reference pace for the whole week, so the same zone means the same pace
+  // on Tuesday as on Sunday.
+  const threshold = inferThresholdPace(athlete.ltPace, week.sessions);
+  const events = week.sessions.map(s => buildCalendarEvent(s, threshold));
   const result = await pushEvents(athlete.intervalsIcuApiKey, athlete.intervalsIcuAthleteId, events);
 
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 502 });

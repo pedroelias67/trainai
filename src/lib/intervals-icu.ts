@@ -158,11 +158,134 @@ export function normalisePace(pace: string | null): string | null {
   return single ? `${single[1]}/${single[2].toLowerCase()}` : null;
 }
 
-export function buildWorkoutDescription(session: PlannedSession): string {
+/**
+ * Pace band per zone, as multiples of threshold pace, slowest bound first to
+ * match Intervals.icu's range order.
+ *
+ * The easy end is deliberately wide. A recovery jog pinned to a narrow band is
+ * a watch that beeps at an athlete who is doing exactly what the session asks.
+ */
+const ZONE_PACE_BAND: Record<string, [number, number]> = {
+  Z1: [1.50, 1.25],
+  Z2: [1.32, 1.15],
+  Z3: [1.16, 1.05],
+  Z4: [1.06, 0.97],
+  Z5: [0.99, 0.90],
+};
+
+/** Midpoint of each band, for reading a threshold pace back out of a session. */
+const ZONE_PACE_MID: Record<string, number> = {
+  Z1: 1.375, Z2: 1.235, Z3: 1.105, Z4: 1.015, Z5: 0.945,
+};
+
+/** 2:30/km to 10:00/km. Outside this, whatever produced the number is wrong. */
+const PLAUSIBLE_THRESHOLD = { min: 150, max: 600 };
+const plausible = (secs: number) =>
+  secs >= PLAUSIBLE_THRESHOLD.min && secs <= PLAUSIBLE_THRESHOLD.max;
+
+function formatPaceSecs(secs: number): string {
+  const s = Math.round(secs);
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+/** Seconds per kilometre for a written pace, taking the middle of a range. */
+export function paceMidSeconds(pace: string | null): number | null {
+  const norm = normalisePace(pace);
+  if (!norm) return null;
+  const m = norm.match(/^(\d{1,2}):(\d{2})(?:-(\d{1,2}):(\d{2}))?\/(km|mi)$/);
+  if (!m) return null;
+  const a = Number(m[1]) * 60 + Number(m[2]);
+  const b = m[3] ? Number(m[3]) * 60 + Number(m[4]) : a;
+  const perUnit = (a + b) / 2;
+  return m[5] === "mi" ? perUnit / 1.609344 : perUnit;
+}
+
+/**
+ * The athlete's threshold pace in seconds per kilometre, which anchors every
+ * zone-to-pace conversion.
+ *
+ * Their stated threshold wins. Failing that it is read back out of the plan
+ * itself: each session carries a planned pace and a session type, and the type
+ * says which zone that pace belongs to — so dividing by the zone's midpoint
+ * gives an implied threshold. The median across the week absorbs the odd
+ * session whose pace the plan wrote loosely.
+ */
+export function inferThresholdPace(
+  ltPace: string | null,
+  sessions: Array<{ sport: string; sessionType: string; plannedPace: string | null }>
+): number | null {
+  const stated = paceMidSeconds(ltPace);
+  if (stated && plausible(stated)) return stated;
+
+  const implied: number[] = [];
+  for (const s of sessions) {
+    if (s.sport !== "RUNNING") continue;
+    const pace = paceMidSeconds(s.plannedPace);
+    const mid = ZONE_PACE_MID[TYPE_TO_ZONE[s.sessionType] ?? ""];
+    if (!pace || !mid) continue;
+    const threshold = pace / mid;
+    if (plausible(threshold)) implied.push(threshold);
+  }
+  if (implied.length === 0) return null;
+
+  implied.sort((a, b) => a - b);
+  return implied[Math.floor(implied.length / 2)];
+}
+
+/** Rewrites a single "Z3 HR" target as the pace band that zone corresponds to. */
+export function zoneToPaceTarget(target: string, thresholdSecPerKm: number): string {
+  const m = target.match(/^Z([1-5]) HR$/);
+  if (!m) return target;
+  const [slow, fast] = ZONE_PACE_BAND[`Z${m[1]}`];
+  return `${formatPaceSecs(thresholdSecPerKm * slow)}-${formatPaceSecs(thresholdSecPerKm * fast)}/km Pace`;
+}
+
+/** The athlete's pace bands written out, for a prompt or an explanation. */
+export function zonePaceTable(thresholdSecPerKm: number): string {
+  return (["Z1", "Z2", "Z3", "Z4", "Z5"] as const)
+    .map(z => `${z} ${zoneToPaceTarget(`${z} HR`, thresholdSecPerKm).replace("/km Pace", "")}`)
+    .join(", ");
+}
+
+/**
+ * Turns every heart-rate target in a workout into a pace band.
+ *
+ * A watch can only guide towards what the step targets. Target heart rate and
+ * the pace is left to the lap summary — which arrives once the step is already
+ * over, so the athlete learns how fast they ran instead of how fast to run. It
+ * also means a single session guides by heart rate in some steps and by pace in
+ * others, which reads as two different workouts stitched together.
+ */
+export function retargetToPace(
+  blocks: WorkoutBlock[],
+  thresholdSecPerKm: number
+): WorkoutBlock[] {
+  return blocks.map(b => ({
+    ...b,
+    steps: b.steps.map(s => ({
+      ...s,
+      ...(s.target ? { target: zoneToPaceTarget(s.target, thresholdSecPerKm) } : {}),
+    })),
+  }));
+}
+
+export function buildWorkoutDescription(
+  session: PlannedSession,
+  thresholdSecPerKm: number | null = null
+): string {
+  // Pace targets are for running: on a bike or in the water the same number
+  // means nothing, and heart rate remains the honest target there.
+  const threshold =
+    session.sport === "RUNNING" && thresholdSecPerKm && plausible(thresholdSecPerKm)
+      ? thresholdSecPerKm
+      : null;
+  const zoneTarget = (zone: string) =>
+    threshold ? zoneToPaceTarget(`${zone} HR`, threshold) : `${zone} HR`;
+
   // Structure the model declared beats structure inferred from its prose, and
   // carries detail the prose route cannot — strides, drills, distance steps.
   const declared = sanitiseSteps(session.steps);
-  if (declared) return renderSteps(declared);
+  if (declared) return renderSteps(threshold ? retargetToPace(declared, threshold) : declared);
 
   const total = (session.plannedDuration ?? 60) * 60;
   const zone = TYPE_TO_ZONE[session.sessionType] ?? "Z2";
@@ -172,7 +295,8 @@ export function buildWorkoutDescription(session: PlannedSession): string {
     session.sport === "RUNNING"
       ? normalisePace(session.plannedPace) ?? normalisePace(session.mainSet)
       : null;
-  const workTarget = pace ? `${pace} Pace` : `${zone} HR`;
+  const workTarget = pace ? `${pace} Pace` : zoneTarget(zone);
+  const easy = zoneTarget("Z1");
 
   const spec = parseIntervals(session.mainSet);
   const lines: string[] = [];
@@ -181,26 +305,26 @@ export function buildWorkoutDescription(session: PlannedSession): string {
     const warmupSecs = parseLeadingDuration(session.warmup) ?? Math.round(total * 0.2);
     const cooldownSecs = parseLeadingDuration(session.cooldown) ?? Math.round(total * 0.15);
 
-    lines.push("Warmup", `- ${formatDuration(warmupSecs)} Z1 HR`, "");
+    lines.push("Warmup", `- ${formatDuration(warmupSecs)} ${easy}`, "");
     lines.push(`${spec.reps}x`, `- ${formatDuration(spec.workSecs)} ${workTarget}`);
-    if (spec.restSecs) lines.push(`- ${formatDuration(spec.restSecs)} Z1 HR`);
-    lines.push("", "Cooldown", `- ${formatDuration(cooldownSecs)} Z1 HR`);
+    if (spec.restSecs) lines.push(`- ${formatDuration(spec.restSecs)} ${easy}`);
+    lines.push("", "Cooldown", `- ${formatDuration(cooldownSecs)} ${easy}`);
     return lines.join("\n");
   }
 
   // Continuous session: a short warmup and cooldown around one sustained block,
   // matching how the in-app timer splits the same session.
   if (session.sessionType === "RECOVERY") {
-    return `- ${formatDuration(total)} Z1 HR`;
+    return `- ${formatDuration(total)} ${easy}`;
   }
 
   const warmupSecs = parseLeadingDuration(session.warmup) ?? Math.round(total * 0.15);
   const cooldownSecs = parseLeadingDuration(session.cooldown) ?? Math.round(total * 0.1);
   const mainSecs = Math.max(total - warmupSecs - cooldownSecs, 60);
 
-  lines.push("Warmup", `- ${formatDuration(warmupSecs)} Z1 HR`, "");
+  lines.push("Warmup", `- ${formatDuration(warmupSecs)} ${easy}`, "");
   lines.push(`- ${formatDuration(mainSecs)} ${workTarget}`, "");
-  lines.push("Cooldown", `- ${formatDuration(cooldownSecs)} Z1 HR`);
+  lines.push("Cooldown", `- ${formatDuration(cooldownSecs)} ${easy}`);
   return lines.join("\n");
 }
 
@@ -253,7 +377,10 @@ export async function pushEvents(
   return { ok: true, count: events.length };
 }
 
-export function buildCalendarEvent(session: PlannedSession): IntervalsEvent {
+export function buildCalendarEvent(
+  session: PlannedSession,
+  thresholdSecPerKm: number | null = null
+): IntervalsEvent {
   const date = new Date(session.date);
   // Intervals.icu expects a local timestamp with no zone suffix.
   const startLocal = `${date.toISOString().split("T")[0]}T00:00:00`;
@@ -263,7 +390,7 @@ export function buildCalendarEvent(session: PlannedSession): IntervalsEvent {
     start_date_local: startLocal,
     type: SPORT_TO_TYPE[session.sport] ?? "Run",
     name: session.name,
-    description: buildWorkoutDescription(session),
+    description: buildWorkoutDescription(session, thresholdSecPerKm),
     // Lets a re-push update the same event instead of duplicating it.
     external_id: `trainai-${session.id}`,
   };
