@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi, afterEach } from "vitest";
 import {
   buildWorkoutDescription,
   buildCalendarEvent,
@@ -6,6 +6,8 @@ import {
   normalisePace,
   sanitiseSteps,
   renderSteps,
+  replaceEvents,
+  hasRunThresholdPace,
   paceMidSeconds,
   inferThresholdPace,
   zoneToPaceTarget,
@@ -335,6 +337,103 @@ describe("buildWorkoutDescription with a pace reference", () => {
 
   it("refuses a reference pace that cannot be right", () => {
     expect(buildWorkoutDescription(tempo, 12)).toContain("Z2 HR");
+  });
+});
+
+describe("replaceEvents", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const events = [
+    buildCalendarEvent({ ...base, id: "aaa", date: new Date("2026-09-10T00:00:00Z") }),
+    buildCalendarEvent({ ...base, id: "bbb", date: new Date("2026-09-12T00:00:00Z") }),
+  ];
+
+  /** Records every call, answering the listing with `calendar`. */
+  function stubFetch(calendar: unknown[], postOk = true) {
+    const calls: Array<{ url: string; method: string }> = [];
+    vi.stubGlobal("fetch", vi.fn(async (url: string, init?: RequestInit) => {
+      calls.push({ url, method: init?.method ?? "GET" });
+      if (url.includes("?oldest=")) return { ok: true, json: async () => calendar };
+      return { ok: postOk, json: async () => ({}), text: async () => "" };
+    }));
+    return calls;
+  }
+
+  it("deletes our own events before writing them again", async () => {
+    // Intervals.icu exports to Garmin on create, not on update: without the
+    // delete, a corrected workout never reaches the watch.
+    const calls = stubFetch([
+      { id: 111, external_id: "trainai-aaa" },
+      { id: 222, external_id: "trainai-bbb" },
+    ]);
+
+    expect(await replaceEvents("k", "i1", events)).toEqual({ ok: true, count: 2 });
+    expect(calls.filter(c => c.method === "DELETE").map(c => c.url)).toEqual([
+      "https://intervals.icu/api/v1/athlete/i1/events/111",
+      "https://intervals.icu/api/v1/athlete/i1/events/222",
+    ]);
+    expect(calls.at(-1)!.method).toBe("POST");
+  });
+
+  it("leaves everything the athlete planned themselves alone", async () => {
+    const calls = stubFetch([
+      { id: 111, external_id: "trainai-aaa" },
+      { id: 333, external_id: "sometrainer-xyz" }, // another app's
+      { id: 444 },                                 // written by hand
+    ]);
+
+    await replaceEvents("k", "i1", events);
+    expect(calls.filter(c => c.method === "DELETE")).toHaveLength(1);
+  });
+
+  it("still writes the week when the calendar cannot be read", async () => {
+    // Losing the re-export is bad; losing the week is worse.
+    vi.stubGlobal("fetch", vi.fn(async (url: string) =>
+      url.includes("?oldest=")
+        ? { ok: false, json: async (): Promise<unknown> => null }
+        : { ok: true, json: async (): Promise<unknown> => ({}), text: async () => "" }
+    ));
+    expect(await replaceEvents("k", "i1", events)).toEqual({ ok: true, count: 2 });
+  });
+
+  it("reports a failed write", async () => {
+    stubFetch([], false);
+    expect(await replaceEvents("k", "i1", events)).toMatchObject({ ok: false });
+  });
+
+  it("touches nothing when there is nothing to send", async () => {
+    const calls = stubFetch([]);
+    expect(await replaceEvents("k", "i1", [])).toEqual({ ok: true, count: 0 });
+    expect(calls).toHaveLength(0);
+  });
+});
+
+describe("hasRunThresholdPace", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  const settings = (groups: unknown) =>
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: true, json: async () => groups })));
+
+  it("reads the running group, not the swimming one", async () => {
+    settings([
+      { types: ["Swim"], threshold_pace: 0.83 },
+      { types: ["Run", "TrailRun"], threshold_pace: null },
+    ]);
+    expect(await hasRunThresholdPace("k", "i1")).toBe(false);
+
+    settings([{ types: ["Run"], threshold_pace: 3.24 }]);
+    expect(await hasRunThresholdPace("k", "i1")).toBe(true);
+  });
+
+  it("says nothing rather than raising a false alarm", async () => {
+    settings([{ types: ["Ride"], ftp: 250 }]);
+    expect(await hasRunThresholdPace("k", "i1")).toBeNull();
+
+    vi.stubGlobal("fetch", vi.fn(async () => ({ ok: false, json: async () => null })));
+    expect(await hasRunThresholdPace("k", "i1")).toBeNull();
+
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
+    expect(await hasRunThresholdPace("k", "i1")).toBeNull();
   });
 });
 

@@ -3,7 +3,13 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
-import { buildCalendarEvent, inferThresholdPace, pushEvents } from "@/lib/intervals-icu";
+import {
+  buildCalendarEvent,
+  formatThresholdPace,
+  hasRunThresholdPace,
+  inferThresholdPace,
+  replaceEvents,
+} from "@/lib/intervals-icu";
 
 /**
  * Pushes a training week's sessions to the athlete's Intervals.icu calendar,
@@ -48,8 +54,27 @@ export async function POST(req: NextRequest) {
   // on Tuesday as on Sunday.
   const threshold = inferThresholdPace(athlete.ltPace, week.sessions);
   const events = week.sessions.map(s => buildCalendarEvent(s, threshold));
-  const result = await pushEvents(athlete.intervalsIcuApiKey, athlete.intervalsIcuAthleteId, events);
+  const result = await replaceEvents(athlete.intervalsIcuApiKey, athlete.intervalsIcuAthleteId, events);
 
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: 502 });
-  return NextResponse.json({ ok: true, pushed: result.count, weekNumber: week.weekNumber });
+
+  // The workouts are on the calendar, but Intervals.icu will strip their pace
+  // targets on the way to the watch unless the athlete has a run threshold pace
+  // over there. Worth saying out loud: nothing fails, the athlete just runs a
+  // session that never tells them how fast to go.
+  let warning: string | null = null;
+  if (week.sessions.some(s => s.sport === "RUNNING")) {
+    const hasThreshold = await hasRunThresholdPace(
+      athlete.intervalsIcuApiKey,
+      athlete.intervalsIcuAthleteId
+    );
+    if (hasThreshold === false) {
+      warning =
+        "Falta o ritmo de limiar nas definições de corrida do Intervals.icu. Sem ele, os alvos de ritmo são descartados a caminho do relógio" +
+        (threshold ? `. Sugestão a partir do teu plano: ${formatThresholdPace(threshold)}` : "") +
+        ".";
+    }
+  }
+
+  return NextResponse.json({ ok: true, pushed: result.count, weekNumber: week.weekNumber, warning });
 }

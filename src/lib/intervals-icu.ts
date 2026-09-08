@@ -377,6 +377,105 @@ export async function pushEvents(
   return { ok: true, count: events.length };
 }
 
+/**
+ * Whether the athlete has a run threshold pace set on Intervals.icu.
+ *
+ * Without one, Intervals.icu strips every pace target as it hands the workout
+ * to Garmin. The workout still parses on their calendar and the watch still
+ * counts the step down — the athlete is simply told to run for 25 minutes
+ * without being told how fast. Heart-rate targets survive, since those are
+ * derived from settings that are filled in, which is how a session arrives
+ * guided in some steps and mute in others.
+ *
+ * Null when we could not find out; silence is better than a false alarm.
+ */
+export async function hasRunThresholdPace(
+  apiKey: string,
+  athleteId: string
+): Promise<boolean | null> {
+  const res = await fetch(`${API}/athlete/${athleteId}/sport-settings`, {
+    headers: { Authorization: authHeader(apiKey) },
+  }).catch(() => null);
+  if (!res?.ok) return null;
+
+  const groups = await res.json().catch(() => null);
+  if (!Array.isArray(groups)) return null;
+
+  const run = groups.find(g => Array.isArray(g?.types) && g.types.includes("Run"));
+  if (!run) return null;
+  return Boolean(run.threshold_pace);
+}
+
+/** "5:08/km", for telling the athlete what to put in that empty field. */
+export function formatThresholdPace(secsPerKm: number): string {
+  return `${formatPaceSecs(secsPerKm)}/km`;
+}
+
+/** Our events on the athlete's calendar in a date range, keyed by external_id. */
+async function ourEventIds(
+  apiKey: string,
+  athleteId: string,
+  oldest: string,
+  newest: string
+): Promise<Map<string, number>> {
+  const res = await fetch(
+    `${API}/athlete/${athleteId}/events?oldest=${oldest}&newest=${newest}`,
+    { headers: { Authorization: authHeader(apiKey) } }
+  );
+  if (!res.ok) return new Map();
+
+  const events = await res.json().catch(() => null);
+  if (!Array.isArray(events)) return new Map();
+
+  const found = new Map<string, number>();
+  for (const e of events) {
+    // Only ever our own: anything the athlete planned themselves, or that came
+    // from another app, carries a different external_id or none at all.
+    if (typeof e?.external_id === "string" && e.external_id.startsWith("trainai-") && e.id) {
+      found.set(e.external_id, e.id);
+    }
+  }
+  return found;
+}
+
+/**
+ * Replaces our events rather than updating them in place.
+ *
+ * Intervals.icu hands a workout to Garmin when the event is created. Updating
+ * an existing event changes it on their calendar without exporting it again, so
+ * a correction on our side — or a setting that was wrong on theirs when the
+ * event was first written — never reaches the watch. Deleting our own events
+ * first makes every send a real export.
+ *
+ * A delete that fails is not fatal: the create that follows still upserts, which
+ * is exactly what this did before. Losing the re-export is better than losing
+ * the week.
+ */
+export async function replaceEvents(
+  apiKey: string,
+  athleteId: string,
+  events: IntervalsEvent[]
+): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
+  if (events.length === 0) return { ok: true, count: 0 };
+
+  const dates = events.map(e => e.start_date_local.split("T")[0]).sort();
+  const existing = await ourEventIds(apiKey, athleteId, dates[0], dates[dates.length - 1]);
+
+  await Promise.all(
+    events
+      .map(e => existing.get(e.external_id))
+      .filter((id): id is number => id !== undefined)
+      .map(id =>
+        fetch(`${API}/athlete/${athleteId}/events/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: authHeader(apiKey) },
+        }).catch(() => null)
+      )
+  );
+
+  return pushEvents(apiKey, athleteId, events);
+}
+
 export function buildCalendarEvent(
   session: PlannedSession,
   thresholdSecPerKm: number | null = null

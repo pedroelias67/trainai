@@ -17,10 +17,12 @@ export function PlanWeekCollapsible({
   const [open, setOpen] = useState(defaultOpen);
   const [pushState, setPushState] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [pushError, setPushError] = useState<string | null>(null);
+  const [pushWarning, setPushWarning] = useState<string | null>(null);
 
   async function pushToWatch() {
     setPushState("loading");
     setPushError(null);
+    setPushWarning(null);
     try {
       const res = await fetch("/api/intervals/push", {
         method: "POST",
@@ -29,6 +31,7 @@ export function PlanWeekCollapsible({
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao enviar");
+      setPushWarning(data.warning ?? null);
       setPushState("done");
     } catch (err) {
       setPushError(err instanceof Error ? err.message : "Erro inesperado");
@@ -69,7 +72,7 @@ export function PlanWeekCollapsible({
             }`}
           >
             {pushState === "loading" ? "A enviar…"
-              : pushState === "done" ? "✓ No relógio"
+              : pushState === "done" ? (pushWarning ? "✓ Enviado" : "✓ No relógio")
               : pushState === "error" ? "Falhou"
               : "⌚ Enviar"}
           </button>
@@ -88,6 +91,22 @@ export function PlanWeekCollapsible({
           ZIP
         </a>
       </div>
+      {pushWarning && (
+        <div className="flex gap-3 mx-3 my-3 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-xs text-[var(--text-secondary)] leading-relaxed">
+          <span className="text-base shrink-0">⚠️</span>
+          <p>
+            {pushWarning}{" "}
+            <a
+              href="https://intervals.icu/settings"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[var(--text-primary)] underline underline-offset-2"
+            >
+              Abrir definições do Intervals.icu
+            </a>
+          </p>
+        </div>
+      )}
       {open && children}
     </div>
   );
