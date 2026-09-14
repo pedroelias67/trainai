@@ -5,43 +5,17 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { cookies } from "next/headers";
+import { afterFailure, cleared, isLocked, minutesLeft } from "@/lib/login-lock";
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string(),
 });
 
-// Simple in-memory rate limiting (resets on server restart)
-const loginAttempts = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(email: string): boolean {
-  const now = Date.now();
-  const record = loginAttempts.get(email);
-  if (!record || record.resetAt < now) {
-    loginAttempts.set(email, { count: 1, resetAt: now + 15 * 60 * 1000 });
-    return true;
-  }
-  if (record.count >= 5) return false;
-  record.count++;
-  return true;
-}
-
-function clearRateLimit(email: string) {
-  loginAttempts.delete(email);
-}
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { email, password } = loginSchema.parse(body);
-
-    // Rate limiting check
-    if (!checkRateLimit(email)) {
-      return NextResponse.json(
-        { error: "Muitas tentativas. Tenta novamente em 15 minutos." },
-        { status: 429 }
-      );
-    }
 
     const user = await prisma.user.findUnique({
       where: { email },
@@ -52,22 +26,41 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
     }
 
+    // Checked before the password, so a guesser gets nothing out of a locked account.
+    if (isLocked(user)) {
+      const mins = minutesLeft(user);
+      return NextResponse.json(
+        { error: `Muitas tentativas falhadas. Tenta novamente dentro de ${mins} minuto${mins === 1 ? "" : "s"}.` },
+        { status: 429 }
+      );
+    }
+
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) {
+      await prisma.user.update({ where: { id: user.id }, data: afterFailure(user) });
       return NextResponse.json({ error: "Credenciais inválidas" }, { status: 401 });
+    }
+
+    // Only wrong passwords count. Counting every attempt meant someone waiting on
+    // a confirmation email locked themselves out just by checking whether it had
+    // arrived — which is what happened to the first friend invited.
+    if (user.failedLoginCount > 0 || user.lockedUntil) {
+      await prisma.user.update({ where: { id: user.id }, data: cleared });
     }
 
     // Only block unverified users if they have a verificationToken set
     // (meaning they registered after the email verification feature was added)
     if (!user.emailVerified && user.verificationToken) {
       return NextResponse.json(
-        { error: "Email não confirmado. Verifica a tua caixa de entrada." },
+        {
+          error: "Email não confirmado. Verifica a tua caixa de entrada, incluindo o spam.",
+          code: "EMAIL_NOT_VERIFIED",
+        },
         { status: 403 }
       );
     }
 
-    // Clear rate limit on successful login
-    clearRateLimit(email);
+    await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
     const cookieStore = await cookies();
     cookieStore.set("user_id", user.id, {

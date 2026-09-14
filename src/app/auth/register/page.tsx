@@ -72,7 +72,9 @@ function RegisterForm() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao criar conta");
-      router.push(`/auth/verify-email?email=${encodeURIComponent(account.email)}`);
+      // An invited account is signed in straight away; only open sign-ups wait
+      // on a confirmation email.
+      router.push(data.redirectTo ?? `/auth/verify-email?email=${encodeURIComponent(account.email)}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro inesperado");
     } finally {
@@ -85,7 +87,7 @@ function RegisterForm() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6"><LogoFull size={36} /></div>
-          <h1 className="text-2xl font-bold text-white">Criar conta</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Criar conta</h1>
           <p className="text-[var(--text-muted)] text-sm mt-1">
             Começa o teu plano de treino personalizado
           </p>
@@ -101,7 +103,7 @@ function RegisterForm() {
             {/* Google OAuth button */}
             <a
               href="/api/auth/google"
-              className="flex items-center justify-center gap-3 w-full py-3 px-4 mb-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)] transition-all text-white text-sm font-medium"
+              className="flex items-center justify-center gap-3 w-full py-3 px-4 mb-4 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-card)] hover:bg-[var(--bg-hover)] hover:border-[var(--border-strong)] transition-all text-[var(--text-primary)] text-sm font-medium"
             >
               <svg width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M17.64 9.2045C17.64 8.5664 17.5827 7.9527 17.4764 7.3636H9V10.845H13.8436C13.635 11.9700 13.0009 12.9232 12.0477 13.5613V15.8195H14.9564C16.6582 14.2527 17.64 11.9455 17.64 9.2045Z" fill="#4285F4"/>
@@ -113,9 +115,9 @@ function RegisterForm() {
             </a>
 
             <div className="flex items-center gap-3 mb-4">
-              <div className="flex-1 h-px bg-[#1f1f1f]" />
+              <div className="flex-1 h-px bg-[var(--border)]" />
               <span className="text-[var(--text-faint)] text-xs">ou</span>
-              <div className="flex-1 h-px bg-[#1f1f1f]" />
+              <div className="flex-1 h-px bg-[var(--border)]" />
             </div>
           </>
         )}
@@ -131,10 +133,10 @@ function RegisterForm() {
               }`}>
                 {s === "account" && step === "athlete" ? "✓" : i + 1}
               </div>
-              <span className={`text-xs ${step === s ? "text-white" : "text-[var(--text-faint)]"}`}>
+              <span className={`text-xs ${step === s ? "text-[var(--text-primary)]" : "text-[var(--text-faint)]"}`}>
                 {s === "account" ? "Conta" : "Perfil atleta"}
               </span>
-              {i === 0 && <div className="flex-1 h-px bg-[#222]" />}
+              {i === 0 && <div className="flex-1 h-px bg-[var(--border)]" />}
             </div>
           ))}
         </div>
@@ -233,7 +235,7 @@ function RegisterForm() {
                         onChange={() => setAthlete({ ...athlete, fitnessLevel: level.value })}
                         className="sr-only" />
                       <div>
-                        <p className="text-sm font-medium text-white">{level.label}</p>
+                        <p className="text-sm font-medium text-[var(--text-primary)]">{level.label}</p>
                         <p className="text-xs text-[var(--text-muted)]">{level.desc}</p>
                       </div>
                     </label>

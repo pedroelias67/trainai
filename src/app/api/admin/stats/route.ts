@@ -1,19 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { requireAdmin } from "@/lib/admin";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "pedroelias67@gmail.com";
-
-async function requireAdmin() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
-  if (!userId) return null;
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user || user.email !== ADMIN_EMAIL) return null;
-  return user;
-}
 
 export async function GET() {
   if (!(await requireAdmin())) {

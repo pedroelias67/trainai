@@ -5,11 +5,23 @@ import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/ui/Logo";
 import Link from "next/link";
 
+type AccountStatus = {
+  pendingVerification: boolean;
+  locked: boolean;
+  lockMinutesLeft: number;
+  failedLoginCount: number;
+  lastLoginAt: string | null;
+  hasPassword: boolean;
+};
+
+type UserAction = "activate" | "unlock" | "resend-verification" | "send-password-reset";
+
 type User = {
   id: string;
   name: string | null;
   email: string;
   createdAt: string;
+  status: AccountStatus;
   athlete: {
     id: string;
     fitnessLevel: string | null;
@@ -27,6 +39,7 @@ type Invite = {
   expiresAt: string;
   usedAt: string | null;
   usedByUserId: string | null;
+  account: (AccountStatus & { id: string }) | null;
 };
 
 type Stats = {
@@ -55,7 +68,13 @@ const fitnessLabels: Record<string, string> = {
 };
 
 function inviteStatus(invite: Invite): { label: string; color: string } {
-  if (invite.usedAt) return { label: "Usado", color: "text-[var(--text-muted)]" };
+  if (invite.usedAt) {
+    // Used only means an account exists. Say whether its owner can get in.
+    if (!invite.account) return { label: "Usado · conta eliminada", color: "text-[var(--text-muted)]" };
+    if (invite.account.locked) return { label: "Conta criada · bloqueada", color: "text-red-400" };
+    if (invite.account.pendingVerification) return { label: "Conta criada · por confirmar", color: "text-yellow-400" };
+    return { label: "Conta ativa", color: "text-green-400" };
+  }
   if (new Date(invite.expiresAt) < new Date()) return { label: "Expirado", color: "text-red-400" };
   return { label: "Pendente", color: "text-green-400" };
 }
@@ -85,6 +104,8 @@ export default function AdminUsersPage() {
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [acting, setActing] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{ id: string; text: string; ok: boolean } | null>(null);
 
   // Invites state
   const [invites, setInvites] = useState<Invite[]>([]);
@@ -172,6 +193,44 @@ export default function AdminUsersPage() {
     setConfirmDelete(null);
   }
 
+  async function runAction(user: User, action: UserAction) {
+    setActing(`${user.id}:${action}`);
+    setNotice(null);
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}/actions`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erro");
+      setUsers((u) => u.map((x) => x.id === user.id ? { ...x, status: data.status } : x));
+      setNotice({ id: user.id, text: data.message, ok: true });
+    } catch (e) {
+      setNotice({ id: user.id, text: e instanceof Error ? e.message : "Erro", ok: false });
+    }
+    setActing(null);
+  }
+
+  async function handleResendInvite(invite: Invite) {
+    setActing(`invite:${invite.id}`);
+    setNotice(null);
+    try {
+      const res = await fetch("/api/admin/invites", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: invite.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erro");
+      setInvites((prev) => prev.map((i) => i.id === invite.id ? { ...i, expiresAt: data.expiresAt } : i));
+      setNotice({ id: invite.id, text: data.message, ok: true });
+    } catch (e) {
+      setNotice({ id: invite.id, text: e instanceof Error ? e.message : "Erro", ok: false });
+    }
+    setActing(null);
+  }
+
   async function handleCreateInvite(e: React.FormEvent) {
     e.preventDefault();
     setCreatingInvite(true);
@@ -185,6 +244,9 @@ export default function AdminUsersPage() {
       if (res.ok) {
         setInvites((prev) => [data, ...prev]);
         setInviteEmail("");
+        setNotice(data.emailError
+          ? { id: data.id, text: `Convite criado, mas o email não seguiu (${data.emailError}). Copia o link e envia-o tu.`, ok: false }
+          : data.email ? { id: data.id, text: `Convite enviado para ${data.email}.`, ok: true } : null);
       }
     } catch {}
     setCreatingInvite(false);
@@ -213,7 +275,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-[color-mix(in_srgb,var(--bg-base)_75%,transparent)] px-6 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <LogoFull size={28} href="/dashboard" />
@@ -233,7 +295,7 @@ export default function AdminUsersPage() {
                 key={t}
                 onClick={() => setTab(t)}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
-                  tab === t ? "bg-[#1f1f1f] text-white" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+                  tab === t ? "bg-[var(--bg-hover)] text-[var(--text-primary)]" : "text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
                 }`}
               >
                 {labels[t]}
@@ -247,7 +309,7 @@ export default function AdminUsersPage() {
           <>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-2xl font-bold text-white">Utilizadores</h1>
+                <h1 className="text-2xl font-bold text-[var(--text-primary)]">Utilizadores</h1>
                 <p className="text-[var(--text-muted)] text-sm mt-0.5">{users.length} utilizador{users.length !== 1 ? "es" : ""} registado{users.length !== 1 ? "s" : ""}</p>
               </div>
             </div>
@@ -268,12 +330,18 @@ export default function AdminUsersPage() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <p className="text-white text-sm font-medium">{user.name ?? "—"}</p>
+                          <p className="text-[var(--text-primary)] text-sm font-medium">{user.name ?? "—"}</p>
                           {user.athlete?.trainingPlans.length ? (
                             <span className="text-green-400 text-xs bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">plano ativo</span>
                           ) : null}
                           {user.athlete?.stravaConnected && (
                             <span className="text-orange-400 text-xs bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">Strava</span>
+                          )}
+                          {user.status.pendingVerification && (
+                            <span className="text-yellow-400 text-xs bg-yellow-500/10 border border-yellow-500/20 px-2 py-0.5 rounded-full">email por confirmar · não consegue entrar</span>
+                          )}
+                          {user.status.locked && (
+                            <span className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full">bloqueado · {user.status.lockMinutesLeft} min</span>
                           )}
                         </div>
                         <p className="text-[var(--text-muted)] text-xs">{user.email}</p>
@@ -281,20 +349,22 @@ export default function AdminUsersPage() {
                           Registado {new Date(user.createdAt).toLocaleDateString("pt-PT")}
                           {user.athlete && ` · ${user.athlete._count.activities} atividade${user.athlete._count.activities !== 1 ? "s" : ""}`}
                           {user.athlete?.fitnessLevel && ` · ${fitnessLabels[user.athlete.fitnessLevel] ?? user.athlete.fitnessLevel}`}
+                          {" · "}{user.status.lastLoginAt ? `último acesso ${relativeTime(user.status.lastLoginAt)}` : "ainda não entrou"}
+                          {user.status.failedLoginCount > 0 && !user.status.locked && ` · ${user.status.failedLoginCount} password${user.status.failedLoginCount !== 1 ? "s" : ""} errada${user.status.failedLoginCount !== 1 ? "s" : ""}`}
                         </p>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         {user.athlete?.id && (
                           <Link
                             href={`/admin/athletes/${user.athlete.id}`}
-                            className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] text-xs transition-all"
+                            className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all"
                           >
                             Ver detalhe →
                           </Link>
                         )}
                         <button
                           onClick={() => { setEditing(user); setEditName(user.name ?? ""); setEditEmail(user.email); }}
-                          className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] text-xs transition-all">
+                          className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all">
                           Editar
                         </button>
                         <button
@@ -303,6 +373,33 @@ export default function AdminUsersPage() {
                           Eliminar
                         </button>
                       </div>
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-[var(--border)] flex flex-wrap items-center gap-2">
+                      {user.status.pendingVerification && (
+                        <>
+                          <button onClick={() => runAction(user, "activate")} disabled={acting !== null}
+                            className="px-3 py-1.5 rounded-lg border border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20 text-xs font-medium transition-all disabled:opacity-50">
+                            {acting === `${user.id}:activate` ? "A ativar…" : "✓ Ativar conta"}
+                          </button>
+                          <button onClick={() => runAction(user, "resend-verification")} disabled={acting !== null}
+                            className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all disabled:opacity-50">
+                            {acting === `${user.id}:resend-verification` ? "A enviar…" : "Reenviar confirmação"}
+                          </button>
+                        </>
+                      )}
+                      {(user.status.locked || user.status.failedLoginCount > 0) && (
+                        <button onClick={() => runAction(user, "unlock")} disabled={acting !== null}
+                          className="px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-medium transition-all disabled:opacity-50">
+                          {acting === `${user.id}:unlock` ? "A desbloquear…" : "Desbloquear"}
+                        </button>
+                      )}
+                      <button onClick={() => runAction(user, "send-password-reset")} disabled={acting !== null}
+                        className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all disabled:opacity-50">
+                        {acting === `${user.id}:send-password-reset` ? "A enviar…" : "Enviar link de nova password"}
+                      </button>
+                      {notice?.id === user.id && (
+                        <span className={`text-xs ${notice.ok ? "text-green-400" : "text-red-400"}`}>{notice.text}</span>
+                      )}
                     </div>
                     {confirmDelete === user.id && (
                       <div className="mt-4 pt-4 border-t border-[var(--border)] flex items-center justify-between">
@@ -332,13 +429,13 @@ export default function AdminUsersPage() {
           <>
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-2xl font-bold text-white">Convites</h1>
+                <h1 className="text-2xl font-bold text-[var(--text-primary)]">Convites</h1>
                 <p className="text-[var(--text-muted)] text-sm mt-0.5">{invites.length} convite{invites.length !== 1 ? "s" : ""}</p>
               </div>
             </div>
 
             <div className="card mb-6">
-              <h2 className="text-sm font-semibold text-white mb-4">Criar convite</h2>
+              <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Criar convite</h2>
               <form onSubmit={handleCreateInvite} className="flex gap-3">
                 <input
                   type="email"
@@ -366,7 +463,7 @@ export default function AdminUsersPage() {
                       <div className="flex items-center gap-4">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-white text-sm font-medium">
+                            <p className="text-[var(--text-primary)] text-sm font-medium">
                               {invite.email ?? "Convite genérico"}
                             </p>
                             <span className={`text-xs font-medium ${status.color}`}>
@@ -377,11 +474,24 @@ export default function AdminUsersPage() {
                             Criado {new Date(invite.createdAt).toLocaleDateString("pt-PT")}
                             {" · "}Expira {new Date(invite.expiresAt).toLocaleDateString("pt-PT")}
                           </p>
+                          {notice?.id === invite.id && (
+                            <p className={`text-xs mt-1 ${notice.ok ? "text-green-400" : "text-red-400"}`}>{notice.text}</p>
+                          )}
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
+                          {!invite.usedAt && invite.email && (
+                            <button
+                              onClick={() => handleResendInvite(invite)}
+                              disabled={acting !== null}
+                              className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all disabled:opacity-50"
+                            >
+                              {acting === `invite:${invite.id}` ? "A enviar…"
+                                : new Date(invite.expiresAt) < new Date() ? "Renovar e reenviar" : "Reenviar"}
+                            </button>
+                          )}
                           <button
                             onClick={() => copyInviteLink(invite.token)}
-                            className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-white hover:border-[var(--border-strong)] text-xs transition-all"
+                            className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all"
                           >
                             {copiedToken === invite.token ? "Copiado ✓" : "Copiar link"}
                           </button>
@@ -405,7 +515,7 @@ export default function AdminUsersPage() {
         {tab === "stats" && (
           <>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-white">Estatísticas</h1>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Estatísticas</h1>
               <p className="text-[var(--text-muted)] text-sm mt-0.5">Visão geral da plataforma</p>
             </div>
 
@@ -423,7 +533,7 @@ export default function AdminUsersPage() {
                   ].map((s) => (
                     <div key={s.label} className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
                       <p className="text-[var(--text-muted)] text-xs">{s.label}</p>
-                      <p className="text-white text-2xl font-bold mt-1">{s.value}</p>
+                      <p className="text-[var(--text-primary)] text-2xl font-bold mt-1">{s.value}</p>
                     </div>
                   ))}
                 </div>
@@ -432,11 +542,11 @@ export default function AdminUsersPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
                     <p className="text-[var(--text-muted)] text-xs">Planos Ativos</p>
-                    <p className="text-white text-2xl font-bold mt-1">{stats.activePlans}</p>
+                    <p className="text-[var(--text-primary)] text-2xl font-bold mt-1">{stats.activePlans}</p>
                   </div>
                   <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
                     <p className="text-[var(--text-muted)] text-xs">Strava Ligado</p>
-                    <p className="text-white text-2xl font-bold mt-1">{stats.stravaConnected}</p>
+                    <p className="text-[var(--text-primary)] text-2xl font-bold mt-1">{stats.stravaConnected}</p>
                     {stats.totalAthletes > 0 && (
                       <p className="text-[var(--text-faint)] text-xs mt-1">
                         {Math.round((stats.stravaConnected / stats.totalAthletes) * 100)}% dos atletas
@@ -445,7 +555,7 @@ export default function AdminUsersPage() {
                   </div>
                   <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
                     <p className="text-[var(--text-muted)] text-xs">Email Verificado</p>
-                    <p className="text-white text-2xl font-bold mt-1">{stats.verifiedUsers}</p>
+                    <p className="text-[var(--text-primary)] text-2xl font-bold mt-1">{stats.verifiedUsers}</p>
                     {stats.totalUsers > 0 && (
                       <p className="text-[var(--text-faint)] text-xs mt-1">
                         {Math.round((stats.verifiedUsers / stats.totalUsers) * 100)}% dos utilizadores
@@ -456,7 +566,7 @@ export default function AdminUsersPage() {
 
                 {/* Top athletes table */}
                 <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
-                  <h2 className="text-sm font-semibold text-white mb-4">Top Atletas</h2>
+                  <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Top Atletas</h2>
                   {stats.topAthletes.length === 0 ? (
                     <p className="text-[var(--text-muted)] text-sm">Sem dados ainda.</p>
                   ) : (
@@ -485,7 +595,7 @@ export default function AdminUsersPage() {
 
                 {/* Bar chart: registrations last 30 days */}
                 <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
-                  <h2 className="text-sm font-semibold text-white mb-4">Registos — últimos 30 dias</h2>
+                  <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Registos — últimos 30 dias</h2>
                   <div className="flex items-end gap-1 h-24">
                     {stats.registrationsByDay.map((d, i) => {
                       const heightPct = maxBarCount > 0 ? Math.round((d.count / maxBarCount) * 100) : 0;
@@ -518,7 +628,7 @@ export default function AdminUsersPage() {
         {tab === "activity" && (
           <>
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-white">Atividade da Plataforma</h1>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Atividade da Plataforma</h1>
               <p className="text-[var(--text-muted)] text-sm mt-0.5">Últimos 50 eventos</p>
             </div>
 
@@ -569,7 +679,7 @@ export default function AdminUsersPage() {
       {editing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
           <div className="bg-[var(--bg-card)] border border-[var(--border-hover)] rounded-2xl p-6 w-full max-w-md shadow-2xl">
-            <h2 className="text-lg font-bold text-white mb-5">Editar utilizador</h2>
+            <h2 className="text-lg font-bold text-[var(--text-primary)] mb-5">Editar utilizador</h2>
             <div className="space-y-4">
               <div>
                 <label className="label">Nome</label>

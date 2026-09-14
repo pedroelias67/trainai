@@ -7,6 +7,7 @@ const LIMITS: Record<string, { max: number; windowMs: number }> = {
   "/api/auth/login":         { max: 10,  windowMs: 60_000 },       // 10/min
   "/api/auth/register":      { max: 5,   windowMs: 60_000 },       // 5/min
   "/api/auth/forgot-password": { max: 3, windowMs: 300_000 },      // 3/5min
+  "/api/auth/resend-verification": { max: 5, windowMs: 300_000 },  // 5/5min — it checks a password
   "/api/ai":                 { max: 20,  windowMs: 60_000 },       // 20/min (AI routes)
   "/api/training-plans":     { max: 5,   windowMs: 300_000 },      // 5/5min (plan generation)
 };

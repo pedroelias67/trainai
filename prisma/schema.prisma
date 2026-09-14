@@ -23,6 +23,13 @@ model User {
   resetToken            String?   @unique
   resetTokenExpiry      DateTime?
 
+  // Login lockout lives here rather than in server memory: Vercel runs several
+  // instances, so a lock held in one was invisible to the others — and to the
+  // admin trying to lift it.
+  failedLoginCount      Int       @default(0)
+  lockedUntil           DateTime?
+  lastLoginAt           DateTime?
+
   athlete       Athlete?
   accounts      Account[]
   sessions      Session[]

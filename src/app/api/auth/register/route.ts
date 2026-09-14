@@ -4,7 +4,9 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import crypto from "crypto";
-import { sendVerificationEmail } from "@/lib/email";
+import { cookies } from "next/headers";
+import * as Sentry from "@sentry/nextjs";
+import { sendVerificationEmail, sendWelcomeEmail } from "@/lib/email";
 
 const registerSchema = z.object({
   name: z.string().min(2),
@@ -45,15 +47,23 @@ export async function POST(req: NextRequest) {
     if (existing) return NextResponse.json({ error: "Email já registado" }, { status: 409 });
 
     const passwordHash = await bcrypt.hash(password, 12);
-    const verificationToken = crypto.randomBytes(32).toString("hex");
-    const verificationTokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    // An invite addressed to this email already proves the inbox: the link only
+    // exists in a message sent there. Asking for a second confirmation adds a
+    // step that can only go wrong — an email in spam, or one never delivered —
+    // and a friend who was invited finds themselves locked out of the account
+    // they just made.
+    const inboxProven = !!invite?.email;
+    const verificationToken = inboxProven ? null : crypto.randomBytes(32).toString("hex");
+    const verificationTokenExpiry = inboxProven ? null : new Date(Date.now() + 24 * 60 * 60 * 1000);
 
     const user = await prisma.user.create({
       data: {
         name, email, passwordHash,
-        emailVerified: false,
+        emailVerified: inboxProven,
         verificationToken,
         verificationTokenExpiry,
+        ...(inboxProven && { lastLoginAt: new Date() }),
         athlete: {
           create: {
             ...(athlete?.dateOfBirth && { dateOfBirth: new Date(athlete.dateOfBirth) }),
@@ -75,11 +85,21 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // Send verification email (don't fail registration if email fails)
+    if (inboxProven) {
+      const cookieStore = await cookies();
+      cookieStore.set("user_id", user.id, {
+        httpOnly: true, secure: process.env.NODE_ENV === "production",
+        sameSite: "lax", maxAge: 60 * 60 * 24 * 7, path: "/",
+      });
+      try { await sendWelcomeEmail(email, name); } catch (e) { Sentry.captureException(e); }
+      return NextResponse.json({ redirectTo: "/onboarding?welcome=1" });
+    }
+
+    // Don't fail registration if the email fails — the login page can resend it.
     try {
-      await sendVerificationEmail(email, name, verificationToken);
+      await sendVerificationEmail(email, name, verificationToken!);
     } catch (e) {
-      console.error("Failed to send verification email:", e);
+      Sentry.captureException(e);
     }
 
     return NextResponse.json({ requiresVerification: true, email });

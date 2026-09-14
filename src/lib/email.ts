@@ -5,12 +5,25 @@ import {
 } from "./email-template";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+/**
+ * Sends through Resend and throws when it fails.
+ *
+ * The SDK reports failure by returning `{ error }` rather than throwing, so a
+ * bare `await resend.emails.send(...)` inside a try/catch never reaches the
+ * catch: a rejected address or a bad key looks exactly like a delivered email.
+ */
+async function send(message: Parameters<typeof resend.emails.send>[0]) {
+  const { error } = await resend.emails.send(message);
+  if (error) throw new Error(`Resend: ${error.name} — ${error.message}`);
+}
+
 const FROM = process.env.FROM_EMAIL ?? "TrainAI <noreply@trainai.pedroelias.com>";
 const BASE_URL = process.env.NEXTAUTH_URL ?? "https://trainai.pedroelias.com";
 
 export async function sendVerificationEmail(email: string, name: string, token: string) {
   const url = `${BASE_URL}/auth/verify-email?token=${token}`;
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: email,
     subject: "Confirma o teu email — TrainAI",
@@ -29,7 +42,7 @@ export async function sendVerificationEmail(email: string, name: string, token: 
 
 export async function sendPasswordResetEmail(email: string, name: string, token: string) {
   const url = `${BASE_URL}/auth/reset-password?token=${token}`;
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: email,
     subject: "Recuperação de password — TrainAI",
@@ -46,7 +59,7 @@ export async function sendPasswordResetEmail(email: string, name: string, token:
 }
 
 export async function sendWelcomeEmail(email: string, name: string) {
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: email,
     subject: "Bem-vindo ao TrainAI 🏃",
@@ -101,7 +114,7 @@ export async function sendWeeklyReportEmail(
   const distancePct = data.plannedDistance
     ? Math.round(Math.min((data.actualDistance / data.plannedDistance) * 100, 100)) : null;
 
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: email,
     subject: `📊 Semana ${data.weekNumber} — Relatório TrainAI`,
@@ -153,7 +166,7 @@ export async function sendWeeklyReportEmail(
 
 export async function sendInviteEmail(email: string, token: string, inviterName: string) {
   const url = `${BASE_URL}/invite/${token}`;
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: email,
     subject: `${inviterName} convidou-te para o TrainAI`,
@@ -188,7 +201,7 @@ export async function sendFeedbackEmail(data: {
     question: "❓ Questão",
   };
 
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: "pedro@trainai.pedroelias.com",
     replyTo: data.email,
@@ -209,7 +222,7 @@ export async function sendFeedbackEmail(data: {
   });
 
   // Confirmation to the user
-  await resend.emails.send({
+  await send({
     from: FROM,
     to: data.email,
     subject: "Recebemos o teu feedback — TrainAI",

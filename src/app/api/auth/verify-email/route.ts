@@ -15,7 +15,10 @@ export async function GET(req: NextRequest) {
 
   await prisma.user.update({
     where: { id: user.id },
-    data: { emailVerified: true, verificationToken: null, verificationTokenExpiry: null },
+    data: {
+      emailVerified: true, verificationToken: null, verificationTokenExpiry: null,
+      lastLoginAt: new Date(),
+    },
   });
 
   // Auto login after verification

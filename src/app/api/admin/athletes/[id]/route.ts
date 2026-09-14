@@ -1,19 +1,9 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
+import { accountStatus, accountStatusSelect, requireAdmin } from "@/lib/admin";
 
-const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "pedroelias67@gmail.com";
-
-async function requireAdmin() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
-  if (!userId) return null;
-  const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user || user.email !== ADMIN_EMAIL) return null;
-  return user;
-}
 
 export async function GET(
   _req: NextRequest,
@@ -28,7 +18,7 @@ export async function GET(
   const athlete = await prisma.athlete.findUnique({
     where: { id },
     include: {
-      user: true,
+      user: { select: { id: true, name: true, email: true, createdAt: true, ...accountStatusSelect } },
       events: { orderBy: { date: "asc" } },
       trainingPlans: {
         include: {
@@ -51,5 +41,17 @@ export async function GET(
     return NextResponse.json({ error: "Atleta não encontrado" }, { status: 404 });
   }
 
-  return NextResponse.json(athlete);
+  // Third-party credentials never leave the server, admin or not: each one acts
+  // on the athlete's own Strava or Intervals.icu account.
+  const {
+    stravaAccessToken: _sa, stravaRefreshToken: _sr, intervalsIcuApiKey: _ik, pushSubscription: _ps,
+    user: { verificationToken: _vt, passwordHash: _ph, ...user },
+    ...rest
+  } = athlete;
+
+  return NextResponse.json({
+    ...rest,
+    user: { ...user, ...accountStatus(athlete.user) },
+    intervalsIcuConnected: !!athlete.intervalsIcuApiKey,
+  });
 }

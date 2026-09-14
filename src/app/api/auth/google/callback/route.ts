@@ -63,6 +63,8 @@ export async function GET(req: NextRequest) {
     await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } });
   }
 
+  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+
   cookieStore.set("user_id", user.id, {
     httpOnly: true, secure: process.env.NODE_ENV === "production",
     sameSite: "lax", maxAge: 60 * 60 * 24 * 7, path: "/",
