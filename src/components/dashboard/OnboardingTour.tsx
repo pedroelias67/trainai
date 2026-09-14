@@ -81,7 +81,7 @@ export function OnboardingTour({ isNew }: { isNew: boolean }) {
         {/* Content */}
         <div className="text-center mb-6">
           <div className="text-5xl mb-4">{current.icon}</div>
-          <h2 className="text-lg font-bold text-white mb-2">{current.title}</h2>
+          <h2 className="text-lg font-bold text-[var(--text-primary)] mb-2">{current.title}</h2>
           <p className="text-[var(--text-muted)] text-sm leading-relaxed">{current.body}</p>
           {current.link && (
             <button

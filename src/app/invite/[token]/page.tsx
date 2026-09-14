@@ -48,7 +48,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
             </span>
           </div>
 
-          <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+          <h1 className="text-4xl md:text-5xl font-black text-[var(--text-primary)] mb-4 leading-tight">
             O teu treinador pessoal<br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-emerald-300">com inteligência artificial</span>
           </h1>
@@ -83,13 +83,13 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
 
         {/* Features */}
         <div className="mb-16">
-          <h2 className="text-xl font-bold text-white text-center mb-8">O que inclui o TrainAI</h2>
+          <h2 className="text-xl font-bold text-[var(--text-primary)] text-center mb-8">O que inclui o TrainAI</h2>
           <div className="grid md:grid-cols-2 gap-4">
             {FEATURES.map((f) => (
               <div key={f.title} className="flex gap-4 p-5 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)] hover:border-[var(--border-hover)] transition-all">
                 <span className="text-2xl shrink-0">{f.icon}</span>
                 <div>
-                  <p className="font-semibold text-white text-sm mb-1">{f.title}</p>
+                  <p className="font-semibold text-[var(--text-primary)] text-sm mb-1">{f.title}</p>
                   <p className="text-[var(--text-muted)] text-xs leading-relaxed">{f.desc}</p>
                 </div>
               </div>
@@ -99,7 +99,7 @@ export default async function InvitePage({ params }: { params: Promise<{ token: 
 
         {/* CTA final */}
         <div className="text-center p-8 rounded-2xl border border-green-500/20 bg-green-500/5">
-          <p className="text-white font-bold text-lg mb-2">Pronto para começar?</p>
+          <p className="text-[var(--text-primary)] font-bold text-lg mb-2">Pronto para começar?</p>
           <p className="text-[var(--text-muted)] text-sm mb-6">
             Leva menos de 2 minutos a criar a conta e gerar o teu primeiro plano.
           </p>

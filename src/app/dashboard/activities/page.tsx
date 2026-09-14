@@ -63,7 +63,7 @@ export default async function ActivitiesPage() {
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-8 gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-white">Atividades</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Atividades</h1>
             <p className="text-[var(--text-muted)] text-sm mt-1">Histórico de treinos sincronizados via Strava</p>
           </div>
           {athlete.stravaConnected && <SyncButton />}
@@ -73,15 +73,15 @@ export default async function ActivitiesPage() {
         {activities.length > 0 && (
           <div className="grid grid-cols-3 gap-4 mb-8">
             <div className="card text-center">
-              <p className="text-2xl font-bold text-white">{activities.length}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">{activities.length}</p>
               <p className="text-[var(--text-muted)] text-xs mt-1">atividades</p>
             </div>
             <div className="card text-center">
-              <p className="text-2xl font-bold text-white">{totalKm.toFixed(0)}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">{totalKm.toFixed(0)}</p>
               <p className="text-[var(--text-muted)] text-xs mt-1">km totais</p>
             </div>
             <div className="card text-center">
-              <p className="text-2xl font-bold text-white">{totalHours}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">{totalHours}</p>
               <p className="text-[var(--text-muted)] text-xs mt-1">horas totais</p>
             </div>
           </div>
@@ -90,7 +90,7 @@ export default async function ActivitiesPage() {
         {activities.length === 0 ? (
           <div className="card text-center py-16">
             <p className="text-4xl mb-4">⚡</p>
-            <h2 className="text-xl font-bold text-white mb-2">Sem atividades ainda</h2>
+            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">Sem atividades ainda</h2>
             <p className="text-[var(--text-muted)] text-sm mb-2">Liga o Strava para sincronizar os teus treinos automaticamente</p>
             {!athlete.stravaConnected && (
               <Link href="/api/strava/connect" className="btn-primary inline-block mt-4">Conectar Strava</Link>

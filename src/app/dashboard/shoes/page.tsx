@@ -71,7 +71,7 @@ function ShoeModal({ shoe, onClose, onSave }: ModalProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 px-4">
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-6 w-full max-w-md space-y-4">
-        <h2 className="font-bold text-white text-lg">{shoe ? "Editar sapatilha" : "Adicionar sapatilha"}</h2>
+        <h2 className="font-bold text-[var(--text-primary)] text-lg">{shoe ? "Editar sapatilha" : "Adicionar sapatilha"}</h2>
 
         <div className="space-y-3">
           <div>
@@ -81,7 +81,7 @@ function ShoeModal({ shoe, onClose, onSave }: ModalProps) {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Ex: Nike Vaporfly 3"
-              className="w-full bg-[var(--bg-hover)] border border-[var(--border-hover)] rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--border-strong)]"
+              className="w-full bg-[var(--bg-hover)] border border-[var(--border-hover)] rounded-xl px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--border-strong)]"
             />
           </div>
           <div>
@@ -91,7 +91,7 @@ function ShoeModal({ shoe, onClose, onSave }: ModalProps) {
               value={brand}
               onChange={(e) => setBrand(e.target.value)}
               placeholder="Ex: Nike"
-              className="w-full bg-[var(--bg-hover)] border border-[var(--border-hover)] rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--border-strong)]"
+              className="w-full bg-[var(--bg-hover)] border border-[var(--border-hover)] rounded-xl px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--border-strong)]"
             />
           </div>
           <div>
@@ -101,12 +101,12 @@ function ShoeModal({ shoe, onClose, onSave }: ModalProps) {
               value={color}
               onChange={(e) => setColor(e.target.value)}
               placeholder="Ex: Branco/Verde"
-              className="w-full bg-[var(--bg-hover)] border border-[var(--border-hover)] rounded-xl px-3 py-2.5 text-sm text-white placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--border-strong)]"
+              className="w-full bg-[var(--bg-hover)] border border-[var(--border-hover)] rounded-xl px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-faint)] focus:outline-none focus:border-[var(--border-strong)]"
             />
           </div>
           <div>
             <label className="text-xs text-[var(--text-secondary)] mb-1 block">
-              Limite de distância: <span className="text-white font-medium">{distanceLimit} km</span>
+              Limite de distância: <span className="text-[var(--text-primary)] font-medium">{distanceLimit} km</span>
             </label>
             <input
               type="range"
@@ -186,7 +186,7 @@ export default function ShoesPage() {
                 href={item.href}
                 className={`px-4 py-2 rounded-lg text-sm transition-all ${
                   item.href === "/dashboard/shoes"
-                    ? "text-white bg-white/10"
+                    ? "text-[var(--text-primary)] bg-[var(--border-hover)]"
                     : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
                 }`}
               >
@@ -203,7 +203,7 @@ export default function ShoesPage() {
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-bold text-white">As minhas sapatilhas</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">As minhas sapatilhas</h1>
             <p className="text-[var(--text-muted)] text-sm mt-1">Regista o desgaste das tuas sapatilhas de corrida</p>
           </div>
           <button
@@ -219,7 +219,7 @@ export default function ShoesPage() {
         ) : shoes.length === 0 ? (
           <div className="card text-center py-16">
             <div className="text-4xl mb-4">👟</div>
-            <h2 className="text-lg font-bold text-white mb-2">Sem sapatilhas registadas</h2>
+            <h2 className="text-lg font-bold text-[var(--text-primary)] mb-2">Sem sapatilhas registadas</h2>
             <p className="text-[var(--text-muted)] text-sm mb-6">Adiciona as tuas sapatilhas para acompanhar o desgaste</p>
             <p className="text-[var(--text-faint)] text-xs">
               Como usar: adiciona sapatilhas aqui e atribui-as às atividades na página de detalhe de cada atividade.
@@ -237,7 +237,7 @@ export default function ShoesPage() {
                 >
                   <div className="flex items-start justify-between mb-3">
                     <div>
-                      <h3 className="font-bold text-white">{shoe.name}</h3>
+                      <h3 className="font-bold text-[var(--text-primary)]">{shoe.name}</h3>
                       {shoe.brand && <p className="text-[var(--text-muted)] text-xs mt-0.5">{shoe.brand}{shoe.color ? ` · ${shoe.color}` : ""}</p>}
                     </div>
                     <div className="flex items-center gap-2">
@@ -253,7 +253,7 @@ export default function ShoesPage() {
                       <span
                         className={`px-2 py-0.5 rounded-full text-xs font-medium ${
                           shoe.retired
-                            ? "bg-zinc-800 text-[var(--text-secondary)]"
+                            ? "bg-[var(--bg-hover)] text-[var(--text-secondary)]"
                             : "bg-green-500/10 text-green-400"
                         }`}
                       >
@@ -269,7 +269,7 @@ export default function ShoesPage() {
                   <ProgressBar totalKm={shoe.totalKm} distanceLimit={shoe.distanceLimit} />
 
                   <div className="flex items-center justify-between mt-2 mb-4">
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-sm font-medium text-[var(--text-primary)]">
                       {shoe.totalKm.toFixed(0)} <span className="text-[var(--text-muted)]">/ {shoe.distanceLimit} km</span>
                     </span>
                     <span className="text-xs text-[var(--text-faint)]">{shoe._count.activities} atividades</span>

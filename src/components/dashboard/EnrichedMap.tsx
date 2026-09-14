@@ -162,7 +162,7 @@ export default function EnrichedMap({ gpsTrack, elevationGain, height = 380, com
         <button
           onClick={() => setColorBy("pace")}
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-            colorBy === "pace" ? "bg-green-500 text-black" : "bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-zinc-200"
+            colorBy === "pace" ? "bg-green-500 text-black" : "bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           }`}
         >
           Pace
@@ -170,7 +170,7 @@ export default function EnrichedMap({ gpsTrack, elevationGain, height = 380, com
         <button
           onClick={() => setColorBy("hr")}
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
-            colorBy === "hr" ? "bg-green-500 text-black" : "bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-zinc-200"
+            colorBy === "hr" ? "bg-green-500 text-black" : "bg-[var(--bg-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
           }`}
         >
           FC

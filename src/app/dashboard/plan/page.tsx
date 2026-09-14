@@ -67,7 +67,7 @@ export default async function PlanPage() {
         {!plan ? (
           <div className="card text-center py-20">
             <p className="text-4xl mb-4">📋</p>
-            <h2 className="text-xl font-bold text-white mb-2">Sem plano ativo</h2>
+            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">Sem plano ativo</h2>
             <p className="text-[var(--text-muted)] text-sm mb-6">Cria um evento para gerar o teu plano personalizado</p>
             <Link href="/onboarding" className="btn-primary inline-block">Criar plano</Link>
           </div>
@@ -77,7 +77,7 @@ export default async function PlanPage() {
             <div className="flex items-start justify-between mb-8 gap-4">
               <div>
                 <p className="text-green-400 text-xs font-medium uppercase tracking-widest mb-1">Plano ativo</p>
-                <h1 className="text-2xl font-bold text-white">{plan.event.name}</h1>
+                <h1 className="text-2xl font-bold text-[var(--text-primary)]">{plan.event.name}</h1>
                 <p className="text-[var(--text-muted)] text-sm mt-1 capitalize">
                   {format(new Date(plan.event.date), "d 'de' MMMM yyyy", { locale: pt })}
                   {" · "}{plan.totalWeeks} semanas
@@ -114,7 +114,7 @@ export default async function PlanPage() {
                         Semana atual
                       </span>
                     )}
-                    <h2 className={`font-semibold text-sm truncate ${isPastWeek ? "text-[var(--text-muted)]" : "text-white"}`}>
+                    <h2 className={`font-semibold text-sm truncate ${isPastWeek ? "text-[var(--text-muted)]" : "text-[var(--text-primary)]"}`}>
                       Semana {week.weekNumber}
                       {week.focus && <span className="text-[var(--text-muted)] font-normal"> · {week.focus}</span>}
                     </h2>
@@ -180,7 +180,7 @@ export default async function PlanPage() {
 
                       {/* Weekly AI analysis */}
                       {(isPastWeek || isCurrentWeek) && (
-                        <div className="mx-3 mb-3 p-4 rounded-xl bg-[#0f0f0f] border border-[var(--border)]">
+                        <div className="mx-3 mb-3 p-4 rounded-xl bg-[var(--bg-subtle)] border border-[var(--border)]">
                           <WeeklyAnalysis
                             weekId={week.id}
                             weekNumber={week.weekNumber}

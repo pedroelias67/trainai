@@ -70,7 +70,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
             <div className="flex items-center gap-3">
               <span className="text-3xl">{sportIcons[session.sport]}</span>
               <div>
-                <h1 className="text-xl font-bold text-white">{session.name}</h1>
+                <h1 className="text-xl font-bold text-[var(--text-primary)]">{session.name}</h1>
                 <p className="text-[var(--text-muted)] text-sm capitalize">
                   {format(new Date(session.date), "EEEE, d 'de' MMMM", { locale: pt })}
                   {" · "}{session.week.plan.event.name}
@@ -96,15 +96,15 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
           {/* Planned metrics */}
           <div className="grid grid-cols-3 gap-3 pt-5 border-t border-[var(--border)]">
             <div className="text-center bg-[var(--bg-subtle)] rounded-xl py-3">
-              <p className="text-2xl font-bold text-white">{session.plannedDistance ?? "—"}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">{session.plannedDistance ?? "—"}</p>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">km planeados</p>
             </div>
             <div className="text-center bg-[var(--bg-subtle)] rounded-xl py-3">
-              <p className="text-2xl font-bold text-white">{session.plannedDuration ?? "—"}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">{session.plannedDuration ?? "—"}</p>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">min planeados</p>
             </div>
             <div className="text-center bg-[var(--bg-subtle)] rounded-xl py-3">
-              <p className="text-2xl font-bold text-white">{session.plannedPace ?? "—"}</p>
+              <p className="text-2xl font-bold text-[var(--text-primary)]">{session.plannedPace ?? "—"}</p>
               <p className="text-xs text-[var(--text-muted)] mt-0.5">pace alvo</p>
             </div>
           </div>
@@ -131,7 +131,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         {/* Zone distribution */}
         {zones && (
           <div className="card">
-            <h2 className="font-semibold text-white mb-4">Distribuição por Zonas</h2>
+            <h2 className="font-semibold text-[var(--text-primary)] mb-4">Distribuição por Zonas</h2>
             <div className="space-y-3">
               {["z1", "z2", "z3", "z4", "z5"].map((z, i) => {
                 const pct = zones[z] ?? 0;
@@ -157,7 +157,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         {/* Workout structure */}
         {session.mainSet && (
         <div className="card space-y-5">
-          <h2 className="font-semibold text-white">Estrutura do Treino</h2>
+          <h2 className="font-semibold text-[var(--text-primary)]">Estrutura do Treino</h2>
 
           {session.warmup && (
             <div className="border-l-2 border-green-500 pl-4">
@@ -200,31 +200,31 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         {session.activity ? (
           <div className="card border-green-500/20 bg-green-500/3">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-white">Atividade Realizada</h2>
+              <h2 className="font-semibold text-[var(--text-primary)]">Atividade Realizada</h2>
               <span className="text-green-400 text-xs font-medium">✓ Concluído</span>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {session.activity.distance && (
                 <div className="text-center bg-[var(--bg-subtle)] rounded-xl py-3">
-                  <p className="text-xl font-bold text-white">{(session.activity.distance / 1000).toFixed(1)}</p>
+                  <p className="text-xl font-bold text-[var(--text-primary)]">{(session.activity.distance / 1000).toFixed(1)}</p>
                   <p className="text-xs text-[var(--text-muted)] mt-0.5">km</p>
                 </div>
               )}
               {session.activity.duration && (
                 <div className="text-center bg-[var(--bg-subtle)] rounded-xl py-3">
-                  <p className="text-xl font-bold text-white">{Math.round(session.activity.duration / 60)}</p>
+                  <p className="text-xl font-bold text-[var(--text-primary)]">{Math.round(session.activity.duration / 60)}</p>
                   <p className="text-xs text-[var(--text-muted)] mt-0.5">min</p>
                 </div>
               )}
               {session.activity.avgHR && (
                 <div className="text-center bg-[var(--bg-subtle)] rounded-xl py-3">
-                  <p className="text-xl font-bold text-white">{session.activity.avgHR}</p>
+                  <p className="text-xl font-bold text-[var(--text-primary)]">{session.activity.avgHR}</p>
                   <p className="text-xs text-[var(--text-muted)] mt-0.5">bpm FC</p>
                 </div>
               )}
               {session.activity.avgPace && (
                 <div className="text-center bg-[var(--bg-subtle)] rounded-xl py-3">
-                  <p className="text-xl font-bold text-white">{session.activity.avgPace}</p>
+                  <p className="text-xl font-bold text-[var(--text-primary)]">{session.activity.avgPace}</p>
                   <p className="text-xs text-[var(--text-muted)] mt-0.5">pace</p>
                 </div>
               )}
@@ -237,7 +237,7 @@ export default async function SessionDetailPage({ params }: { params: Promise<{ 
         ) : (
           <div className="text-center py-8 rounded-2xl border border-dashed border-[var(--border-hover)]">
             <p className="text-[var(--text-faint)] text-sm">Ainda sem atividade registada para este treino</p>
-            <p className="text-zinc-700 text-xs mt-1">Será preenchido automaticamente após sincronização Strava</p>
+            <p className="text-[var(--text-faint)] text-xs mt-1">Será preenchido automaticamente após sincronização Strava</p>
           </div>
         )}
 

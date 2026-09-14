@@ -86,7 +86,7 @@ export default function ChatPage() {
               <Link key={item.href} href={item.href}
                 className={`px-4 py-2 rounded-lg text-sm transition-all ${
                   item.href === "/dashboard/chat"
-                    ? "text-white bg-white/10"
+                    ? "text-[var(--text-primary)] bg-[var(--border-hover)]"
                     : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
                 }`}>
                 {item.label}
@@ -99,7 +99,7 @@ export default function ChatPage() {
 
       <main className="flex-1 max-w-3xl w-full mx-auto px-6 py-6 flex flex-col">
         <div className="mb-4">
-          <h1 className="text-xl font-bold text-white flex items-center gap-2">
+          <h1 className="text-xl font-bold text-[var(--text-primary)] flex items-center gap-2">
             🤖 Chat com o Treinador IA
           </h1>
           <p className="text-[var(--text-muted)] text-sm mt-0.5">Faz perguntas sobre o teu plano, treino ou nutrição</p>
@@ -145,7 +145,7 @@ export default function ChatPage() {
               </div>
               <div className={`rounded-2xl px-4 py-3 text-sm max-w-lg leading-relaxed whitespace-pre-wrap ${
                 msg.role === "user"
-                  ? "bg-green-500/10 border border-green-500/20 text-white rounded-tr-sm"
+                  ? "bg-green-500/10 border border-green-500/20 text-[var(--text-primary)] rounded-tr-sm"
                   : "bg-[var(--bg-card)] border border-[var(--border)] text-[var(--text-secondary)] rounded-tl-sm"
               }`}>
                 {msg.content}
@@ -178,7 +178,7 @@ export default function ChatPage() {
             onChange={(e) => setInput(e.target.value)}
             placeholder="Escreve a tua pergunta..."
             disabled={loading}
-            className="flex-1 bg-[var(--bg-card)] border border-[var(--border-hover)] rounded-xl px-4 py-3 text-sm text-white placeholder-zinc-600
+            className="flex-1 bg-[var(--bg-card)] border border-[var(--border-hover)] rounded-xl px-4 py-3 text-sm text-[var(--text-primary)] placeholder-zinc-600
               focus:outline-none focus:border-green-500/50 focus:ring-1 focus:ring-green-500/20 transition-all
               disabled:opacity-50"
           />

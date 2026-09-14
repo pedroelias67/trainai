@@ -35,11 +35,11 @@ export default function NutritionPlan({ sessionId }: Props) {
   };
 
   return (
-    <div className="rounded-2xl border border-green-500/20 bg-[#0f1a0f] p-5">
+    <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <span className="text-xl">🥗</span>
-          <h2 className="font-semibold text-white">Nutrição e Hidratação</h2>
+          <h2 className="font-semibold text-[var(--text-primary)]">Nutrição e Hidratação</h2>
         </div>
         {!plan && (
           <button

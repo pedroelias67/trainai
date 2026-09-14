@@ -39,7 +39,7 @@ export default function RacePlanPage() {
     <div className="min-h-screen bg-[var(--bg-base)]">
       <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-[var(--bg-base)]/80 px-6 py-3 print:hidden">
         <div className="max-w-3xl mx-auto flex items-center justify-between">
-          <span className="text-white font-bold text-lg">TrainAI</span>
+          <span className="text-[var(--text-primary)] font-bold text-lg">TrainAI</span>
           <Link href="/dashboard" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-sm transition-colors">← Dashboard</Link>
         </div>
       </header>
@@ -47,7 +47,7 @@ export default function RacePlanPage() {
       <main className="max-w-3xl mx-auto px-6 py-8">
         <div className="mb-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Estratégia de Corrida</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Estratégia de Corrida</h1>
             <p className="text-[var(--text-muted)] text-sm mt-1">Plano detalhado para o dia do evento</p>
           </div>
           <div className="flex items-center gap-2 print:hidden">

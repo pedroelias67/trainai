@@ -304,7 +304,7 @@ export default function PWAProvider({ children }: { children: React.ReactNode })
             <span className="text-lg font-black text-black">T</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white font-semibold text-sm">Instalar TrainAI</p>
+            <p className="text-[var(--text-primary)] font-semibold text-sm">Instalar TrainAI</p>
             <p className="text-[var(--text-muted)] text-xs">Acesso rápido, funciona offline</p>
           </div>
           <div className="flex items-center gap-2 shrink-0">

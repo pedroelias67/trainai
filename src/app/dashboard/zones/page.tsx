@@ -44,7 +44,7 @@ export default async function ZonesPage() {
                 href={item.href}
                 className={`px-4 py-2 rounded-lg text-sm transition-all ${
                   item.href === "/dashboard/zones"
-                    ? "text-white bg-white/10"
+                    ? "text-[var(--text-primary)] bg-[var(--border-hover)]"
                     : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
                 }`}
               >
@@ -61,12 +61,12 @@ export default async function ZonesPage() {
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         <div className="flex items-start justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Zonas de Treino</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)]">Zonas de Treino</h1>
             <p className="text-[var(--text-muted)] text-sm mt-1">Zonas personalizadas com base no teu perfil fisiológico</p>
           </div>
           <Link
             href="/dashboard/profile"
-            className="text-xs text-[var(--text-secondary)] hover:text-zinc-200 border border-[var(--border-hover)] px-3 py-1.5 rounded-lg transition-colors"
+            className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border-hover)] px-3 py-1.5 rounded-lg transition-colors"
           >
             Atualizar perfil →
           </Link>
@@ -75,7 +75,7 @@ export default async function ZonesPage() {
         {!athlete.maxHR ? (
           <div className="card text-center py-12">
             <div className="text-4xl mb-4">❤️</div>
-            <h2 className="text-lg font-bold text-white mb-2">FC Máxima não configurada</h2>
+            <h2 className="text-lg font-bold text-[var(--text-primary)] mb-2">FC Máxima não configurada</h2>
             <p className="text-[var(--text-muted)] text-sm mb-6">
               Define a tua frequência cardíaca máxima no perfil para calcular as zonas de treino.
             </p>
@@ -88,7 +88,7 @@ export default async function ZonesPage() {
             {/* HR Zones */}
             <div className="card">
               <div className="flex items-center justify-between mb-1">
-                <h2 className="font-bold text-white">Zonas de FC</h2>
+                <h2 className="font-bold text-[var(--text-primary)]">Zonas de FC</h2>
                 <span className="text-xs text-[var(--text-muted)]">FC Máx: {athlete.maxHR} bpm</span>
               </div>
               <p className="text-xs text-[var(--text-faint)] mb-4">
@@ -102,7 +102,7 @@ export default async function ZonesPage() {
                     <div className={`w-2 h-10 rounded-full shrink-0 ${zone.color}`} />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
-                        <p className="text-sm font-medium text-white">{zone.name}</p>
+                        <p className="text-sm font-medium text-[var(--text-primary)]">{zone.name}</p>
                         <p className="text-sm font-mono text-[var(--text-secondary)] shrink-0 ml-4">
                           {zone.low}–{zone.high} bpm
                         </p>
@@ -118,7 +118,7 @@ export default async function ZonesPage() {
             {paceZones ? (
               <div className="card">
                 <div className="flex items-center justify-between mb-1">
-                  <h2 className="font-bold text-white">Zonas de Pace</h2>
+                  <h2 className="font-bold text-[var(--text-primary)]">Zonas de Pace</h2>
                   <span className="text-xs text-[var(--text-muted)]">Limiar: {athlete.ltPace}</span>
                 </div>
                 <p className="text-xs text-[var(--text-faint)] mb-4">Baseado no pace de limiar anaeróbico</p>
@@ -130,7 +130,7 @@ export default async function ZonesPage() {
                       }`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-white">{zone.name}</p>
+                          <p className="text-sm font-medium text-[var(--text-primary)]">{zone.name}</p>
                           <p className="text-sm font-mono text-[var(--text-secondary)] shrink-0 ml-4">
                             {zone.low}{zone.high !== "—" ? `–${zone.high}` : "+"}
                           </p>
@@ -144,7 +144,7 @@ export default async function ZonesPage() {
             ) : (
               <div className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
                 <p className="text-sm text-[var(--text-secondary)]">
-                  <span className="text-white font-medium">Pace de limiar não configurado.</span>{" "}
+                  <span className="text-[var(--text-primary)] font-medium">Pace de limiar não configurado.</span>{" "}
                   Adiciona o teu pace de limiar anaeróbico no{" "}
                   <Link href="/dashboard/profile" className="text-green-400 hover:text-green-300 underline">
                     perfil
@@ -158,7 +158,7 @@ export default async function ZonesPage() {
             {powerZones ? (
               <div className="card">
                 <div className="flex items-center justify-between mb-1">
-                  <h2 className="font-bold text-white">Zonas de Potência</h2>
+                  <h2 className="font-bold text-[var(--text-primary)]">Zonas de Potência</h2>
                   <span className="text-xs text-[var(--text-muted)]">FTP: {athlete.ftp}W</span>
                 </div>
                 <p className="text-xs text-[var(--text-faint)] mb-4">Baseado no FTP (Functional Threshold Power) — ciclismo e triatlo</p>
@@ -168,7 +168,7 @@ export default async function ZonesPage() {
                       <div className={`w-2 h-10 rounded-full shrink-0 ${zone.color}`} />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-sm font-medium text-white">{zone.name}</p>
+                          <p className="text-sm font-medium text-[var(--text-primary)]">{zone.name}</p>
                           <p className="text-sm font-mono text-[var(--text-secondary)] shrink-0 ml-4">
                             {zone.low}–{zone.high}W
                           </p>
@@ -182,7 +182,7 @@ export default async function ZonesPage() {
             ) : (
               <div className="p-4 rounded-2xl border border-[var(--border)] bg-[var(--bg-card)]">
                 <p className="text-sm text-[var(--text-secondary)]">
-                  <span className="text-white font-medium">FTP não configurado.</span>{" "}
+                  <span className="text-[var(--text-primary)] font-medium">FTP não configurado.</span>{" "}
                   Adiciona o teu FTP (Potência de Limiar Funcional) no{" "}
                   <Link href="/dashboard/profile" className="text-green-400 hover:text-green-300 underline">
                     perfil

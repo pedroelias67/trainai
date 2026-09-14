@@ -45,7 +45,7 @@ export function WeeklyAnalysis({ weekId, weekNumber, savedAnalysis }: Props) {
       {!analysis ? (
         <div className="flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-white">Análise IA da semana {weekNumber}</p>
+            <p className="text-sm font-medium text-[var(--text-primary)]">Análise IA da semana {weekNumber}</p>
             <p className="text-xs text-[var(--text-muted)] mt-0.5">Compara o planeado com o realizado e ajusta a semana seguinte</p>
           </div>
           <button onClick={runAnalysis} disabled={loading}
@@ -65,7 +65,7 @@ export function WeeklyAnalysis({ weekId, weekNumber, savedAnalysis }: Props) {
           <button onClick={() => setOpen(!open)}
             className="flex items-center justify-between w-full text-left">
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-white">Análise IA — Semana {weekNumber}</span>
+              <span className="text-sm font-medium text-[var(--text-primary)]">Análise IA — Semana {weekNumber}</span>
               <span className="text-xs text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">Concluída</span>
             </div>
             <svg className={`w-4 h-4 text-[var(--text-muted)] transition-transform ${open ? "rotate-180" : ""}`} viewBox="0 0 20 20" fill="currentColor">

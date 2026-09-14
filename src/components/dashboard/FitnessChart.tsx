@@ -60,7 +60,7 @@ export function FitnessChart({ data, todayCTL, todayATL, todayTSB }: Props) {
 
       {/* Chart */}
       <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
-        <h3 className="font-bold text-white mb-4">Evolução dos últimos 60 dias</h3>
+        <h3 className="font-bold text-[var(--text-primary)] mb-4">Evolução dos últimos 60 dias</h3>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={data} margin={{ top: 5, right: 10, left: -10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#1f1f1f" />

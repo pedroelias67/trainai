@@ -59,7 +59,7 @@ export function PersonalRecords({ records, hasActivities = false }: Props) {
   return (
     <div className="card mb-6">
       <div className="flex items-center justify-between gap-3 mb-1">
-        <h2 className="font-bold text-white">Records Pessoais</h2>
+        <h2 className="font-bold text-[var(--text-primary)]">Records Pessoais</h2>
         {canRecalculate && (
           <button onClick={calculate} disabled={calculating}
             className={
@@ -86,7 +86,7 @@ export function PersonalRecords({ records, hasActivities = false }: Props) {
               <p className="text-xs text-[var(--text-muted)] uppercase tracking-wide mb-2">{label}</p>
               {pr ? (
                 <>
-                  <p className={`text-xl font-bold ${isRecent ? "text-green-400" : "text-white"}`}>
+                  <p className={`text-xl font-bold ${isRecent ? "text-green-400" : "text-[var(--text-primary)]"}`}>
                     {formatTime(pr.timeSeconds)}
                     {isRecent && <span className="ml-1 text-sm">↗</span>}
                   </p>
@@ -102,7 +102,7 @@ export function PersonalRecords({ records, hasActivities = false }: Props) {
                 </>
               ) : (
                 <>
-                  <p className="text-2xl text-zinc-700 font-bold mt-2">—</p>
+                  <p className="text-2xl text-[var(--text-faint)] font-bold mt-2">—</p>
                   <p className="text-[10px] text-[var(--text-faint)] mt-1">ainda não corrida</p>
                 </>
               )}

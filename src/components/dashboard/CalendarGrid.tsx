@@ -152,7 +152,7 @@ export default function CalendarGrid({ days, sessions, activities, currentMonth 
                 ? "border-green-500 bg-green-500/5"
                 : isCurrentMonth
                 ? "border-[var(--border)] bg-[var(--bg-card)]"
-                : "border-[#181818] bg-[#0d0d0d] opacity-40"
+                : "border-[var(--border)] bg-[var(--bg-subtle)] opacity-40"
             }`}
           >
             <p className={`text-xs font-medium mb-1 ${
@@ -224,7 +224,7 @@ export default function CalendarGrid({ days, sessions, activities, currentMonth 
               })}
 
               {hasActivityWithoutSession && (
-                <div className="text-xs px-1.5 py-1 rounded border bg-zinc-800/30 text-[var(--text-muted)] border-zinc-700/30 truncate">
+                <div className="text-xs px-1.5 py-1 rounded border bg-[var(--bg-subtle)] text-[var(--text-muted)] border-[var(--border)] truncate">
                   {SPORT_ICON[dayActivities[0].sport] ?? "🏃"} {dayActivities[0].name ?? "Atividade"}
                 </div>
               )}

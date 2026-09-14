@@ -28,8 +28,8 @@ function ScaleButton({ value, selected, invert, onClick }: {
       onClick={onClick}
       className={`w-9 h-9 rounded-lg text-sm font-bold transition-all border-2 ${
         selected
-          ? `${colors[value - 1]} border-white text-white scale-110`
-          : "bg-white/5 border-transparent text-[var(--text-muted)] hover:bg-white/10"
+          ? `${colors[value - 1]} border-white text-[var(--text-primary)] scale-110`
+          : "bg-[var(--bg-hover)] border-transparent text-[var(--text-muted)] hover:bg-[var(--border-hover)]"
       }`}
     >
       {value}
@@ -92,7 +92,7 @@ export function WellnessCheckin() {
     <div className="card">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-white text-sm">Como te sentes hoje?</h3>
+          <h3 className="font-semibold text-[var(--text-primary)] text-sm">Como te sentes hoje?</h3>
           {saved && score !== null && (
             <p className={`text-xs mt-0.5 ${scoreColor}`}>
               Estado geral: {score}/5 · {score >= 4 ? "Pronto para treinar" : score >= 3 ? "Razoável" : "Dia de recuperação recomendado"}
@@ -104,7 +104,7 @@ export function WellnessCheckin() {
         </div>
         <button
           onClick={() => setOpen(o => !o)}
-          className="px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white text-xs font-medium rounded-lg transition-colors"
+          className="px-3 py-1.5 bg-[var(--border-hover)] hover:bg-[var(--border-strong)] text-[var(--text-primary)] text-xs font-medium rounded-lg transition-colors"
         >
           {saved ? "Editar" : "Registar"}
         </button>
@@ -156,7 +156,7 @@ export function WellnessCheckin() {
               onChange={e => setNotes(e.target.value)}
               placeholder="Ex: pernas pesadas, dormi mal, stress no trabalho..."
               rows={2}
-              className="w-full bg-white/5 border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-white placeholder-[var(--text-faint)] resize-none focus:outline-none focus:border-[var(--accent)]"
+              className="w-full bg-[var(--bg-hover)] border border-[var(--border)] rounded-lg px-3 py-2 text-sm text-[var(--text-primary)] placeholder-[var(--text-faint)] resize-none focus:outline-none focus:border-[var(--accent)]"
             />
           </div>
 

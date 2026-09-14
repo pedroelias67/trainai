@@ -67,7 +67,7 @@ export function WeeklyLoadChart({ activities }: { activities: Activity[] }) {
             <div key={i} className="flex-1 flex flex-col items-center gap-1 group relative">
               {/* Tooltip */}
               <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-[var(--bg-hover)] border border-[var(--border-hover)] rounded-lg px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-10">
-                <p className="text-xs text-white font-semibold">{week.km} km</p>
+                <p className="text-xs text-[var(--text-primary)] font-semibold">{week.km} km</p>
                 <p className="text-xs text-[var(--text-muted)]">{week.minutes} min</p>
               </div>
               <div className="w-full flex items-end justify-center" style={{ height: "88px" }}>
@@ -144,7 +144,7 @@ export function PaceEvolutionChart({ activities }: { activities: Activity[] }) {
         <span className="text-[10px] text-[var(--text-faint)]">
           {format(new Date(runningWithPace[0].date), "d MMM", { locale: pt })}
         </span>
-        <span className="text-xs text-white font-semibold">
+        <span className="text-xs text-[var(--text-primary)] font-semibold">
           {secondsToPace(paces[paces.length - 1])}/km
         </span>
         <span className="text-[10px] text-[var(--text-faint)]">

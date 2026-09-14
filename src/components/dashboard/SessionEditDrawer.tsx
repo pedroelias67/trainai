@@ -89,7 +89,7 @@ export function SessionEditDrawer({ session, onClose }: Props) {
 
         {/* Handle (mobile) */}
         <div className="flex justify-center pt-3 pb-1 md:hidden">
-          <div className="w-8 h-1 rounded-full bg-[#333]" />
+          <div className="w-8 h-1 rounded-full bg-[var(--border-strong)]" />
         </div>
 
         {/* Header */}
@@ -103,7 +103,7 @@ export function SessionEditDrawer({ session, onClose }: Props) {
                 <span className="text-green-400 text-xs bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded">✓ Concluído</span>
               )}
             </div>
-            <h2 className="text-white font-semibold">{session.name}</h2>
+            <h2 className="text-[var(--text-primary)] font-semibold">{session.name}</h2>
           </div>
           <button onClick={onClose} className="text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-colors ml-4 mt-1">
             <svg viewBox="0 0 24 24" className="w-5 h-5 fill-none stroke-current" strokeWidth={2}>

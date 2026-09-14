@@ -50,7 +50,7 @@ export default function NotificationSettings() {
     <div className="card">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold text-white text-sm">Notificações</h3>
+          <h3 className="font-semibold text-[var(--text-primary)] text-sm">Notificações</h3>
           <p className="text-xs text-[var(--text-muted)] mt-0.5">
             Estado: <span className={statusColor}>{statusLabel}</span>
           </p>

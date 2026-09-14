@@ -65,7 +65,9 @@ export default async function RootLayout({
   const initialTheme = await getInitialTheme();
   
   return (
-    <html lang="pt" {...(initialTheme !== 'system' && { 'data-theme': initialTheme })}>
+    // suppressHydrationWarning: the inline theme script sets data-theme before
+    // React hydrates, so the attribute differs from the server HTML by design.
+    <html lang="pt" suppressHydrationWarning {...(initialTheme !== 'system' && { 'data-theme': initialTheme })}>
       <body className="antialiased">
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
         <ThemeProvider initialTheme={initialTheme}>

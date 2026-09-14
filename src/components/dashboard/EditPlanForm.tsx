@@ -100,7 +100,7 @@ export function EditPlanForm({
           <div className="w-8 h-8 bg-green-500/10 border border-green-500/20 rounded-lg flex items-center justify-center text-sm">🎯</div>
           <div>
             <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest">Evento alvo</p>
-            <p className="text-white font-medium text-sm">{eventName}</p>
+            <p className="text-[var(--text-primary)] font-medium text-sm">{eventName}</p>
           </div>
         </div>
       )}

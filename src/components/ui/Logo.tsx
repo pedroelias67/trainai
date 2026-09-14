@@ -36,7 +36,7 @@ export function LogoFull({ size = 36, className = "", href }: LogoFullProps) {
       <LogoIcon size={size} />
       <span
         style={{ fontSize: size * 0.56, fontWeight: 700, letterSpacing: "-0.03em" }}
-        className="text-white"
+        className="text-[var(--text-primary)]"
       >
         Train<span className="text-green-400">AI</span>
       </span>

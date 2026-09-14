@@ -4,7 +4,7 @@ export default function OfflinePage() {
   return (
     <div className="min-h-screen bg-[var(--bg-base)] flex flex-col items-center justify-center px-6 text-center">
       <div className="text-6xl mb-6">📡</div>
-      <h1 className="text-2xl font-bold text-white mb-2">Sem ligação</h1>
+      <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Sem ligação</h1>
       <p className="text-[var(--text-muted)] text-sm mb-8 max-w-xs">
         Não foi possível ligar ao TrainAI. Verifica a tua ligação à internet e tenta novamente.
       </p>

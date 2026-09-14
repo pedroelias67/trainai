@@ -43,7 +43,7 @@ export function VO2maxCard({
       </div>
 
       <div className="flex items-baseline gap-2 mb-4">
-        <span className="text-4xl font-bold text-white tabular-nums">{estimate.value}</span>
+        <span className="text-4xl font-bold text-[var(--text-primary)] tabular-nums">{estimate.value}</span>
         <span className="text-sm text-[var(--text-muted)]">ml/kg/min</span>
       </div>
 

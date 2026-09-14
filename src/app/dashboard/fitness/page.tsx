@@ -182,7 +182,7 @@ export default async function FitnessPage() {
               <Link key={item.href} href={item.href}
                 className={`px-4 py-2 rounded-lg text-sm transition-all ${
                   item.href === "/dashboard/fitness"
-                    ? "text-white bg-white/10"
+                    ? "text-[var(--text-primary)] bg-[var(--border-hover)]"
                     : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
                 }`}>
                 {item.label}
@@ -195,7 +195,7 @@ export default async function FitnessPage() {
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-white">Dashboard de Fitness</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Dashboard de Fitness</h1>
           <p className="text-[var(--text-muted)] text-sm mt-1">
             Carga de treino, fadiga e forma dos últimos 90 dias
           </p>

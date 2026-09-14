@@ -78,7 +78,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
           <div className="flex items-center gap-3 mb-6">
             <span className="text-4xl">{sportIcons[activity.sport]}</span>
             <div>
-              <h1 className="text-xl font-bold text-white">
+              <h1 className="text-xl font-bold text-[var(--text-primary)]">
                 {activity.name ?? sportLabels[activity.sport]}
               </h1>
               <p className="text-[var(--text-muted)] text-sm capitalize">
@@ -90,7 +90,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
           <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
             {topStats.map((s) => (
               <div key={s.label} className="text-center bg-[var(--bg-subtle)] rounded-xl py-3 px-2">
-                <p className="text-lg font-bold text-white">{s.value}</p>
+                <p className="text-lg font-bold text-[var(--text-primary)]">{s.value}</p>
                 <p className="text-xs text-[var(--text-muted)] mt-0.5">{s.label}</p>
               </div>
             ))}
@@ -112,7 +112,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
         {gpsTrack && gpsTrack.length > 0 ? (
           <div className="overflow-hidden rounded-2xl border border-[var(--border)]">
             <div className="px-5 py-4 border-b border-[var(--border)] bg-[var(--bg-card)]">
-              <h2 className="font-semibold text-white text-sm">Percurso</h2>
+              <h2 className="font-semibold text-[var(--text-primary)] text-sm">Percurso</h2>
             </div>
             <EnrichedMap gpsTrack={gpsTrack} elevationGain={activity.elevationGain} />
           </div>
@@ -126,7 +126,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
           {/* HR zones */}
           {hrZones && (
             <div className="card">
-              <h2 className="font-semibold text-white mb-4">Tempo por Zona de FC</h2>
+              <h2 className="font-semibold text-[var(--text-primary)] mb-4">Tempo por Zona de FC</h2>
               <div className="space-y-3">
                 {["z1", "z2", "z3", "z4", "z5"].map((z, i) => {
                   const seconds = hrZones[z] ?? 0;
@@ -151,12 +151,12 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
 
           {/* Extra stats */}
           <div className="card">
-            <h2 className="font-semibold text-white mb-4">Análise de Carga</h2>
+            <h2 className="font-semibold text-[var(--text-primary)] mb-4">Análise de Carga</h2>
             <div className="space-y-1">
               {extraStats.map((s) => (
                 <div key={s.label} className="flex justify-between items-center py-2.5 border-b border-[var(--border)] last:border-0">
                   <span className="text-sm text-[var(--text-muted)]">{s.label}</span>
-                  <span className="text-sm font-medium text-white">{s.value}</span>
+                  <span className="text-sm font-medium text-[var(--text-primary)]">{s.value}</span>
                 </div>
               ))}
             </div>
@@ -166,7 +166,7 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
         {/* Splits */}
         {splits && splits.length > 0 && (
           <div className="card">
-            <h2 className="font-semibold text-white mb-4">Splits por Km</h2>
+            <h2 className="font-semibold text-[var(--text-primary)] mb-4">Splits por Km</h2>
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -178,8 +178,8 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
                 </thead>
                 <tbody>
                   {splits.map((split) => (
-                    <tr key={split.km} className="border-b border-[#161616] hover:bg-[var(--bg-subtle)] transition-colors">
-                      <td className="py-2.5 font-medium text-white">{split.km}</td>
+                    <tr key={split.km} className="border-b border-[var(--border)] hover:bg-[var(--bg-subtle)] transition-colors">
+                      <td className="py-2.5 font-medium text-[var(--text-primary)]">{split.km}</td>
                       <td className="py-2.5 text-[var(--text-secondary)]">{split.pace}</td>
                       <td className="py-2.5 text-[var(--text-secondary)]">{split.hr ? `${split.hr} bpm` : "—"}</td>
                     </tr>
@@ -193,20 +193,20 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
         {/* Planned vs actual */}
         {activity.sessions.length > 0 && (
           <div className="card border-green-500/20 bg-green-500/3">
-            <h2 className="font-semibold text-white mb-4">Planeado vs Realizado</h2>
+            <h2 className="font-semibold text-[var(--text-primary)] mb-4">Planeado vs Realizado</h2>
             {activity.sessions.map((session) => (
               <div key={session.id} className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-xs text-[var(--text-muted)] mb-2">Planeado</p>
-                  <p className="text-lg font-bold text-white">
+                  <p className="text-lg font-bold text-[var(--text-primary)]">
                     {session.plannedDistance ? `${session.plannedDistance}km` : "—"}
                   </p>
                   <p className="text-xs text-[var(--text-muted)]">{session.plannedPace ?? "—"}</p>
                 </div>
-                <div className="flex items-center justify-center text-zinc-700 text-xl font-light">vs</div>
+                <div className="flex items-center justify-center text-[var(--text-faint)] text-xl font-light">vs</div>
                 <div>
                   <p className="text-xs text-[var(--text-muted)] mb-2">Realizado</p>
-                  <p className="text-lg font-bold text-white">
+                  <p className="text-lg font-bold text-[var(--text-primary)]">
                     {activity.distance ? `${(activity.distance / 1000).toFixed(1)}km` : "—"}
                   </p>
                   <p className="text-xs text-[var(--text-muted)]">{activity.avgPace ?? "—"}</p>

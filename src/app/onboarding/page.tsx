@@ -198,10 +198,10 @@ export default function OnboardingPage() {
                   }`}>
                     {concluido ? "✓" : i + 1}
                   </div>
-                  <span className={`text-xs font-medium ${step === id ? "text-white" : "text-[var(--text-faint)]"}`}>
+                  <span className={`text-xs font-medium ${step === id ? "text-[var(--text-primary)]" : "text-[var(--text-faint)]"}`}>
                     {label}
                   </span>
-                  {i < STEPS.length - 1 && <div className="flex-1 h-px bg-[#222] ml-1" />}
+                  {i < STEPS.length - 1 && <div className="flex-1 h-px bg-[var(--border)] ml-1" />}
                 </div>
               );
             })}
@@ -210,7 +210,7 @@ export default function OnboardingPage() {
 
         {step === "profile" && (
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">O teu perfil de atleta</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">O teu perfil de atleta</h1>
             <p className="text-[var(--text-muted)] text-sm mb-8">Ajuda-nos a criar o plano certo para ti</p>
 
             <form onSubmit={handleProfileSubmit} className="card space-y-6">
@@ -269,7 +269,7 @@ export default function OnboardingPage() {
                         onChange={() => setProfile({ ...profile, fitnessLevel: level.value })}
                         className="sr-only" />
                       <div>
-                        <p className="text-sm font-medium text-white">{level.label}</p>
+                        <p className="text-sm font-medium text-[var(--text-primary)]">{level.label}</p>
                         <p className="text-xs text-[var(--text-muted)]">{level.desc}</p>
                       </div>
                     </label>
@@ -286,7 +286,7 @@ export default function OnboardingPage() {
 
         {step === "event" && (
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1">O teu evento alvo</h1>
+            <h1 className="text-2xl font-bold text-[var(--text-primary)] mb-1">O teu evento alvo</h1>
             <p className="text-[var(--text-muted)] text-sm mb-8">A IA vai criar um plano periodizado até ao evento</p>
 
             <form onSubmit={handleEventSubmit} className="card space-y-6">
@@ -321,7 +321,7 @@ export default function OnboardingPage() {
                         onChange={() => setEvent({ ...event, sport: sport.value, distance: DISTANCES[sport.value]?.[0]?.value ?? "MARATHON" })}
                         className="sr-only" />
                       <span className="text-base">{sport.icon}</span>
-                      <span className="text-sm font-medium text-white">{sport.label}</span>
+                      <span className="text-sm font-medium text-[var(--text-primary)]">{sport.label}</span>
                     </label>
                   ))}
                 </div>
@@ -387,7 +387,7 @@ export default function OnboardingPage() {
         {step === "availability" && (
           <div className="card">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold text-white">Quando podes treinar?</h1>
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Quando podes treinar?</h1>
               <p className="text-[var(--text-muted)] text-sm mt-1">
                 O plano é construído à volta destes dias. Podes mudá-los depois, mas isso obriga a gerar tudo de novo.
               </p>
@@ -473,7 +473,7 @@ export default function OnboardingPage() {
             <div className="w-16 h-16 bg-green-500/10 border border-green-500/20 rounded-2xl flex items-center justify-center text-3xl mx-auto mb-6">
               🎉
             </div>
-            <h2 className="text-2xl font-bold text-white mb-2">Plano criado!</h2>
+            <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-2">Plano criado!</h2>
             <p className="text-[var(--text-muted)] text-sm">O teu plano de treino personalizado está pronto. A redirecionar…</p>
             <div className="mt-6 flex justify-center">
               <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />

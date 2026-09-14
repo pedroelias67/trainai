@@ -75,7 +75,7 @@ export function FeedbackButton() {
             {sent ? (
               <div className="text-center py-4">
                 <div className="text-4xl mb-3">🙏</div>
-                <h3 className="font-bold text-white text-lg mb-2">Obrigado pelo feedback!</h3>
+                <h3 className="font-bold text-[var(--text-primary)] text-lg mb-2">Obrigado pelo feedback!</h3>
                 <p className="text-[var(--text-muted)] text-sm mb-5">Vamos analisar a tua mensagem e melhorar o TrainAI.</p>
                 <button onClick={handleClose} className="w-full py-3 rounded-xl bg-[var(--accent)] text-black font-semibold">
                   Fechar
@@ -84,7 +84,7 @@ export function FeedbackButton() {
             ) : (
               <form onSubmit={handleSubmit}>
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="font-bold text-white text-lg">Enviar feedback</h3>
+                  <h3 className="font-bold text-[var(--text-primary)] text-lg">Enviar feedback</h3>
                   <button type="button" onClick={handleClose} className="text-[var(--text-faint)] hover:text-[var(--text-secondary)] transition-colors">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M18 6 6 18M6 6l12 12"/>

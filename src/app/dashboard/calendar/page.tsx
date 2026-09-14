@@ -103,7 +103,7 @@ export default async function CalendarPage({
               <Link key={item.href} href={item.href}
                 className={`px-4 py-2 rounded-lg text-sm transition-all ${
                   item.href === "/dashboard/calendar"
-                    ? "text-white bg-white/10"
+                    ? "text-[var(--text-primary)] bg-[var(--border-hover)]"
                     : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-hover)]"
                 }`}>
                 {item.label}
@@ -117,7 +117,7 @@ export default async function CalendarPage({
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Month navigation */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-2xl font-bold text-white capitalize">
+          <h1 className="text-2xl font-bold text-[var(--text-primary)] capitalize">
             {format(currentMonth, "MMMM yyyy", { locale: pt })}
           </h1>
           <div className="flex items-center gap-2">

@@ -83,7 +83,7 @@ export function WorkoutTimer({
     return (
       <div className="card text-center py-8 border-green-500/20 bg-green-500/5">
         <div className="text-4xl mb-3">🎉</div>
-        <h3 className="text-lg font-bold text-white mb-1">Treino Concluído!</h3>
+        <h3 className="text-lg font-bold text-[var(--text-primary)] mb-1">Treino Concluído!</h3>
         <p className="text-[var(--text-muted)] text-sm">Tempo total: {fmt(totalElapsed)}</p>
         <p className="text-[var(--text-faint)] text-xs mt-2">Não te esqueças de registar no Strava</p>
       </div>
@@ -92,7 +92,7 @@ export function WorkoutTimer({
 
   return (
     <div className="card">
-      <h2 className="font-semibold text-white mb-4">Temporizador</h2>
+      <h2 className="font-semibold text-[var(--text-primary)] mb-4">Temporizador</h2>
 
       {/* Phase list — segments track duration, and labels are dropped once an
           interval set makes them too narrow to read */}
@@ -110,7 +110,7 @@ export function WorkoutTimer({
               style={{ backgroundColor: p.color }}
             />
             {phases.length <= 4 && (
-              <span className={`text-[10px] truncate ${i === phaseIdx ? "text-white" : "text-[var(--text-faint)]"}`}>
+              <span className={`text-[10px] truncate ${i === phaseIdx ? "text-[var(--text-primary)]" : "text-[var(--text-faint)]"}`}>
                 {p.label}
               </span>
             )}
@@ -139,7 +139,7 @@ export function WorkoutTimer({
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-2xl font-bold text-white font-mono tabular-nums">
+            <span className="text-2xl font-bold text-[var(--text-primary)] font-mono tabular-nums">
               {currentPhase.duration > 0 ? fmt(remaining) : fmt(elapsed)}
             </span>
             <span className="text-[10px] text-[var(--text-faint)] mt-0.5">
@@ -149,7 +149,7 @@ export function WorkoutTimer({
         </div>
 
         <div className="text-center">
-          <p className="font-semibold text-white">{currentPhase.label}</p>
+          <p className="font-semibold text-[var(--text-primary)]">{currentPhase.label}</p>
           <p className="text-xs text-[var(--text-muted)]">Total: {fmt(totalElapsed)}</p>
         </div>
 
@@ -182,7 +182,7 @@ export function WorkoutTimer({
           {active && phaseIdx < phases.length - 1 && (
             <button
               onClick={advancePhase}
-              className="w-14 h-14 rounded-full border border-[var(--border-hover)] bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-muted)] hover:text-white text-lg transition-all active:scale-95"
+              className="w-14 h-14 rounded-full border border-[var(--border-hover)] bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] text-lg transition-all active:scale-95"
               title="Próxima fase"
             >
               ⏭
@@ -191,7 +191,7 @@ export function WorkoutTimer({
           {(active || totalElapsed > 0) && (
             <button
               onClick={() => { haptic("light"); setActive(false); setElapsed(0); setTotalElapsed(0); setPhaseIdx(0); setDone(false); }}
-              className="w-14 h-14 rounded-full border border-[var(--border-hover)] bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-muted)] hover:text-white transition-all active:scale-95"
+              className="w-14 h-14 rounded-full border border-[var(--border-hover)] bg-[var(--bg-hover)] flex items-center justify-center text-[var(--text-muted)] hover:text-[var(--text-primary)] transition-all active:scale-95"
               title="Reiniciar"
             >
               ↺

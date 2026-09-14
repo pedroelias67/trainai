@@ -65,7 +65,7 @@ export function PlanWeekGrid({ sessions }: Props) {
               <Link href={`/dashboard/session/${session.id}`}
                 className={`flex items-start gap-3 p-3 rounded-xl border transition-all ${
                   session.cancelled
-                    ? "border-[#2a2a2a] bg-[#111] opacity-50"
+                    ? "border-[var(--border-hover)] bg-[var(--bg-card)] opacity-50"
                     : session.completed
                     ? "border-green-500/20 bg-green-500/5 opacity-70"
                     : session.isPriority
@@ -82,7 +82,7 @@ export function PlanWeekGrid({ sessions }: Props) {
                     {format(sessionDate, "EEE d MMM", { locale: pt })}
                     {isSessionToday && !session.cancelled && <span className="text-green-400 ml-1">· Hoje</span>}
                   </p>
-                  <p className={`text-sm font-medium truncate ${session.cancelled ? "line-through text-[var(--text-muted)]" : "text-white"}`}>
+                  <p className={`text-sm font-medium truncate ${session.cancelled ? "line-through text-[var(--text-muted)]" : "text-[var(--text-primary)]"}`}>
                     {session.name}
                   </p>
                   <div className="flex items-center gap-2 mt-1 flex-wrap">

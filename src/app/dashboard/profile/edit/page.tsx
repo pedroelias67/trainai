@@ -27,7 +27,7 @@ export default async function EditProfilePage() {
 
       <main className="max-w-2xl mx-auto px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">Editar perfil</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Editar perfil</h1>
           <p className="text-[var(--text-muted)] text-sm mt-1">Os dados de FC e pace melhoram a precisão dos planos gerados por IA</p>
         </div>
 

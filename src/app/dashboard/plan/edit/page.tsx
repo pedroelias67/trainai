@@ -36,7 +36,7 @@ export default async function EditPlanPage() {
 
       <main className="max-w-3xl mx-auto px-6 py-8">
         <div className="mb-8">
-          <h1 className="text-2xl font-bold text-white">Preferências de treino</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Preferências de treino</h1>
           <p className="text-[var(--text-muted)] text-sm mt-1">
             Ajusta as tuas preferências e regenera o plano com IA
           </p>

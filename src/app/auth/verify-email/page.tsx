@@ -13,10 +13,10 @@ export default async function VerifyEmailPage({
         <div className="mb-8"><LogoFull size={36} className="justify-center" /></div>
         <div className="card space-y-4">
           <div className="text-4xl">📧</div>
-          <h1 className="text-xl font-bold text-white">Confirma o teu email</h1>
+          <h1 className="text-xl font-bold text-[var(--text-primary)]">Confirma o teu email</h1>
           <p className="text-[var(--text-secondary)] text-sm">
             Enviámos um link de confirmação para<br />
-            <span className="text-white font-medium">{email ?? "o teu email"}</span>
+            <span className="text-[var(--text-primary)] font-medium">{email ?? "o teu email"}</span>
           </p>
           <p className="text-[var(--text-faint)] text-xs">
             Verifica também a pasta de spam. O link expira em 24 horas.

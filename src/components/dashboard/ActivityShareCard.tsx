@@ -47,7 +47,7 @@ export default function ActivityShareCard({ name, distance, duration, avgPace, a
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="font-semibold text-white text-sm">Partilhar</h2>
+        <h2 className="font-semibold text-[var(--text-primary)] text-sm">Partilhar</h2>
         <button
           onClick={handleShare}
           className="px-3 py-1.5 bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)] border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5"
@@ -71,7 +71,7 @@ export default function ActivityShareCard({ name, distance, duration, avgPace, a
           {/* Distance — big number */}
           {distance && (
             <div className="mb-4">
-              <span className="text-4xl font-black text-white">{distance}</span>
+              <span className="text-4xl font-black text-[var(--text-primary)]">{distance}</span>
               <span className="text-[var(--text-muted)] text-lg ml-1">km</span>
             </div>
           )}
@@ -80,19 +80,19 @@ export default function ActivityShareCard({ name, distance, duration, avgPace, a
           <div className="flex items-center gap-4 mb-4">
             {duration && (
               <div>
-                <p className="text-white font-semibold text-sm">{duration}</p>
+                <p className="text-[var(--text-primary)] font-semibold text-sm">{duration}</p>
                 <p className="text-[var(--text-faint)] text-xs">Duração</p>
               </div>
             )}
             {avgPace && (
               <div>
-                <p className="text-white font-semibold text-sm">{avgPace}</p>
+                <p className="text-[var(--text-primary)] font-semibold text-sm">{avgPace}</p>
                 <p className="text-[var(--text-faint)] text-xs">Pace</p>
               </div>
             )}
             {avgHR && (
               <div>
-                <p className="text-white font-semibold text-sm">{avgHR} bpm</p>
+                <p className="text-[var(--text-primary)] font-semibold text-sm">{avgHR} bpm</p>
                 <p className="text-[var(--text-faint)] text-xs">FC Média</p>
               </div>
             )}

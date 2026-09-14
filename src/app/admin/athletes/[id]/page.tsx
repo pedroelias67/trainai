@@ -112,7 +112,7 @@ export default async function AthleteDetailPage({
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
-      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-black/60 px-6 py-3">
+      <header className="sticky top-0 z-40 border-b border-[var(--border)] backdrop-blur-xl bg-[color-mix(in_srgb,var(--bg-base)_75%,transparent)] px-6 py-3">
         <div className="max-w-5xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-4">
             <LogoFull size={28} href="/dashboard" />
@@ -137,7 +137,7 @@ export default async function AthleteDetailPage({
               {athlete.user.name?.[0]?.toUpperCase() ?? athlete.user.email[0].toUpperCase()}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl font-bold text-white">
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">
                 {athlete.user.name ?? "Sem nome"}
               </h1>
               <p className="text-[var(--text-muted)] text-sm mt-0.5">{athlete.user.email}</p>
@@ -192,7 +192,7 @@ export default async function AthleteDetailPage({
               className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5"
             >
               <p className="text-[var(--text-muted)] text-xs">{s.label}</p>
-              <p className="text-white text-lg font-bold mt-1 truncate">{s.value}</p>
+              <p className="text-[var(--text-primary)] text-lg font-bold mt-1 truncate">{s.value}</p>
             </div>
           ))}
         </div>
@@ -200,7 +200,7 @@ export default async function AthleteDetailPage({
         {/* Active plan */}
         {activePlan && (
           <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
-            <h2 className="text-sm font-semibold text-white mb-4">Plano Ativo</h2>
+            <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Plano Ativo</h2>
             <div className="flex items-center justify-between mb-2">
               <p className="text-[var(--text-secondary)] text-sm">{activePlan.name}</p>
               <span className="text-[var(--text-muted)] text-xs">
@@ -266,7 +266,7 @@ export default async function AthleteDetailPage({
 
         {/* Recent activities */}
         <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-white mb-4">Atividades Recentes</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Atividades Recentes</h2>
           {athlete.activities.length === 0 ? (
             <p className="text-[var(--text-muted)] text-sm">Sem atividades registadas.</p>
           ) : (
@@ -299,7 +299,7 @@ export default async function AthleteDetailPage({
 
         {/* All training plans */}
         <div className="bg-[var(--bg-card)] border border-[var(--border)] rounded-2xl p-5">
-          <h2 className="text-sm font-semibold text-white mb-4">Todos os Planos</h2>
+          <h2 className="text-sm font-semibold text-[var(--text-primary)] mb-4">Todos os Planos</h2>
           {athlete.trainingPlans.length === 0 ? (
             <p className="text-[var(--text-muted)] text-sm">Sem planos de treino.</p>
           ) : (
@@ -311,7 +311,7 @@ export default async function AthleteDetailPage({
                 >
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <p className="text-zinc-200 text-sm font-medium">{p.name}</p>
+                      <p className="text-[var(--text-primary)] text-sm font-medium">{p.name}</p>
                       <span
                         className={`text-xs px-2 py-0.5 rounded-full border ${
                           statusColors[p.status] ?? statusColors.ARCHIVED

@@ -86,7 +86,7 @@ export function EditProfileForm({ initial }: Props) {
 
       {/* Personal */}
       <div className="card space-y-4">
-        <h3 className="text-sm font-semibold text-white">Dados pessoais</h3>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">Dados pessoais</h3>
         <div>
           <label className="label">Nome</label>
           <input type="text" className="input" value={form.name}
@@ -111,7 +111,7 @@ export function EditProfileForm({ initial }: Props) {
 
       {/* Athletic */}
       <div className="card space-y-4">
-        <h3 className="text-sm font-semibold text-white">Dados de atleta</h3>
+        <h3 className="text-sm font-semibold text-[var(--text-primary)]">Dados de atleta</h3>
 
         <div>
           <label className="label">Nível de condição física</label>

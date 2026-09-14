@@ -186,7 +186,7 @@ export default async function DashboardPage() {
                 Admin
               </Link>
             )}
-            Olá, <span className="text-white font-medium">{athlete.user.name?.split(" ")[0]}</span>
+            Olá, <span className="text-[var(--text-primary)] font-medium">{athlete.user.name?.split(" ")[0]}</span>
           </div>
         </div>
       </header>
@@ -221,7 +221,7 @@ export default async function DashboardPage() {
         {!activePlan ? (
           <div className="card text-center py-20">
             <div className="text-5xl mb-4">🏃</div>
-            <h2 className="text-xl font-bold text-white mb-2">Sem plano ativo</h2>
+            <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">Sem plano ativo</h2>
             <p className="text-[var(--text-muted)] text-sm mb-6">Cria um evento e gera o teu plano de treino personalizado</p>
             <Link href="/onboarding" className="btn-primary inline-block">Criar primeiro plano</Link>
           </div>
@@ -234,7 +234,7 @@ export default async function DashboardPage() {
               <div className="card">
                 <div className="flex items-center justify-between mb-5">
                   <div>
-                    <h2 className="font-bold text-white text-lg">Hoje</h2>
+                    <h2 className="font-bold text-[var(--text-primary)] text-lg">Hoje</h2>
                     <p className="text-[var(--text-muted)] text-xs mt-0.5 capitalize">
                       {format(new Date(), "EEEE, d 'de' MMMM", { locale: pt })}
                     </p>
@@ -260,7 +260,7 @@ export default async function DashboardPage() {
                           {sportIcon[session.sport] ?? "🏃"}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="font-medium text-white text-sm">{session.name}</p>
+                          <p className="font-medium text-[var(--text-primary)] text-sm">{session.name}</p>
                           <p className="text-xs text-[var(--text-muted)] mt-0.5">
                             {sportLabels[session.sport]} · {sessionTypeLabel(session.sessionType)}
                             {session.plannedDistance ? ` · ${session.plannedDistance}km` : ""}
@@ -290,7 +290,7 @@ export default async function DashboardPage() {
                         className="group flex items-center gap-3 p-3 rounded-xl bg-[var(--bg-subtle)] border border-transparent hover:border-[var(--border-hover)] hover:bg-[var(--bg-hover)] transition-all">
                         <span className="text-lg shrink-0">{sportIcon[session.sport] ?? "🏃"}</span>
                         <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-white">{session.name}</p>
+                          <p className="text-sm font-medium text-[var(--text-primary)]">{session.name}</p>
                           <p className="text-xs text-[var(--text-muted)]">
                             {sessionTypeLabel(session.sessionType)}
                             {session.plannedDistance ? ` · ${session.plannedDistance}km` : ""}
@@ -329,18 +329,18 @@ export default async function DashboardPage() {
               <div className="relative overflow-hidden rounded-2xl border border-[var(--border)] p-5">
                 <div className="absolute inset-0 bg-gradient-to-br from-green-500/8 to-transparent pointer-events-none" />
                 <p className="text-green-400 text-xs font-medium uppercase tracking-widest mb-3">Evento Alvo</p>
-                <h3 className="font-bold text-white text-lg leading-tight mb-1">{activePlan.event.name}</h3>
+                <h3 className="font-bold text-[var(--text-primary)] text-lg leading-tight mb-1">{activePlan.event.name}</h3>
                 <p className="text-[var(--text-muted)] text-sm capitalize">
                   {format(new Date(activePlan.event.date), "d 'de' MMMM yyyy", { locale: pt })}
                 </p>
                 {daysToEvent !== null && (
                   <div className="mt-4 pt-4 border-t border-[var(--border)] flex items-end gap-4">
                     <div>
-                      <p className="text-3xl font-bold text-white">{daysToEvent}</p>
+                      <p className="text-3xl font-bold text-[var(--text-primary)]">{daysToEvent}</p>
                       <p className="text-[var(--text-muted)] text-xs">dias restantes</p>
                     </div>
                     <div className="text-right">
-                      <p className="text-xl font-bold text-white">{activePlan.currentWeek}<span className="text-[var(--text-faint)] text-sm">/{activePlan.totalWeeks}</span></p>
+                      <p className="text-xl font-bold text-[var(--text-primary)]">{activePlan.currentWeek}<span className="text-[var(--text-faint)] text-sm">/{activePlan.totalWeeks}</span></p>
                       <p className="text-[var(--text-muted)] text-xs">semana</p>
                     </div>
                   </div>
@@ -356,11 +356,11 @@ export default async function DashboardPage() {
                   )}
                   <div className="grid grid-cols-2 gap-3 mb-4">
                     <div className="bg-[var(--bg-subtle)] rounded-xl p-3 text-center">
-                      <p className="text-xl font-bold text-white">{plannedDistanceThisWeek ?? "—"}</p>
+                      <p className="text-xl font-bold text-[var(--text-primary)]">{plannedDistanceThisWeek ?? "—"}</p>
                       <p className="text-[var(--text-muted)] text-xs mt-0.5">km planeados</p>
                     </div>
                     <div className="bg-[var(--bg-subtle)] rounded-xl p-3 text-center">
-                      <p className="text-xl font-bold text-white">{completedThisWeek}<span className="text-[var(--text-faint)] text-sm">/{totalThisWeek}</span></p>
+                      <p className="text-xl font-bold text-[var(--text-primary)]">{completedThisWeek}<span className="text-[var(--text-faint)] text-sm">/{totalThisWeek}</span></p>
                       <p className="text-[var(--text-muted)] text-xs mt-0.5">treinos</p>
                     </div>
                   </div>

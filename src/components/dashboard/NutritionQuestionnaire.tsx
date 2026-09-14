@@ -218,7 +218,7 @@ export default function NutritionQuestionnaire({ hasSport, initial }: Props) {
         <button
           onClick={isLast ? finish : () => setStep((s) => s + 1)}
           disabled={!canAdvance() || saving}
-          className="flex-1 py-2.5 rounded-xl bg-[var(--accent)] text-white font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-40"
+          className="flex-1 py-2.5 rounded-xl bg-[var(--accent)] text-[var(--accent-fg)] font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-40"
         >
           {saving ? "A guardar…" : isLast ? "Gerar plano nutricional →" : "Continuar →"}
         </button>

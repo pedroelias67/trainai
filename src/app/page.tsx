@@ -3,14 +3,14 @@ import { LogoFull } from "@/components/ui/Logo";
 
 export default function HomePage() {
   return (
-    <div className="min-h-screen bg-[var(--bg-base)] text-white overflow-hidden">
+    <div className="min-h-screen bg-[var(--bg-base)] text-[var(--text-primary)] overflow-hidden">
 
       {/* Nav */}
-      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 border-b border-white/5 backdrop-blur-xl bg-black/40">
+      <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 py-4 border-b border-[var(--border)] backdrop-blur-xl bg-[color-mix(in_srgb,var(--bg-base)_75%,transparent)]">
         <LogoFull size={32} />
         <div className="hidden md:flex items-center gap-6 text-sm text-[var(--text-secondary)]">
-          <a href="#funcionalidades" className="hover:text-white transition-colors">Funcionalidades</a>
-          <a href="#como-funciona" className="hover:text-white transition-colors">Como funciona</a>
+          <a href="#funcionalidades" className="hover:text-[var(--text-primary)] transition-colors">Funcionalidades</a>
+          <a href="#como-funciona" className="hover:text-[var(--text-primary)] transition-colors">Como funciona</a>
         </div>
         <div className="flex items-center gap-3">
           <Link href="/auth/login" className="btn-ghost text-sm">Entrar</Link>
@@ -48,14 +48,14 @@ export default function HomePage() {
         </div>
 
         {/* Stats */}
-        <div className="flex items-center justify-center gap-8 mt-16 pt-16 border-t border-white/5">
+        <div className="flex items-center justify-center gap-8 mt-16 pt-16 border-t border-[var(--border)]">
           {[
             { value: "80/20", label: "Distribuição de intensidade" },
             { value: "Jack Daniels", label: "Metodologia de referência" },
             { value: "Strava", label: "Sincronização automática" },
           ].map((s) => (
             <div key={s.label} className="text-center">
-              <p className="text-white font-semibold text-lg">{s.value}</p>
+              <p className="text-[var(--text-primary)] font-semibold text-lg">{s.value}</p>
               <p className="text-[var(--text-muted)] text-xs mt-0.5">{s.label}</p>
             </div>
           ))}

@@ -84,6 +84,21 @@
     --accent-glow: rgba(22, 163, 74, 0.15);
   }
 
+  /* The accent text colours across the app are Tailwind's 400 shades, picked for
+     a dark ground. On the light theme's near-white they measure 1.5–2.8:1 —
+     green-400 is 1.7:1 — so status labels and links all but disappear. These
+     swap each for the darkest shade of the same hue that still reads as that
+     hue, all at or above 4.5:1 on the light card and base colours. */
+  [data-theme="light"] :is(.text-green-400, .text-green-500, .text-emerald-400) { color: #15803d; }
+  [data-theme="light"] :is(.hover\:text-green-300, .hover\:text-green-400):hover { color: #166534; }
+  [data-theme="light"] :is(.text-red-400, .text-red-500) { color: #b91c1c; }
+  [data-theme="light"] :is(.hover\:text-red-300, .hover\:text-red-400):hover { color: #991b1b; }
+  [data-theme="light"] :is(.text-yellow-300, .text-yellow-400) { color: #854d0e; }
+  [data-theme="light"] .text-amber-400 { color: #b45309; }
+  [data-theme="light"] .text-blue-400 { color: #1d4ed8; }
+  [data-theme="light"] :is(.text-orange-300, .text-orange-400, .text-orange-500) { color: #c2410c; }
+  [data-theme="light"] .text-purple-400 { color: #7e22ce; }
+
   * { box-sizing: border-box; }
 
   body {

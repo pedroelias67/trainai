@@ -120,7 +120,7 @@ export default function ActivitiesList({ activities }: { activities: Activity[] 
               )}
               <Link
                 href={`/dashboard/activity/${activity.id}`}
-                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[var(--accent)] text-white text-sm font-medium hover:opacity-90 transition-opacity"
+                className="flex items-center justify-center gap-2 w-full py-2.5 rounded-xl bg-[var(--accent)] text-[var(--accent-fg)] text-sm font-medium hover:opacity-90 transition-opacity"
               >
                 Ver análise completa, mapa e splits →
               </Link>

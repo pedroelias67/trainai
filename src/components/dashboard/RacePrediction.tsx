@@ -91,7 +91,7 @@ export function RacePrediction({ records, recentBestPaceSec, recentBestDistM, ta
 
       <div className="bg-[var(--accent)]/10 border border-[var(--accent)]/20 rounded-xl p-4 text-center">
         <p className="text-xs text-[var(--accent)] font-medium mb-1">{target.label}</p>
-        <p className="text-3xl font-bold text-white">{formatTime(predictedSecs)}</p>
+        <p className="text-3xl font-bold text-[var(--text-primary)]">{formatTime(predictedSecs)}</p>
         <p className="text-xs text-[var(--text-muted)] mt-1">Pace médio {paceStr}</p>
       </div>
 
@@ -101,7 +101,7 @@ export function RacePrediction({ records, recentBestPaceSec, recentBestDistM, ta
           return (
             <div
               key={p.label}
-              className={`rounded-xl p-3 text-center ${isTarget ? "bg-[var(--accent)]/15 border border-[var(--accent)]/30" : "bg-white/5"}`}
+              className={`rounded-xl p-3 text-center ${isTarget ? "bg-[var(--accent)]/15 border border-[var(--accent)]/30" : "bg-[var(--bg-hover)]"}`}
             >
               <p className="text-[10px] text-[var(--text-faint)]">{p.label}</p>
               <p className={`text-sm font-bold mt-0.5 ${isTarget ? "text-[var(--accent)]" : "text-[var(--text-primary)]"}`}>

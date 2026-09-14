@@ -91,7 +91,7 @@ export default function ResetPasswordPage() {
       <div className="w-full max-w-sm">
         <div className="text-center mb-10">
           <div className="flex justify-center mb-6"><LogoFull size={36} /></div>
-          <h1 className="text-2xl font-bold text-white">Nova password</h1>
+          <h1 className="text-2xl font-bold text-[var(--text-primary)]">Nova password</h1>
           <p className="text-[var(--text-muted)] text-sm mt-1">Define uma nova password para a tua conta</p>
         </div>
         <Suspense fallback={<div className="card text-center text-[var(--text-muted)] text-sm py-8">A carregar…</div>}>
