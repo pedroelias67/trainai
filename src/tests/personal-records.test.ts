@@ -2,9 +2,11 @@ import { describe, it, expect } from "vitest";
 import {
   matchesDistance,
   formatPace,
-  paceToSeconds,
-  bestEffortFromSplits,
+  bestEffortSeconds,
+  bestTimeForDistance,
+  type RunForRecords,
 } from "@/lib/personal-records";
+import { clockParts, formatClock, formatPacePerKm } from "@/lib/format";
 
 describe("matchesDistance", () => {
   it("accepts an activity that really covers the distance", () => {
@@ -40,44 +42,94 @@ describe("formatPace", () => {
   });
 });
 
-describe("paceToSeconds", () => {
-  it("parses the stored pace format", () => {
-    expect(paceToSeconds("5:25/km")).toBe(325);
-    expect(paceToSeconds("6:00/km")).toBe(360);
+describe("bestEffortSeconds", () => {
+  const efforts = [
+    { name: "5K", elapsed_time: 1631, moving_time: 1620 },
+    { name: "Half-Marathon", elapsed_time: 7475 },
+  ];
+
+  it("reads the elapsed time of the named effort", () => {
+    expect(bestEffortSeconds(efforts, "5K")).toBe(1631);
+    expect(bestEffortSeconds(efforts, "Half-Marathon")).toBe(7475);
   });
 
-  it("rejects what it cannot parse", () => {
-    expect(paceToSeconds("N/A")).toBeNull();
-    expect(paceToSeconds(null)).toBeNull();
+  it("has nothing for an effort the run did not include, or no efforts at all", () => {
+    expect(bestEffortSeconds(efforts, "Marathon")).toBeNull();
+    expect(bestEffortSeconds(null, "5K")).toBeNull();
+    expect(bestEffortSeconds({ name: "5K" }, "5K")).toBeNull();
   });
 });
 
-describe("bestEffortFromSplits", () => {
-  const splits = (paces: string[]) => paces.map((pace, i) => ({ km: i + 1, pace }));
+describe("bestTimeForDistance", () => {
+  const FIVE_K = { meters: 5000, stravaEffort: "5K" };
+  const HALF = { meters: 21097, stravaEffort: "Half-Marathon" };
 
-  it("finds the fastest continuous stretch inside a longer run", () => {
-    // km 3-7 are the quick ones: 300+300+300+310+310 = 1520s
-    const out = bestEffortFromSplits(
-      splits(["360", "360", "300", "300", "300", "310", "310", "360"].map(s => `${Math.floor(+s / 60)}:${String(+s % 60).padStart(2, "0")}/km`)),
-      8000,
-      5
-    );
-    expect(out).toBe(1520);
+  const run = (over: Partial<RunForRecords>): RunForRecords => ({
+    id: "r", date: new Date("2026-09-13"), distance: 10000, duration: 3000,
+    elapsedTime: null, bestEfforts: null, ...over,
   });
 
-  it("ignores the trailing partial kilometre", () => {
-    // 7.7km run: the 8th split covers 700m but its pace reads per-km, so using
-    // it as a full kilometre would invent 300m of running.
-    const paces = ["5:00/km", "5:00/km", "5:00/km", "5:00/km", "5:00/km", "5:00/km", "5:00/km", "3:00/km"];
-    expect(bestEffortFromSplits(splits(paces), 7700, 5)).toBe(1500);
+  it("ignores a stretch that was only fast because the stops were left out", () => {
+    // The athlete's run of 18 August: 7.72 km, 43:04 moving but 53:07 elapsed.
+    // Summing moving-time splits made a 27:07 5K of it; Strava, counting the
+    // stops, measured the best 5K inside it at 37:01.
+    const aug18 = run({
+      id: "aug18", distance: 7720, duration: 2584, elapsedTime: 3187,
+      bestEfforts: [{ name: "5K", elapsed_time: 2221 }],
+    });
+    const aug20 = run({
+      id: "aug20", distance: 10090, duration: 3437, elapsedTime: 3440,
+      bestEfforts: [{ name: "5K", elapsed_time: 1631 }, { name: "10K", elapsed_time: 3405 }],
+    });
+    expect(bestTimeForDistance([aug18, aug20], FIVE_K)).toMatchObject({ activityId: "aug20", timeSeconds: 1631 });
   });
 
-  it("returns null when the run is shorter than the target", () => {
-    expect(bestEffortFromSplits(splits(["5:00/km", "5:00/km"]), 2000, 5)).toBeNull();
+  it("credits the half marathon run on 13 September", () => {
+    const race = run({
+      id: "porto", distance: 21410.8, duration: 7588, elapsedTime: 7596,
+      bestEfforts: [{ name: "5K", elapsed_time: 1714 }, { name: "Half-Marathon", elapsed_time: 7475 }],
+    });
+    expect(bestTimeForDistance([race], HALF)).toMatchObject({ activityId: "porto", timeSeconds: 7475 });
   });
 
-  it("returns null when a split cannot be read", () => {
-    const paces = ["5:00/km", "N/A", "5:00/km", "5:00/km", "5:00/km", "5:00/km"];
-    expect(bestEffortFromSplits(splits(paces), 6000, 5)).toBeNull();
+  it("falls back to the whole run, by elapsed time, when there are no best efforts", () => {
+    const manual = run({ distance: 21150, duration: 7400, elapsedTime: 7460 });
+    expect(bestTimeForDistance([manual], HALF)?.timeSeconds).toBe(7460);
+  });
+
+  it("falls back to the whole run when the GPS measured the race just short", () => {
+    // Strava only records an effort the track is long enough for.
+    const short = run({
+      distance: 21050, duration: 7500, elapsedTime: 7510,
+      bestEfforts: [{ name: "5K", elapsed_time: 1700 }],
+    });
+    expect(bestTimeForDistance([short], HALF)?.timeSeconds).toBe(7510);
+  });
+
+  it("never credits a distance the athlete did not run", () => {
+    const tenK = run({ distance: 10000, bestEfforts: [{ name: "5K", elapsed_time: 1500 }] });
+    expect(bestTimeForDistance([tenK], HALF)).toBeNull();
+  });
+
+  it("skips GPS glitches", () => {
+    const glitch = run({ distance: 21100, duration: 600, bestEfforts: [{ name: "Half-Marathon", elapsed_time: 600 }] });
+    expect(bestTimeForDistance([glitch], HALF)).toBeNull();
+  });
+});
+
+describe("time and pace formatting", () => {
+  it("never shows 60 seconds", () => {
+    // The half marathon's km 21 split read "5:60/km", and its record
+    // would have too: 7588 s over 21.097 km is 359.7 s/km.
+    expect(formatPacePerKm(359.7)).toBe("6:00/km");
+    expect(formatPace(359.7)).toBe("6:00/km");
+    expect(formatClock(3599.6)).toBe("1:00:00");
+    expect(clockParts(119.5)).toEqual({ h: 0, m: 2, s: 0 });
+  });
+
+  it("formats the ordinary cases", () => {
+    expect(formatPacePerKm(302)).toBe("5:02/km");
+    expect(formatClock(1631)).toBe("27:11");
+    expect(formatClock(7475)).toBe("2:04:35");
   });
 });

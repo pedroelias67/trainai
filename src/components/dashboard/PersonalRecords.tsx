@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { subDays } from "date-fns";
+import { formatClock as formatTime } from "@/lib/format";
 
 interface PR {
   id: string;
@@ -27,13 +28,6 @@ const DISTANCES = [
   { meters: 42195, label: "Maratona" },
 ];
 
-function formatTime(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.round(seconds % 60);
-  if (h > 0) return `${h}:${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
 
 export function PersonalRecords({ records, hasActivities = false }: Props) {
   const thirtyDaysAgo = subDays(new Date(), 30);

@@ -4,6 +4,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { refreshStravaToken } from "@/lib/strava";
 import { syncStravaActivity } from "@/lib/sync-activity";
+import { recalculatePersonalRecords } from "@/lib/personal-records";
+import * as Sentry from "@sentry/nextjs";
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
@@ -48,6 +50,16 @@ export async function POST(req: NextRequest) {
     }
 
     await syncStravaActivity(stravaActivityId, athlete.id, accessToken);
+
+    // This is how nearly every activity arrives, and records were only ever
+    // recalculated by the manual sync — so a half marathon synced on its own
+    // never reached the records page.
+    try {
+      await recalculatePersonalRecords(athlete.id);
+    } catch (err) {
+      // The activity is already saved; a records failure must not undo that.
+      Sentry.captureException(err, { tags: { stage: "webhook-records" } });
+    }
 
     return NextResponse.json({ ok: true });
   } catch (err) {

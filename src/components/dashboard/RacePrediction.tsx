@@ -1,11 +1,10 @@
 "use client";
 
 import { riegel, pickReferenceRecord, formatRaceDistance } from "@/lib/race-prediction";
+import { clockParts, formatPacePerKm } from "@/lib/format";
 
 function formatTime(secs: number): string {
-  const h = Math.floor(secs / 3600);
-  const m = Math.floor((secs % 3600) / 60);
-  const s = Math.round(secs % 60);
+  const { h, m, s } = clockParts(secs);
   if (h > 0) return `${h}h${String(m).padStart(2, "0")}m${String(s).padStart(2, "0")}s`;
   return `${m}m${String(s).padStart(2, "0")}s`;
 }
@@ -75,7 +74,7 @@ export function RacePrediction({ records, recentBestPaceSec, recentBestDistM, ta
 
   const predictedSecs = riegel(bestTimeSecs, bestDistM, target.meters);
   const paceSecs = predictedSecs / (target.meters / 1000);
-  const paceStr = `${Math.floor(paceSecs / 60)}:${String(Math.round(paceSecs % 60)).padStart(2, "0")}/km`;
+  const paceStr = formatPacePerKm(paceSecs);
 
   const allPredictions = REFERENCE_DISTANCES.map(d => ({
     ...d,

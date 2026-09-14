@@ -1,3 +1,5 @@
+import { formatPacePerKm } from "./format";
+
 // Heart rate zones (Karvonen method when restingHR available)
 export function calculateHRZones(maxHR: number, restingHR?: number) {
   const reserve = restingHR ? maxHR - restingHR : null;
@@ -35,7 +37,7 @@ export function calculatePaceZones(ltPace: string) {
   const sec = parseInt(parts[1] ?? "0", 10);
   const ltSec = min * 60 + sec; // seconds per km
 
-  const formatPace = (s: number) => `${Math.floor(s / 60)}:${String(Math.round(s % 60)).padStart(2, "0")}`;
+  const formatPace = (s: number) => formatPacePerKm(s).replace("/km", "");
 
   return [
     { name: "Z1 — Recuperação", low: formatPace(ltSec * 1.30), high: "—", description: "Acima de 130% do pace de limiar" },

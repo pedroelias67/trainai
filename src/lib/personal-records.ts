@@ -1,18 +1,25 @@
 // Derives personal records from activity history.
 //
-// A record is something the athlete actually ran. Only activities that genuinely
-// cover the distance count, using their real time — no extrapolation. Predicted
-// times for distances not yet raced belong to the race predictor on the
-// dashboard, and calling those "records" would misrepresent them.
+// A record is something the athlete actually ran. Nothing is extrapolated:
+// predicted times for distances not yet raced belong to the race predictor on
+// the dashboard, and calling those "records" would misrepresent them.
+//
+// The source is Strava's best efforts. For every run Strava measures the fastest
+// stretch of each standard distance along the GPS track, by elapsed time — the
+// same figures its own records list and a Garmin show. Summing whole-kilometre
+// splits, which this used to do, cannot see a stop: splits are paced on moving
+// time, so a run with ten minutes standing at traffic lights produced a 5K
+// "record" ten minutes faster than anything the athlete ran.
 
 import { prisma } from "@/lib/prisma";
 import { Sport } from "@prisma/client";
+import { formatPacePerKm } from "@/lib/format";
 
 const STANDARD_DISTANCES = [
-  { name: "5 km", meters: 5000 },
-  { name: "10 km", meters: 10000 },
-  { name: "Meia Maratona", meters: 21097 },
-  { name: "Maratona", meters: 42195 },
+  { name: "5 km", meters: 5000, stravaEffort: "5K" },
+  { name: "10 km", meters: 10000, stravaEffort: "10K" },
+  { name: "Meia Maratona", meters: 21097, stravaEffort: "Half-Marathon" },
+  { name: "Maratona", meters: 42195, stravaEffort: "Marathon" },
 ];
 
 const TRIATHLON_DISTANCES: Record<string, { name: string; totalMeters: number }> = {
@@ -26,57 +33,66 @@ const TRIATHLON_SPORTS: Sport[] = [
   Sport.TRIATHLON_SPRINT, Sport.TRIATHLON_OLYMPIC, Sport.TRIATHLON_HALF, Sport.TRIATHLON_FULL,
 ];
 
-export function formatPace(secondsPerKm: number): string {
-  const mins = Math.floor(secondsPerKm / 60);
-  const secs = Math.round(secondsPerKm % 60);
-  return `${mins}:${String(secs).padStart(2, "0")}/km`;
-}
+export const formatPace = formatPacePerKm;
 
 /**
- * Whether an activity really covers a standard distance. GPS undershoots a
- * little, and races are run a few percent long by taking wide lines, so a
- * narrow band around the target is allowed. The recorded time is then used as
- * it stands — never scaled — so a record can only ever be honest or slightly
- * pessimistic, never flattering.
+ * Whether an activity as a whole covers a standard distance — the fallback for
+ * runs without best efforts. GPS undershoots a little, and races are run a few
+ * percent long by taking wide lines, so a narrow band around the target is
+ * allowed. The time is used as it stands, never scaled.
  */
 export function matchesDistance(actualMetres: number, targetMetres: number): boolean {
   return actualMetres >= targetMetres * 0.99 && actualMetres <= targetMetres * 1.05;
 }
 
-export type Split = { km: number; pace: string | null };
+/** What records are computed from, per run. */
+export type RunForRecords = {
+  id: string;
+  date: Date;
+  distance: number;
+  /** Moving time, as stored on the activity. */
+  duration: number;
+  /** Strava's elapsed time: stops included, which is what a record must be. */
+  elapsedTime: number | null;
+  /** Strava's best_efforts, untouched. Null when the run has none. */
+  bestEfforts: unknown;
+};
 
-/** "5:25/km" → 325 seconds. */
-export function paceToSeconds(pace: string | null): number | null {
-  if (!pace) return null;
-  const m = pace.match(/^(\d{1,2}):(\d{2})/);
-  if (!m) return null;
-  const secs = parseInt(m[1], 10) * 60 + parseInt(m[2], 10);
-  return secs > 0 ? secs : null;
+/** Elapsed seconds of a named Strava best effort, or null if the run has none. */
+export function bestEffortSeconds(bestEfforts: unknown, name: string): number | null {
+  if (!Array.isArray(bestEfforts)) return null;
+  const effort = bestEfforts.find(e => e?.name === name);
+  const secs = Number(effort?.elapsed_time);
+  return Number.isFinite(secs) && secs > 0 ? secs : null;
 }
 
 /**
- * Fastest continuous stretch of `targetKm` inside a longer run, the way a watch
- * reports a best effort. Only whole kilometre splits are used: the last split of
- * an activity is usually a partial kilometre, and its per-km pace would count as
- * a full one. Returns null when the run is simply not long enough.
+ * The fastest time for one standard distance across a set of runs.
+ *
+ * A run counts through its Strava best effort for that distance. Failing that —
+ * no GPS, typed in by hand, or a track measured just short — it counts only when
+ * the whole run is that distance, by its elapsed time where known.
  */
-export function bestEffortFromSplits(
-  splits: Split[],
-  activityMetres: number,
-  targetKm: number
-): number | null {
-  const wholeKm = Math.floor(activityMetres / 1000);
-  const usable = splits
-    .slice(0, wholeKm)
-    .map(s => paceToSeconds(s.pace));
+export function bestTimeForDistance(
+  runs: RunForRecords[],
+  distance: { meters: number; stravaEffort: string }
+): { timeSeconds: number; activityId: string; date: Date } | null {
+  let best: { timeSeconds: number; activityId: string; date: Date } | null = null;
 
-  if (usable.length < targetKm || usable.some(s => s === null)) return null;
+  for (const run of runs) {
+    // Discards GPS glitches and anything that is not running pace.
+    const speedKmh = run.distance / 1000 / (run.duration / 3600);
+    if (!(speedKmh >= 5 && speedKmh <= 25)) continue;
 
-  let best: number | null = null;
-  for (let i = 0; i + targetKm <= usable.length; i++) {
-    let sum = 0;
-    for (let j = i; j < i + targetKm; j++) sum += usable[j]!;
-    if (best === null || sum < best) best = sum;
+    // Strava only measures an effort the GPS track is long enough for, so a race
+    // the watch measured a touch short has none: the whole run stands in.
+    const time =
+      bestEffortSeconds(run.bestEfforts, distance.stravaEffort) ??
+      (matchesDistance(run.distance, distance.meters) ? run.elapsedTime ?? run.duration : null);
+
+    if (time !== null && (!best || time < best.timeSeconds)) {
+      best = { timeSeconds: time, activityId: run.id, date: run.date };
+    }
   }
   return best;
 }
@@ -105,42 +121,23 @@ async function upsertRecord(
 export async function recalculatePersonalRecords(athleteId: string): Promise<string[]> {
   const updated: string[] = [];
 
-  const runs = await prisma.activity.findMany({
-    where: { athleteId, sport: "RUNNING", distance: { not: null }, duration: { not: null } },
-    select: { id: true, distance: true, duration: true, date: true, splits: true },
-  });
+  // Only the two fields needed out of the raw Strava payload, which also carries
+  // laps and segment efforts and is far too heavy to load whole for every run.
+  const rows = await prisma.$queryRaw<Array<{
+    id: string; date: Date; distance: number; duration: number;
+    elapsedTime: number | null; bestEfforts: unknown;
+  }>>`
+    SELECT id, date, distance, duration,
+           ("rawData"->>'elapsed_time')::float AS "elapsedTime",
+           "rawData"->'best_efforts' AS "bestEfforts"
+    FROM "Activity"
+    WHERE "athleteId" = ${athleteId} AND sport = 'RUNNING'
+      AND distance IS NOT NULL AND duration IS NOT NULL
+  `;
+  const runs: RunForRecords[] = rows;
 
   for (const std of STANDARD_DISTANCES) {
-    let best: { timeSeconds: number; activityId: string; date: Date } | null = null;
-
-    for (const act of runs) {
-      const dist = act.distance!;
-      const dur = act.duration!;
-      // Discards GPS glitches and anything that is not running pace.
-      const speedKmh = dist / 1000 / (dur / 3600);
-      if (speedKmh < 5 || speedKmh > 25) continue;
-
-      // The whole activity was that distance, so its time is the record.
-      let timeSeconds: number | null = matchesDistance(dist, std.meters) ? dur : null;
-
-      // Otherwise look for the distance run as a stretch inside a longer effort.
-      // Splits are whole kilometres, so this only applies to distances that are
-      // themselves whole kilometres — summing 21 of them would be 97m short of a
-      // half marathon and would flatter the time.
-      const isWholeKm = std.meters % 1000 === 0;
-      if (timeSeconds === null && isWholeKm && dist > std.meters && Array.isArray(act.splits)) {
-        timeSeconds = bestEffortFromSplits(
-          act.splits as unknown as Split[],
-          dist,
-          std.meters / 1000
-        );
-      }
-
-      if (timeSeconds !== null && (!best || timeSeconds < best.timeSeconds)) {
-        best = { timeSeconds, activityId: act.id, date: act.date };
-      }
-    }
-
+    const best = bestTimeForDistance(runs, std);
     if (!best) continue;
     await upsertRecord(athleteId, std.meters, best.timeSeconds, best.timeSeconds / (std.meters / 1000), best.activityId, best.date);
     updated.push(std.name);

@@ -1,5 +1,7 @@
 // Strava API v3 integration
 
+import { formatPacePerKm } from "./format";
+
 const STRAVA_API = "https://www.strava.com/api/v3";
 const STRAVA_AUTH = "https://www.strava.com/oauth";
 
@@ -151,10 +153,7 @@ export function mapStravaSportToSport(stravaType: string): string {
 
 export function formatPaceFromSpeed(speedMs: number): string {
   if (!speedMs || speedMs === 0) return "—";
-  const secondsPerKm = 1000 / speedMs;
-  const minutes = Math.floor(secondsPerKm / 60);
-  const seconds = Math.round(secondsPerKm % 60);
-  return `${minutes}:${seconds.toString().padStart(2, "0")}/km`;
+  return formatPacePerKm(1000 / speedMs);
 }
 
 // Descodificar polyline do Google/Strava para array de coordenadas

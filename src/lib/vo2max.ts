@@ -19,6 +19,8 @@
 // Not to be confused with the bare ratio 15.3 × HRmax/HRrest, which ignores
 // running data entirely and is not used here.
 
+import { clockParts } from "./format";
+
 export type VO2maxMethod = "heart-rate-reserve" | "performance";
 
 export type VO2maxEstimate = {
@@ -159,9 +161,7 @@ function formatDistance(metres: number): string {
 }
 
 function formatTime(seconds: number): string {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  const s = Math.round(seconds % 60);
+  const { h, m, s } = clockParts(seconds);
   const mm = String(m).padStart(h > 0 ? 2 : 1, "0");
   return h > 0
     ? `${h}:${mm}:${String(s).padStart(2, "0")}`

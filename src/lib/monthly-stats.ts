@@ -1,6 +1,8 @@
 // Aggregates activities into per-month totals for the training summary.
 // Months with no activity are kept in the series so gaps stay visible.
 
+import { formatPacePerKm } from "./format";
+
 export type StatActivity = {
   date: Date | string;
   sport: string;
@@ -94,9 +96,7 @@ export function monthlyStats(activities: StatActivity[], months: number, now = n
 
 export function formatPace(secPerKm: number | null): string | null {
   if (!secPerKm || secPerKm <= 0) return null;
-  const m = Math.floor(secPerKm / 60);
-  const s = Math.round(secPerKm % 60);
-  return `${m}:${String(s).padStart(2, "0")}/km`;
+  return formatPacePerKm(secPerKm);
 }
 
 export function formatHours(seconds: number): string {
