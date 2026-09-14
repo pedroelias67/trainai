@@ -2,6 +2,8 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
+import * as Sentry from "@sentry/nextjs";
+import { sendWelcomeEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
   const cookieStore = await cookies();
@@ -40,6 +42,23 @@ export async function GET(req: NextRequest) {
   let user = await prisma.user.findUnique({ where: { email: googleUser.email } });
 
   if (!user) {
+    // Signing up through Google skipped the invite check that email sign-up
+    // enforces, so on an invite-only deployment anyone with a Google account
+    // could create one. A new account needs a pending invite for this address.
+    const invite = process.env.INVITE_ONLY === "true"
+      ? await prisma.invite.findFirst({
+          where: {
+            email: { equals: googleUser.email, mode: "insensitive" },
+            usedAt: null,
+            expiresAt: { gt: new Date() },
+          },
+        })
+      : null;
+    if (process.env.INVITE_ONLY === "true" && !invite) {
+      cookieStore.delete("oauth_state");
+      return NextResponse.redirect(new URL("/auth/login?error=invite_required", req.url));
+    }
+
     user = await prisma.user.create({
       data: {
         email: googleUser.email,
@@ -58,6 +77,17 @@ export async function GET(req: NextRequest) {
         refresh_token: tokens.refresh_token ?? null,
       },
     });
+    if (invite) {
+      await prisma.invite.update({
+        where: { id: invite.id },
+        data: { usedAt: new Date(), usedByUserId: user.id },
+      });
+    }
+    try {
+      await sendWelcomeEmail(user.email, user.name ?? "atleta");
+    } catch (e) {
+      Sentry.captureException(e, { tags: { stage: "google-welcome" } });
+    }
   } else if (!user.emailVerified) {
     // Mark as verified since Google confirmed the email
     await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } });

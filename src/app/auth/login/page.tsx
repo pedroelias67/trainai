@@ -83,6 +83,8 @@ function LoginForm() {
               ? "O link de confirmação expirou. Regista-te novamente."
               : oauthError === "invalid_token"
               ? "Link de confirmação inválido."
+              : oauthError === "invite_required"
+              ? "O registo está limitado a convites. Usa o link do convite que recebeste, com o mesmo email."
               : "Erro ao autenticar com Google. Tenta novamente."}
           </div>
         )}
