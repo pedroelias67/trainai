@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
-import { cookies } from "next/headers";
+import { createSession, SUSPENDED_MESSAGE } from "@/lib/session";
 import { afterFailure, cleared, isLocked, minutesLeft } from "@/lib/login-lock";
 
 const loginSchema = z.object({
@@ -48,6 +48,11 @@ export async function POST(req: NextRequest) {
       await prisma.user.update({ where: { id: user.id }, data: cleared });
     }
 
+    // After the password, so a suspension is only ever revealed to the account's owner.
+    if (user.suspendedAt) {
+      return NextResponse.json({ error: SUSPENDED_MESSAGE, code: "SUSPENDED" }, { status: 403 });
+    }
+
     // Only block unverified users if they have a verificationToken set
     // (meaning they registered after the email verification feature was added)
     if (!user.emailVerified && user.verificationToken) {
@@ -62,14 +67,7 @@ export async function POST(req: NextRequest) {
 
     await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
-    const cookieStore = await cookies();
-    cookieStore.set("user_id", user.id, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 dias
-      path: "/",
-    });
+    await createSession(user.id, req.headers.get("user-agent"));
 
     const hasAthlete = !!user.athlete;
     const hasCompletedOnboarding = hasAthlete && !!user.athlete?.fitnessLevel;

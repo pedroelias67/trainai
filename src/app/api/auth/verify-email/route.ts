@@ -1,7 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
+import { createSession } from "@/lib/session";
 import { sendWelcomeEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
@@ -15,18 +15,17 @@ export async function GET(req: NextRequest) {
 
   await prisma.user.update({
     where: { id: user.id },
-    data: {
-      emailVerified: true, verificationToken: null, verificationTokenExpiry: null,
-      lastLoginAt: new Date(),
-    },
+    data: { emailVerified: true, verificationToken: null, verificationTokenExpiry: null },
   });
 
+  // The email is confirmed either way, but a suspended account is not signed in.
+  if (user.suspendedAt) {
+    return NextResponse.redirect(new URL("/auth/login?error=suspended", req.url));
+  }
+
   // Auto login after verification
-  const cookieStore = await cookies();
-  cookieStore.set("user_id", user.id, {
-    httpOnly: true, secure: process.env.NODE_ENV === "production",
-    sameSite: "lax", maxAge: 60 * 60 * 24 * 7, path: "/",
-  });
+  await createSession(user.id, req.headers.get("user-agent"));
+  await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
   // Send welcome email
   try { await sendWelcomeEmail(user.email, user.name ?? "atleta"); } catch {}

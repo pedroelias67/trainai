@@ -17,7 +17,7 @@ export async function GET() {
   const userIds = invites.map(i => i.usedByUserId).filter((id): id is string => !!id);
   const users = await prisma.user.findMany({
     where: { id: { in: userIds } },
-    select: { id: true, ...accountStatusSelect },
+    select: { id: true, ...accountStatusSelect() },
   });
   const byId = new Map(users.map(u => [u.id, u]));
 

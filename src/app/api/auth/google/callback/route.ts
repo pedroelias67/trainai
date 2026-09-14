@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { cookies } from "next/headers";
 import * as Sentry from "@sentry/nextjs";
+import { createSession } from "@/lib/session";
 import { sendWelcomeEmail } from "@/lib/email";
 
 export async function GET(req: NextRequest) {
@@ -93,12 +94,14 @@ export async function GET(req: NextRequest) {
     await prisma.user.update({ where: { id: user.id }, data: { emailVerified: true } });
   }
 
+  if (user.suspendedAt) {
+    cookieStore.delete("oauth_state");
+    return NextResponse.redirect(new URL("/auth/login?error=suspended", req.url));
+  }
+
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
 
-  cookieStore.set("user_id", user.id, {
-    httpOnly: true, secure: process.env.NODE_ENV === "production",
-    sameSite: "lax", maxAge: 60 * 60 * 24 * 7, path: "/",
-  });
+  await createSession(user.id, req.headers.get("user-agent"));
   cookieStore.delete("oauth_state");
 
   // Check if athlete profile exists

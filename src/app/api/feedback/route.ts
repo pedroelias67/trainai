@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { sendFeedbackEmail } from "@/lib/email";
+import { getSessionUserId } from "@/lib/session";
 
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("user_id")?.value;
+    const userId = await getSessionUserId();
 
     const body = await req.json();
     const { category, message } = body as { category: string; message: string };

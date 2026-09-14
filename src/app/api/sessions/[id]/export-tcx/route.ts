@@ -1,16 +1,15 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { buildTcxWorkout } from "@/lib/tcx-builder";
+import { getSessionUserId } from "@/lib/session";
 
 export async function GET(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const athlete = await prisma.athlete.findUnique({ where: { userId } });

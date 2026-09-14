@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -13,6 +12,7 @@ import { FitnessChart } from "@/components/dashboard/FitnessChart";
 import { PersonalRecords } from "@/components/dashboard/PersonalRecords";
 import { ProgressionChart } from "@/components/dashboard/ProgressionChart";
 import { MonthlyVolumeChart } from "@/components/dashboard/MonthlyVolumeChart";
+import { getSessionUserId } from "@/lib/session";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -44,8 +44,7 @@ function estimateTSS(duration: number | null, avgHR: number | null): number {
 }
 
 export default async function FitnessPage() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) redirect("/auth/login");
 
   const athlete = await prisma.athlete.findUnique({

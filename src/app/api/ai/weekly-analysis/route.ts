@@ -6,11 +6,10 @@ export const maxDuration = 300;
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { analyzeWeekAndAdapt } from "@/lib/claude";
-import { cookies } from "next/headers";
+import { getSessionUserId } from "@/lib/session";
 
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   try {

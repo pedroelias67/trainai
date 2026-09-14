@@ -7,6 +7,10 @@ const mockPrisma = prisma as unknown as {
     create: ReturnType<typeof vi.fn>;
     update: ReturnType<typeof vi.fn>;
   };
+  session: {
+    create: ReturnType<typeof vi.fn>;
+    deleteMany: ReturnType<typeof vi.fn>;
+  };
 };
 
 // Helper to make a fake POST request
@@ -143,5 +147,45 @@ describe("Account lockout", () => {
     expect(mockPrisma.user.update).toHaveBeenCalledWith(
       expect.objectContaining({ data: { failedLoginCount: 0, lockedUntil: null } })
     );
+  });
+});
+
+describe("Sessions on login", () => {
+  const user = (over: Record<string, unknown> = {}) => ({
+    id: "user-1", email: "test@test.com", passwordHash: "hashed_correct_password",
+    emailVerified: true, verificationToken: null, failedLoginCount: 0, lockedUntil: null,
+    suspendedAt: null, athlete: { id: "athlete-1", fitnessLevel: "ADVANCED" }, ...over,
+  });
+
+  beforeEach(() => vi.clearAllMocks());
+
+  it("opens a session whose stored token is not the user's id", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue(user());
+    const { POST } = await import("@/app/api/auth/login/route");
+
+    const res = await POST(makeRequest({ email: "test@test.com", password: "correct_password" }) as never);
+    expect(res.status).toBe(200);
+    const { data } = mockPrisma.session.create.mock.calls[0][0];
+    expect(data.userId).toBe("user-1");
+    expect(data.sessionToken).toMatch(/^[0-9a-f]{64}$/); // a SHA-256, not an id
+  });
+
+  it("refuses a suspended account, and opens no session for it", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue(user({ suspendedAt: new Date() }));
+    const { POST } = await import("@/app/api/auth/login/route");
+
+    const res = await POST(makeRequest({ email: "test@test.com", password: "correct_password" }) as never);
+    expect(res.status).toBe(403);
+    expect((await res.json()).code).toBe("SUSPENDED");
+    expect(mockPrisma.session.create).not.toHaveBeenCalled();
+  });
+
+  it("says nothing about suspension to someone with the wrong password", async () => {
+    mockPrisma.user.findUnique.mockResolvedValue(user({ suspendedAt: new Date() }));
+    const { POST } = await import("@/app/api/auth/login/route");
+
+    const res = await POST(makeRequest({ email: "test@test.com", password: "wrong_password" }) as never);
+    expect(res.status).toBe(401);
+    expect((await res.json()).code).toBeUndefined();
   });
 });

@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { redirect, notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -11,6 +10,7 @@ import NutritionPlan from "@/components/dashboard/NutritionPlan";
 import { WorkoutTimer } from "@/components/dashboard/WorkoutTimer";
 import { SessionDetailLoader } from "@/components/dashboard/SessionDetailLoader";
 import { sessionTypeLabel, sessionTypeDescription } from "@/lib/session-types";
+import { getSessionUserId } from "@/lib/session";
 
 const sessionTypeColors: Record<string, string> = {
   EASY: "bg-green-500/10 text-green-400 border-green-500/20",
@@ -35,8 +35,7 @@ const zoneColors = ["bg-zinc-500", "bg-green-500", "bg-yellow-500", "bg-orange-5
 
 export default async function SessionDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) redirect("/auth/login");
 
   const athlete = await prisma.athlete.findUnique({ where: { userId } });

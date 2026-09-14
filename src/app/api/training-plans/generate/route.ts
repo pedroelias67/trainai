@@ -7,12 +7,11 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { generatePlanSkeleton, detailSessions } from "@/lib/claude";
 import { HORIZON_WEEKS } from "@/lib/plan-horizon";
-import { cookies } from "next/headers";
+import { getSessionUserId } from "@/lib/session";
 
 export async function POST(req: NextRequest) {
   try {
-    const cookieStore = await cookies();
-    const userId = cookieStore.get("user_id")?.value;
+    const userId = await getSessionUserId();
     if (!userId) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
     const body = await req.json();

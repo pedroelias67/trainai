@@ -6,6 +6,9 @@ import { LogoFull } from "@/components/ui/Logo";
 import Link from "next/link";
 
 type AccountStatus = {
+  suspended: boolean;
+  suspendedAt: string | null;
+  activeSessions: number;
   pendingVerification: boolean;
   locked: boolean;
   lockMinutesLeft: number;
@@ -14,7 +17,9 @@ type AccountStatus = {
   hasPassword: boolean;
 };
 
-type UserAction = "activate" | "unlock" | "resend-verification" | "send-password-reset" | "send-welcome";
+type UserAction =
+  | "activate" | "unlock" | "resend-verification" | "send-password-reset" | "send-welcome"
+  | "suspend" | "unsuspend" | "revoke-sessions";
 
 type User = {
   id: string;
@@ -71,6 +76,7 @@ function inviteStatus(invite: Invite): { label: string; color: string } {
   if (invite.usedAt) {
     // Used only means an account exists. Say whether its owner can get in.
     if (!invite.account) return { label: "Usado · conta eliminada", color: "text-[var(--text-muted)]" };
+    if (invite.account.suspended) return { label: "Conta suspensa", color: "text-red-400" };
     if (invite.account.locked) return { label: "Conta criada · bloqueada", color: "text-red-400" };
     if (invite.account.pendingVerification) return { label: "Conta criada · por confirmar", color: "text-yellow-400" };
     return { label: "Conta ativa", color: "text-green-400" };
@@ -105,6 +111,7 @@ export default function AdminUsersPage() {
   const [deleting, setDeleting] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [acting, setActing] = useState<string | null>(null);
+  const [confirmSuspend, setConfirmSuspend] = useState<string | null>(null);
   const [notice, setNotice] = useState<{ id: string; text: string; ok: boolean } | null>(null);
 
   // Invites state
@@ -205,6 +212,7 @@ export default function AdminUsersPage() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro");
       setUsers((u) => u.map((x) => x.id === user.id ? { ...x, status: data.status } : x));
+      setConfirmSuspend(null);
       setNotice({ id: user.id, text: data.message, ok: true });
     } catch (e) {
       setNotice({ id: user.id, text: e instanceof Error ? e.message : "Erro", ok: false });
@@ -337,6 +345,11 @@ export default function AdminUsersPage() {
                           {user.athlete?.stravaConnected && (
                             <span className="text-orange-400 text-xs bg-orange-500/10 border border-orange-500/20 px-2 py-0.5 rounded-full">Strava</span>
                           )}
+                          {user.status.suspended && (
+                            <span className="text-red-400 text-xs bg-red-500/10 border border-red-500/20 px-2 py-0.5 rounded-full font-semibold">
+                              suspenso desde {new Date(user.status.suspendedAt!).toLocaleDateString("pt-PT")}
+                            </span>
+                          )}
                           {user.status.pendingVerification && (
                             <span className="text-yellow-400 text-xs bg-yellow-500/10 border border-yellow-500/20 px-2 py-0.5 rounded-full">email por confirmar · não consegue entrar</span>
                           )}
@@ -350,6 +363,7 @@ export default function AdminUsersPage() {
                           {user.athlete && ` · ${user.athlete._count.activities} atividade${user.athlete._count.activities !== 1 ? "s" : ""}`}
                           {user.athlete?.fitnessLevel && ` · ${fitnessLabels[user.athlete.fitnessLevel] ?? user.athlete.fitnessLevel}`}
                           {" · "}{user.status.lastLoginAt ? `último acesso ${relativeTime(user.status.lastLoginAt)}` : "ainda não entrou"}
+                          {user.status.activeSessions > 0 && ` · ${user.status.activeSessions} ${user.status.activeSessions === 1 ? "sessão aberta" : "sessões abertas"}`}
                           {user.status.failedLoginCount > 0 && !user.status.locked && ` · ${user.status.failedLoginCount} password${user.status.failedLoginCount !== 1 ? "s" : ""} errada${user.status.failedLoginCount !== 1 ? "s" : ""}`}
                         </p>
                       </div>
@@ -403,6 +417,32 @@ export default function AdminUsersPage() {
                         className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all disabled:opacity-50">
                         {acting === `${user.id}:send-password-reset` ? "A enviar…" : "Enviar link de nova password"}
                       </button>
+                      {user.status.activeSessions > 0 && (
+                        <button onClick={() => runAction(user, "revoke-sessions")} disabled={acting !== null}
+                          className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all disabled:opacity-50">
+                          {acting === `${user.id}:revoke-sessions` ? "A terminar…" : "Terminar sessões"}
+                        </button>
+                      )}
+                      {user.status.suspended ? (
+                        <button onClick={() => runAction(user, "unsuspend")} disabled={acting !== null}
+                          className="px-3 py-1.5 rounded-lg border border-green-500/30 bg-green-500/10 text-green-400 hover:bg-green-500/20 text-xs font-medium transition-all disabled:opacity-50">
+                          {acting === `${user.id}:unsuspend` ? "A reativar…" : "Reativar acesso"}
+                        </button>
+                      ) : confirmSuspend === user.id ? (
+                        <span className="flex items-center gap-2">
+                          <span className="text-xs text-[var(--text-secondary)]">Deixa de conseguir entrar e sai de todas as sessões.</span>
+                          <button onClick={() => setConfirmSuspend(null)} className="btn-secondary text-xs py-1.5 px-3">Cancelar</button>
+                          <button onClick={() => runAction(user, "suspend")} disabled={acting !== null}
+                            className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-medium transition-all disabled:opacity-50">
+                            {acting === `${user.id}:suspend` ? "A suspender…" : "Confirmar suspensão"}
+                          </button>
+                        </span>
+                      ) : (
+                        <button onClick={() => setConfirmSuspend(user.id)} disabled={acting !== null}
+                          className="px-3 py-1.5 rounded-lg border border-red-500/20 text-red-500 hover:bg-red-500/10 text-xs transition-all disabled:opacity-50">
+                          Suspender acesso
+                        </button>
+                      )}
                       {notice?.id === user.id && (
                         <span className={`text-xs ${notice.ok ? "text-green-400" : "text-red-400"}`}>{notice.text}</span>
                       )}

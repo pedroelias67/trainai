@@ -1,9 +1,9 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LogoFull } from "@/components/ui/Logo";
 import { calculateHRZones, calculatePaceZones, calculatePowerZones } from "@/lib/training-zones";
+import { getSessionUserId } from "@/lib/session";
 
 const NAV_ITEMS = [
   { href: "/dashboard", label: "Dashboard" },
@@ -18,8 +18,7 @@ const NAV_ITEMS = [
 ];
 
 export default async function ZonesPage() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) redirect("/auth/login");
 
   const athlete = await prisma.athlete.findUnique({

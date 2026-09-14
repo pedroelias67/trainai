@@ -1,12 +1,11 @@
 export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { getStravaAuthUrl } from "@/lib/strava";
+import { getSessionUserId } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return NextResponse.redirect(new URL("/auth/login", req.url));
 
   // state para verificar o callback

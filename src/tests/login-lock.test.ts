@@ -33,9 +33,15 @@ describe("minutesLeft", () => {
 
 describe("accountStatus", () => {
   const base = {
+    suspendedAt: null, _count: { sessions: 0 },
     emailVerified: true, verificationToken: null, failedLoginCount: 0,
     lockedUntil: null, lastLoginAt: null, passwordHash: "hash",
   };
+
+  it("reports a suspension and the sessions still open", () => {
+    const out = accountStatus({ ...base, suspendedAt: new Date("2026-09-14"), _count: { sessions: 2 } });
+    expect(out).toMatchObject({ suspended: true, activeSessions: 2 });
+  });
 
   it("flags an account waiting on its confirmation email", () => {
     // The state the first invited friend was stuck in, invisible to the admin.

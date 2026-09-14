@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -7,6 +6,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addM
 import { pt } from "date-fns/locale";
 import CalendarGrid from "@/components/dashboard/CalendarGrid";
 import { SESSION_TYPES } from "@/lib/session-types";
+import { getSessionUserId } from "@/lib/session";
 
 const SESSION_TYPE_COLORS: Record<string, string> = {
   EASY: "bg-green-500/10 text-green-400 border-green-500/20",
@@ -36,8 +36,7 @@ export default async function CalendarPage({
 }: {
   searchParams: Promise<{ month?: string; year?: string }>;
 }) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) redirect("/auth/login");
 
   const athlete = await prisma.athlete.findUnique({

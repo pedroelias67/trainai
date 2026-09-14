@@ -4,7 +4,15 @@ import {
   emailBadge, emailStatGrid, emailInfoBox, emailDivider, emailSubheading, EMAIL_COLORS,
 } from "./email-template";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Built on first send, not at import. The constructor throws without a key, and
+// at module level that took down every route importing this file — including
+// ones that never send, like suspending an account — wherever the key is unset:
+// preview deployments, and local development.
+let client: Resend | null = null;
+function resend(): Resend {
+  if (!process.env.RESEND_API_KEY) throw new Error("RESEND_API_KEY não está definida neste ambiente");
+  return (client ??= new Resend(process.env.RESEND_API_KEY));
+}
 
 /**
  * Sends through Resend and throws when it fails.
@@ -13,8 +21,8 @@ const resend = new Resend(process.env.RESEND_API_KEY);
  * bare `await resend.emails.send(...)` inside a try/catch never reaches the
  * catch: a rejected address or a bad key looks exactly like a delivered email.
  */
-async function send(message: Parameters<typeof resend.emails.send>[0]) {
-  const { error } = await resend.emails.send(message);
+async function send(message: Parameters<Resend["emails"]["send"]>[0]) {
+  const { error } = await resend().emails.send(message);
   if (error) throw new Error(`Resend: ${error.name} — ${error.message}`);
 }
 

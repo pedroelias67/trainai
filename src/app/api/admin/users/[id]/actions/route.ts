@@ -4,12 +4,19 @@ import { NextRequest, NextResponse } from "next/server";
 import crypto from "crypto";
 import * as Sentry from "@sentry/nextjs";
 import { prisma } from "@/lib/prisma";
-import { accountStatus, accountStatusSelect, requireAdmin } from "@/lib/admin";
+import { accountStatus, accountStatusSelect, ADMIN_EMAIL, requireAdmin } from "@/lib/admin";
+import { revokeAllSessions } from "@/lib/session";
 import { cleared } from "@/lib/login-lock";
 import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail } from "@/lib/email";
 
-const ACTIONS = ["activate", "unlock", "resend-verification", "send-password-reset", "send-welcome"] as const;
+const ACTIONS = [
+  "activate", "unlock", "resend-verification", "send-password-reset", "send-welcome",
+  "suspend", "unsuspend", "revoke-sessions",
+] as const;
 type Action = (typeof ACTIONS)[number];
+
+const sessionsEnded = (n: number) =>
+  n === 1 ? "1 sessão terminada" : `${n} sessões terminadas`;
 
 /**
  * The fixes an admin reaches for when someone cannot get in: confirm the account
@@ -35,6 +42,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     select: { id: true, email: true, name: true },
   });
   if (!user) return NextResponse.json({ error: "Utilizador não encontrado" }, { status: 404 });
+
+  // Suspending the admin would lock the only person able to undo it.
+  if (action === "suspend" && user.email === ADMIN_EMAIL) {
+    return NextResponse.json({ error: "Não podes suspender a conta de administrador" }, { status: 400 });
+  }
 
   let message: string;
 
@@ -77,6 +89,28 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         break;
       }
 
+      case "suspend": {
+        // The flag stops new sign-ins and every request's session check; deleting
+        // the sessions as well means nothing already open outlives the decision.
+        await prisma.user.update({ where: { id }, data: { suspendedAt: new Date() } });
+        const ended = await revokeAllSessions(id);
+        message = `Acesso suspenso.${ended ? ` ${sessionsEnded(ended)}.` : ""}`;
+        break;
+      }
+
+      case "unsuspend":
+        await prisma.user.update({ where: { id }, data: { suspendedAt: null } });
+        message = "Acesso reativado. Pode voltar a entrar.";
+        break;
+
+      case "revoke-sessions": {
+        const ended = await revokeAllSessions(id);
+        message = ended
+          ? `${sessionsEnded(ended)}. Terá de voltar a entrar.`
+          : "Não havia sessões abertas.";
+        break;
+      }
+
       case "send-welcome": {
         // For an account activated some other way — by hand, or before the
         // activation email existed — whose owner was never told they can sign in.
@@ -114,6 +148,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     );
   }
 
-  const after = await prisma.user.findUniqueOrThrow({ where: { id }, select: accountStatusSelect });
+  const after = await prisma.user.findUniqueOrThrow({ where: { id }, select: accountStatusSelect() });
   return NextResponse.json({ ok: true, message, status: accountStatus(after) });
 }

@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -9,11 +8,11 @@ import { WeeklyAnalysis } from "@/components/dashboard/WeeklyAnalysis";
 import { PlanWeekGrid } from "@/components/dashboard/PlanWeekGrid";
 import { PlanWeekCollapsible } from "@/components/dashboard/PlanWeekCollapsible";
 import { ArchivePlan } from "@/components/dashboard/ArchivePlan";
+import { getSessionUserId } from "@/lib/session";
 
 
 export default async function PlanPage() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) redirect("/auth/login");
 
   const athlete = await prisma.athlete.findUnique({

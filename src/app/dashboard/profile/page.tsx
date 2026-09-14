@@ -1,4 +1,3 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
@@ -10,6 +9,7 @@ import ThemeToggle from "@/components/dashboard/ThemeToggle";
 import { DeleteAccount } from "@/components/dashboard/DeleteAccount";
 import { WatchCompatibility } from "@/components/dashboard/WatchCompatibility";
 import { IntervalsConnect } from "@/components/dashboard/IntervalsConnect";
+import { getSessionUserId } from "@/lib/session";
 
 const fitnessLabels: Record<string, string> = {
   BEGINNER: "Iniciante", INTERMEDIATE: "Intermédio", ADVANCED: "Avançado", ELITE: "Elite",
@@ -19,8 +19,7 @@ const genderLabels: Record<string, string> = {
 };
 
 export default async function ProfilePage() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) redirect("/auth/login");
 
   const athlete = await prisma.athlete.findUnique({

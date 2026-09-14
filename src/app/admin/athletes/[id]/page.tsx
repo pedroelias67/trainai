@@ -1,14 +1,13 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { LogoFull } from "@/components/ui/Logo";
+import { getSessionUserId } from "@/lib/session";
 
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL ?? "pedroelias67@gmail.com";
 
 async function requireAdmin() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return null;
   const user = await prisma.user.findUnique({ where: { id: userId } });
   if (!user || user.email !== ADMIN_EMAIL) return null;

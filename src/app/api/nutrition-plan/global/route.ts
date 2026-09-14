@@ -4,13 +4,12 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { claude, CLAUDE_MODEL } from "@/lib/claude";
+import { getSessionUserId } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const athlete = await prisma.athlete.findUnique({
@@ -23,8 +22,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const athlete = await prisma.athlete.findUnique({

@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import crypto from "crypto";
-import { cookies } from "next/headers";
+import { createSession } from "@/lib/session";
 import * as Sentry from "@sentry/nextjs";
 import { sendVerificationEmail, sendWelcomeEmail } from "@/lib/email";
 
@@ -86,11 +86,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (inboxProven) {
-      const cookieStore = await cookies();
-      cookieStore.set("user_id", user.id, {
-        httpOnly: true, secure: process.env.NODE_ENV === "production",
-        sameSite: "lax", maxAge: 60 * 60 * 24 * 7, path: "/",
-      });
+      await createSession(user.id, req.headers.get("user-agent"));
       try { await sendWelcomeEmail(email, name); } catch (e) { Sentry.captureException(e); }
       return NextResponse.json({ redirectTo: "/onboarding?welcome=1" });
     }

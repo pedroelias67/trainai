@@ -3,9 +3,9 @@ export const dynamic = "force-dynamic";
 export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { detailSessions } from "@/lib/claude";
+import { getSessionUserId } from "@/lib/session";
 
 /**
  * Writes the coaching prose for a week's sessions. The plan is created as a
@@ -15,8 +15,7 @@ import { detailSessions } from "@/lib/claude";
  * a retry after a partial failure completes what is left rather than redoing it.
  */
 export async function POST(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const athlete = await prisma.athlete.findUnique({ where: { userId } });

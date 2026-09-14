@@ -1,10 +1,10 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
+import { destroySession } from "@/lib/session";
 
 export async function POST() {
-  const cookieStore = await cookies();
-  cookieStore.delete("user_id");
+  // Deletes the session row, not just the cookie: a copied cookie stops working too.
+  await destroySession();
   return NextResponse.redirect(new URL("/auth/login", process.env.NEXTAUTH_URL ?? "http://localhost:3000"));
 }

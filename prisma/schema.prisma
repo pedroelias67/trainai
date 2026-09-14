@@ -30,6 +30,10 @@ model User {
   lockedUntil           DateTime?
   lastLoginAt           DateTime?
 
+  // Set by the admin to cut someone off. Their sessions are deleted at the same
+  // moment, and every request checks this, so it takes effect immediately.
+  suspendedAt           DateTime?
+
   athlete       Athlete?
   accounts      Account[]
   sessions      Session[]
@@ -53,12 +57,18 @@ model Account {
   @@unique([provider, providerAccountId])
 }
 
+// A signed-in browser. The cookie carries a random token; only its SHA-256 is
+// stored, so reading this table is not enough to sign in as anyone.
 model Session {
   id           String   @id @default(cuid())
-  sessionToken String   @unique
+  sessionToken String   @unique // SHA-256 of the cookie's token, never the token
   userId       String
   expires      DateTime
+  createdAt    DateTime @default(now())
+  userAgent    String?
   user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
 
 model Athlete {

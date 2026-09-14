@@ -1,13 +1,12 @@
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { LogoFull } from "@/components/ui/Logo";
 import Link from "next/link";
 import { EditProfileForm } from "@/components/dashboard/EditProfileForm";
+import { getSessionUserId } from "@/lib/session";
 
 export default async function EditProfilePage() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) redirect("/auth/login");
 
   const athlete = await prisma.athlete.findUnique({

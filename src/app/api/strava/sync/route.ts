@@ -1,15 +1,14 @@
 export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { prisma } from "@/lib/prisma";
 import { getRecentStravaActivities, refreshStravaToken } from "@/lib/strava";
 import { syncStravaActivity } from "@/lib/sync-activity";
 import { recalculatePersonalRecords } from "@/lib/personal-records";
+import { getSessionUserId } from "@/lib/session";
 
 export async function POST() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const athlete = await prisma.athlete.findUnique({ where: { userId } });

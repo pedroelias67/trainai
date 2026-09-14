@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { format, isToday, isTomorrow, subDays } from "date-fns";
@@ -11,6 +10,7 @@ import RecentActivitiesFeed from "@/components/dashboard/RecentActivitiesFeed";
 import { OnboardingTour } from "@/components/dashboard/OnboardingTour";
 import { WeeklyLoadChart, PaceEvolutionChart } from "@/components/dashboard/TrainingCharts";
 import { sessionTypeLabel, sessionTypeDescription } from "@/lib/session-types";
+import { getSessionUserId } from "@/lib/session";
 
 async function getDashboardData(userId: string) {
   return prisma.athlete.findUnique({
@@ -81,8 +81,7 @@ const sportIcon: Record<string, string> = {
 };
 
 export default async function DashboardPage() {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) redirect("/auth/login");
 
   const athlete = await getDashboardData(userId);

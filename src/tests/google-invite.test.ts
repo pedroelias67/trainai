@@ -21,6 +21,7 @@ const db = vi.hoisted(() => ({
   account: { create: vi.fn() },
   athlete: { findUnique: vi.fn() },
   invite: { findFirst: vi.fn(), update: vi.fn() },
+  session: { create: vi.fn(), deleteMany: vi.fn(async () => ({ count: 0 })) },
 }));
 vi.mock("@/lib/prisma", () => ({ prisma: db }));
 vi.mock("@/lib/email", () => ({ sendWelcomeEmail: vi.fn() }));
@@ -54,7 +55,7 @@ describe("Google sign-up on an invite-only deployment", () => {
     const res = await GET(callback() as never);
     expect(res.headers.get("location")).toContain("error=invite_required");
     expect(db.user.create).not.toHaveBeenCalled();
-    expect(cookieStore.set).not.toHaveBeenCalled();
+    expect(db.session.create).not.toHaveBeenCalled();
   });
 
   it("creates the account and uses up the invite when one is waiting", async () => {
@@ -76,6 +77,15 @@ describe("Google sign-up on an invite-only deployment", () => {
     const res = await GET(callback() as never);
     expect(res.headers.get("location")).toContain("/dashboard");
     expect(db.invite.findFirst).not.toHaveBeenCalled();
+  });
+
+  it("does not sign in a suspended account", async () => {
+    db.user.findUnique.mockResolvedValue({ id: "u1", email: "stranger@gmail.com", emailVerified: true, suspendedAt: new Date() });
+    const { GET } = await import("@/app/api/auth/google/callback/route");
+
+    const res = await GET(callback() as never);
+    expect(res.headers.get("location")).toContain("error=suspended");
+    expect(db.session.create).not.toHaveBeenCalled();
   });
 
   it("asks for no invite when sign-up is open", async () => {

@@ -18,7 +18,7 @@ export async function GET(
   const athlete = await prisma.athlete.findUnique({
     where: { id },
     include: {
-      user: { select: { id: true, name: true, email: true, createdAt: true, ...accountStatusSelect } },
+      user: { select: { id: true, name: true, email: true, createdAt: true, ...accountStatusSelect() } },
       events: { orderBy: { date: "asc" } },
       trainingPlans: {
         include: {
@@ -45,7 +45,7 @@ export async function GET(
   // on the athlete's own Strava or Intervals.icu account.
   const {
     stravaAccessToken: _sa, stravaRefreshToken: _sr, intervalsIcuApiKey: _ik, pushSubscription: _ps,
-    user: { verificationToken: _vt, passwordHash: _ph, ...user },
+    user: { verificationToken: _vt, passwordHash: _ph, _count: _c, ...user },
     ...rest
   } = athlete;
 

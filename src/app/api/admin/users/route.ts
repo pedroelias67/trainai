@@ -18,7 +18,7 @@ export async function GET() {
       name: true,
       email: true,
       createdAt: true,
-      ...accountStatusSelect,
+      ...accountStatusSelect(),
       athlete: {
         select: {
           id: true,
@@ -32,9 +32,14 @@ export async function GET() {
   });
 
   return NextResponse.json(
-    users.map(({ emailVerified, verificationToken, failedLoginCount, lockedUntil, lastLoginAt, passwordHash, ...u }) => ({
+    users.map(({
+      suspendedAt, _count, emailVerified, verificationToken, failedLoginCount, lockedUntil, lastLoginAt, passwordHash,
+      ...u
+    }) => ({
       ...u,
-      status: accountStatus({ emailVerified, verificationToken, failedLoginCount, lockedUntil, lastLoginAt, passwordHash }),
+      status: accountStatus({
+        suspendedAt, _count, emailVerified, verificationToken, failedLoginCount, lockedUntil, lastLoginAt, passwordHash,
+      }),
     }))
   );
 }

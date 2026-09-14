@@ -2,9 +2,9 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { cookies } from "next/headers";
 import { z } from "zod";
 import { Sport, Distance, GoalType, Priority } from "@prisma/client";
+import { getSessionUserId } from "@/lib/session";
 
 // Nothing was validated here: an unparseable date reached Prisma as Invalid Date
 // and surfaced as a generic 500, a past date was stored and counted down to a
@@ -28,8 +28,7 @@ const eventSchema = z.object({
 });
 
 export async function POST(req: NextRequest) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   try {
@@ -67,8 +66,7 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const cookieStore = await cookies();
-  const userId = cookieStore.get("user_id")?.value;
+  const userId = await getSessionUserId();
   if (!userId) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
 
   const athlete = await prisma.athlete.findUnique({ where: { userId } });
