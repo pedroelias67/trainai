@@ -14,7 +14,7 @@ type AccountStatus = {
   hasPassword: boolean;
 };
 
-type UserAction = "activate" | "unlock" | "resend-verification" | "send-password-reset";
+type UserAction = "activate" | "unlock" | "resend-verification" | "send-password-reset" | "send-welcome";
 
 type User = {
   id: string;
@@ -391,6 +391,12 @@ export default function AdminUsersPage() {
                         <button onClick={() => runAction(user, "unlock")} disabled={acting !== null}
                           className="px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 text-xs font-medium transition-all disabled:opacity-50">
                           {acting === `${user.id}:unlock` ? "A desbloquear…" : "Desbloquear"}
+                        </button>
+                      )}
+                      {!user.status.pendingVerification && (
+                        <button onClick={() => runAction(user, "send-welcome")} disabled={acting !== null}
+                          className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all disabled:opacity-50">
+                          {acting === `${user.id}:send-welcome` ? "A enviar…" : "Enviar email de boas-vindas"}
                         </button>
                       )}
                       <button onClick={() => runAction(user, "send-password-reset")} disabled={acting !== null}

@@ -8,7 +8,7 @@ import { accountStatus, accountStatusSelect, requireAdmin } from "@/lib/admin";
 import { cleared } from "@/lib/login-lock";
 import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail } from "@/lib/email";
 
-const ACTIONS = ["activate", "unlock", "resend-verification", "send-password-reset"] as const;
+const ACTIONS = ["activate", "unlock", "resend-verification", "send-password-reset", "send-welcome"] as const;
 type Action = (typeof ACTIONS)[number];
 
 /**
@@ -74,6 +74,24 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         });
         await sendVerificationEmail(user.email, user.name ?? "atleta", verificationToken);
         message = `Email de confirmação enviado para ${user.email}.`;
+        break;
+      }
+
+      case "send-welcome": {
+        // For an account activated some other way — by hand, or before the
+        // activation email existed — whose owner was never told they can sign in.
+        const account = await prisma.user.findUniqueOrThrow({
+          where: { id },
+          select: { emailVerified: true, verificationToken: true },
+        });
+        if (!account.emailVerified && account.verificationToken) {
+          return NextResponse.json(
+            { error: "A conta ainda não está ativa. Ativa-a primeiro." },
+            { status: 400 }
+          );
+        }
+        await sendWelcomeEmail(user.email, user.name ?? "atleta");
+        message = `Email de boas-vindas enviado para ${user.email}.`;
         break;
       }
 
