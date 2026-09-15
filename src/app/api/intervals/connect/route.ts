@@ -2,7 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { verifyApiKey } from "@/lib/intervals-icu";
+import { checkIntervalsConnection, verifyApiKey } from "@/lib/intervals-icu";
+import { recordIntervalsCheck, THRESHOLD_MISSING_WARNING } from "@/lib/intervals-connection";
 import { getSessionUserId } from "@/lib/session";
 
 /** Stores an Intervals.icu API key after checking it actually works. */
@@ -27,10 +28,22 @@ export async function POST(req: NextRequest) {
 
   await prisma.athlete.update({
     where: { id: athlete.id },
-    data: { intervalsIcuApiKey: apiKey, intervalsIcuAthleteId: account.id },
+    data: {
+      intervalsIcuApiKey: apiKey, intervalsIcuAthleteId: account.id,
+      // A new key starts clean; whatever failed was about the old one.
+      intervalsIcuPushError: null, intervalsIcuHasRunThreshold: null, intervalsIcuCheckedAt: null,
+    },
   });
 
-  return NextResponse.json({ ok: true, athleteName: account.name });
+  // Checked now, while the athlete is on the page with Intervals.icu open in
+  // another tab, rather than discovered mid-run when the watch shows no pace.
+  const check = await checkIntervalsConnection(apiKey, account.id);
+  await recordIntervalsCheck(athlete.id, check);
+  const warning = check.status === "ok" && check.hasRunThreshold === false
+    ? `${THRESHOLD_MISSING_WARNING}. Em intervals.icu → Settings → Corrida → Definições de Ritmo, preenche o "Ritmo de limiar".`
+    : null;
+
+  return NextResponse.json({ ok: true, athleteName: account.name, warning });
 }
 
 /** Forgets the key, leaving anything already on the Intervals.icu calendar in place. */
@@ -40,7 +53,10 @@ export async function DELETE() {
 
   await prisma.athlete.update({
     where: { userId },
-    data: { intervalsIcuApiKey: null, intervalsIcuAthleteId: null },
+    data: {
+      intervalsIcuApiKey: null, intervalsIcuAthleteId: null,
+      intervalsIcuPushError: null, intervalsIcuHasRunThreshold: null, intervalsIcuCheckedAt: null,
+    },
   });
 
   return NextResponse.json({ ok: true });

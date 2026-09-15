@@ -2,7 +2,8 @@ export const dynamic = "force-dynamic";
 
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getRecentStravaActivities, refreshStravaToken } from "@/lib/strava";
+import { getRecentStravaActivities, StravaAuthError } from "@/lib/strava";
+import { getValidStravaToken, recordStravaSync } from "@/lib/strava-connection";
 import { syncStravaActivity } from "@/lib/sync-activity";
 import { recalculatePersonalRecords } from "@/lib/personal-records";
 import { getSessionUserId } from "@/lib/session";
@@ -16,27 +17,25 @@ export async function POST() {
     return NextResponse.json({ error: "Strava não conectado" }, { status: 400 });
   }
 
-  let accessToken = athlete.stravaAccessToken!;
-  if (athlete.stravaTokenExpiry && athlete.stravaTokenExpiry < new Date()) {
-    const newTokens = await refreshStravaToken(athlete.stravaRefreshToken!);
-    accessToken = newTokens.access_token;
-    await prisma.athlete.update({
-      where: { id: athlete.id },
-      data: {
-        stravaAccessToken: newTokens.access_token,
-        stravaRefreshToken: newTokens.refresh_token,
-        stravaTokenExpiry: new Date(newTokens.expires_at * 1000),
-      },
-    });
-  }
-
-  const afterTimestamp = Math.floor(Date.now() / 1000) - 28 * 24 * 60 * 60;
-  const stravaActivities = await getRecentStravaActivities(accessToken, afterTimestamp);
-
   let synced = 0;
-  for (const sa of stravaActivities) {
-    await syncStravaActivity(String(sa.id), athlete.id, accessToken);
-    synced++;
+  try {
+    const accessToken = await getValidStravaToken(athlete);
+    const afterTimestamp = Math.floor(Date.now() / 1000) - 28 * 24 * 60 * 60;
+    const stravaActivities = await getRecentStravaActivities(accessToken, afterTimestamp);
+    for (const sa of stravaActivities) {
+      await syncStravaActivity(String(sa.id), athlete.id, accessToken);
+      synced++;
+    }
+    await recordStravaSync(athlete.id, null);
+  } catch (err) {
+    await recordStravaSync(athlete.id, err).catch(() => {});
+    if (err instanceof StravaAuthError) {
+      return NextResponse.json(
+        { error: "O Strava deixou de aceitar a ligação. Liga o Strava outra vez no perfil." },
+        { status: 401 }
+      );
+    }
+    throw err;
   }
 
   // Records are derived from the full activity history, so they only stay

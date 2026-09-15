@@ -105,9 +105,20 @@ model Athlete {
   stravaAccessToken  String?
   stravaRefreshToken String?
   stravaTokenExpiry  DateTime?
+  // What happened the last time Strava was used on this athlete's behalf, so the
+  // admin can see a broken link before the athlete notices an empty week.
+  stravaLastSyncAt   DateTime? // last activity imported successfully
+  stravaSyncError    String?   // last failure; cleared by the next success
+  stravaSyncErrorAt  DateTime?
   // Intervals.icu bridge: pushes planned workouts on to Garmin, COROS, Suunto and Wahoo
   intervalsIcuApiKey    String?
   intervalsIcuAthleteId String?
+  intervalsIcuLastPushAt   DateTime?
+  intervalsIcuPushError    String?  // last failed send; cleared by the next success
+  // Without a run threshold pace there, Intervals.icu strips pace targets on the
+  // way to the watch. Null until checked.
+  intervalsIcuHasRunThreshold Boolean?
+  intervalsIcuCheckedAt    DateTime?
   pushSubscription Json?
   // "system" until the athlete picks one, so a first visit can follow the device.
   // Existing rows hold "dark", which now correctly means a deliberate choice.

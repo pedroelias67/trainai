@@ -393,17 +393,37 @@ export async function hasRunThresholdPace(
   apiKey: string,
   athleteId: string
 ): Promise<boolean | null> {
+  const check = await checkIntervalsConnection(apiKey, athleteId);
+  return check.status === "ok" ? check.hasRunThreshold : null;
+}
+
+export type IntervalsCheck =
+  | { status: "ok"; hasRunThreshold: boolean | null }
+  | { status: "invalid-key" }
+  | { status: "unreachable" };
+
+/**
+ * Tries the athlete's key against their sport settings, which answers two
+ * questions in one call: does the key still work, and is there a run threshold
+ * pace. A revoked or regenerated key is the other way the watch silently stops
+ * getting workouts.
+ */
+export async function checkIntervalsConnection(
+  apiKey: string,
+  athleteId: string
+): Promise<IntervalsCheck> {
   const res = await fetch(`${API}/athlete/${athleteId}/sport-settings`, {
     headers: { Authorization: authHeader(apiKey) },
   }).catch(() => null);
-  if (!res?.ok) return null;
+  if (!res) return { status: "unreachable" };
+  if (res.status === 401 || res.status === 403) return { status: "invalid-key" };
+  if (!res.ok) return { status: "unreachable" };
 
   const groups = await res.json().catch(() => null);
-  if (!Array.isArray(groups)) return null;
+  if (!Array.isArray(groups)) return { status: "unreachable" };
 
   const run = groups.find(g => Array.isArray(g?.types) && g.types.includes("Run"));
-  if (!run) return null;
-  return Boolean(run.threshold_pace);
+  return { status: "ok", hasRunThreshold: run ? Boolean(run.threshold_pace) : null };
 }
 
 /** "5:08/km", for telling the athlete what to put in that empty field. */

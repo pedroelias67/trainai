@@ -5,6 +5,9 @@ import { formatPacePerKm } from "./format";
 const STRAVA_API = "https://www.strava.com/api/v3";
 const STRAVA_AUTH = "https://www.strava.com/oauth";
 
+/** Holds the OAuth state between sending the athlete to Strava and their return. */
+export const STRAVA_STATE_COOKIE = "strava_oauth_state";
+
 export interface StravaTokens {
   access_token: string;
   refresh_token: string;
@@ -89,8 +92,21 @@ export async function refreshStravaToken(refreshToken: string): Promise<StravaTo
       grant_type: "refresh_token",
     }),
   });
-  if (!res.ok) throw new Error(`Strava refresh error: ${res.status}`);
+  if (!res.ok) {
+    // 400 and 401 here mean Strava no longer accepts this athlete's grant —
+    // almost always because they removed the app from their Strava settings.
+    if (res.status === 400 || res.status === 401) throw new StravaAuthError(res.status);
+    throw new Error(`Strava refresh error: ${res.status}`);
+  }
   return res.json();
+}
+
+/** Strava refused the athlete's credentials: the link has to be made again. */
+export class StravaAuthError extends Error {
+  constructor(public status: number) {
+    super(`Strava recusou o acesso (${status})`);
+    this.name = "StravaAuthError";
+  }
 }
 
 export async function getStravaActivity(

@@ -9,6 +9,7 @@ export function IntervalsConnect({ connected }: { connected: boolean }) {
   const [apiKey, setApiKey] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [warning, setWarning] = useState<string | null>(null);
 
   async function connect(e: React.FormEvent) {
     e.preventDefault();
@@ -22,6 +23,7 @@ export function IntervalsConnect({ connected }: { connected: boolean }) {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao ligar");
+      setWarning(data.warning ?? null);
       setApiKey("");
       setShowForm(false);
       router.refresh();
@@ -35,6 +37,7 @@ export function IntervalsConnect({ connected }: { connected: boolean }) {
   async function disconnect() {
     setLoading(true);
     await fetch("/api/intervals/connect", { method: "DELETE" });
+    setWarning(null);
     setLoading(false);
     router.refresh();
   }
@@ -107,6 +110,19 @@ export function IntervalsConnect({ connected }: { connected: boolean }) {
             {loading ? "A verificar…" : "Ligar Intervals.icu"}
           </button>
         </form>
+      )}
+
+      {warning && (
+        <div className="flex gap-2.5 mt-3 p-3 rounded-xl bg-yellow-500/5 border border-yellow-500/20 text-xs text-[var(--text-secondary)] leading-relaxed">
+          <span className="shrink-0">⚠️</span>
+          <p>
+            <strong className="text-[var(--text-primary)]">Ligado, mas falta um passo.</strong> {warning}{" "}
+            <a href="https://intervals.icu/settings" target="_blank" rel="noopener noreferrer"
+              className="text-[var(--text-primary)] underline underline-offset-2">
+              Abrir definições
+            </a>
+          </p>
+        </div>
       )}
     </div>
   );

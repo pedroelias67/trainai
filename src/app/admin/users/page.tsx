@@ -47,6 +47,39 @@ type Invite = {
   account: (AccountStatus & { id: string }) | null;
 };
 
+type LinkLevel = "ok" | "warning" | "error" | "off";
+type LinkStatus = { level: LinkLevel; label: string; detail?: string };
+type Connection = {
+  userId: string;
+  athleteId: string;
+  name: string | null;
+  email: string;
+  strava: LinkStatus;
+  intervals: LinkStatus;
+  worst: LinkLevel;
+};
+
+const LINK_STYLE: Record<LinkLevel, { dot: string; text: string }> = {
+  ok: { dot: "bg-green-500", text: "text-green-400" },
+  warning: { dot: "bg-yellow-500", text: "text-yellow-400" },
+  error: { dot: "bg-red-500", text: "text-red-400" },
+  off: { dot: "bg-[var(--border-strong)]", text: "text-[var(--text-muted)]" },
+};
+
+function LinkCell({ service, status }: { service: string; status: LinkStatus }) {
+  const style = LINK_STYLE[status.level];
+  return (
+    <div className="min-w-0">
+      <p className="text-[var(--text-faint)] text-[11px] uppercase tracking-wide mb-0.5">{service}</p>
+      <p className={`text-sm font-medium flex items-center gap-1.5 ${style.text}`}>
+        <span className={`w-2 h-2 rounded-full shrink-0 ${style.dot}`} />
+        {status.label}
+      </p>
+      {status.detail && <p className="text-[var(--text-muted)] text-xs mt-0.5">{status.detail}</p>}
+    </div>
+  );
+}
+
 type Stats = {
   totalUsers: number;
   verifiedUsers: number;
@@ -98,7 +131,7 @@ function relativeTime(date: string) {
 
 export default function AdminUsersPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<"users" | "invites" | "stats" | "activity">("users");
+  const [tab, setTab] = useState<"users" | "invites" | "connections" | "stats" | "activity">("users");
 
   // Users state
   const [users, setUsers] = useState<User[]>([]);
@@ -121,6 +154,11 @@ export default function AdminUsersPage() {
   const [creatingInvite, setCreatingInvite] = useState(false);
   const [copiedToken, setCopiedToken] = useState<string | null>(null);
 
+  // Connections state
+  const [connections, setConnections] = useState<Connection[] | null>(null);
+  const [checking, setChecking] = useState(false);
+  const [checkNote, setCheckNote] = useState<string | null>(null);
+
   // Stats state
   const [stats, setStats] = useState<Stats | null>(null);
   const [statsLoading, setStatsLoading] = useState(false);
@@ -142,6 +180,16 @@ export default function AdminUsersPage() {
       .catch((e) => setError(e.message))
       .finally(() => setLoading(false));
   }, [router]);
+
+  // Loaded up front as well as on opening the tab, so the tab can show how many
+  // accounts need attention before anyone clicks it. Only reads the database.
+  useEffect(() => {
+    if (tab !== "users" && tab !== "connections") return;
+    fetch("/api/admin/connections")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (Array.isArray(data)) setConnections(data); })
+      .catch(() => {});
+  }, [tab]);
 
   useEffect(() => {
     if (tab !== "invites") return;
@@ -239,6 +287,21 @@ export default function AdminUsersPage() {
     setActing(null);
   }
 
+  async function checkConnections() {
+    setChecking(true);
+    setCheckNote(null);
+    try {
+      const res = await fetch("/api/admin/connections/check", { method: "POST" });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erro");
+      setConnections(data.connections);
+      setCheckNote(`${data.checked} ligaç${data.checked === 1 ? "ão verificada" : "ões verificadas"} agora.`);
+    } catch (e) {
+      setCheckNote(e instanceof Error ? e.message : "Erro ao verificar");
+    }
+    setChecking(false);
+  }
+
   async function handleCreateInvite(e: React.FormEvent) {
     e.preventDefault();
     setCreatingInvite(true);
@@ -296,8 +359,11 @@ export default function AdminUsersPage() {
       <main className="max-w-5xl mx-auto px-6 py-8">
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-1 w-fit flex-wrap">
-          {(["users", "invites", "stats", "activity"] as const).map((t) => {
-            const labels = { users: "Utilizadores", invites: "Convites", stats: "Estatísticas", activity: "Atividade" };
+          {(["users", "invites", "connections", "stats", "activity"] as const).map((t) => {
+            const labels = { users: "Utilizadores", invites: "Convites", connections: "Ligações", stats: "Estatísticas", activity: "Atividade" };
+            const problems = t === "connections" && connections
+              ? connections.filter((c) => c.worst === "error" || c.worst === "warning").length
+              : 0;
             return (
               <button
                 key={t}
@@ -307,6 +373,9 @@ export default function AdminUsersPage() {
                 }`}
               >
                 {labels[t]}
+                {problems > 0 && (
+                  <span className="ml-1.5 text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-yellow-500/15 text-yellow-400">{problems}</span>
+                )}
               </button>
             );
           })}
@@ -552,6 +621,50 @@ export default function AdminUsersPage() {
                     </div>
                   );
                 })}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── CONNECTIONS TAB ── */}
+        {tab === "connections" && (
+          <>
+            <div className="flex items-start justify-between gap-4 mb-6 flex-wrap">
+              <div>
+                <h1 className="text-2xl font-bold text-[var(--text-primary)]">Ligações</h1>
+                <p className="text-[var(--text-muted)] text-sm mt-0.5">
+                  Strava e Intervals.icu de cada atleta, com os problemas primeiro.
+                </p>
+              </div>
+              <div className="text-right">
+                <button onClick={checkConnections} disabled={checking} className="btn-secondary text-sm disabled:opacity-50">
+                  {checking ? "A verificar…" : "Verificar agora"}
+                </button>
+                <p className="text-[var(--text-faint)] text-xs mt-1.5 max-w-[16rem]">
+                  {checkNote ?? "Mostra o último estado registado. Verificar testa cada ligação a sério."}
+                </p>
+              </div>
+            </div>
+
+            {!connections ? (
+              <div className="card text-center py-12 text-[var(--text-muted)] text-sm">A carregar…</div>
+            ) : (
+              <div className="space-y-3">
+                {connections.map((c) => (
+                  <div key={c.userId} className={`card ${c.worst === "error" ? "border-red-500/30" : c.worst === "warning" ? "border-yellow-500/30" : ""}`}>
+                    <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_minmax(0,1fr)] items-start">
+                      <div className="min-w-0">
+                        <p className="text-[var(--text-primary)] text-sm font-medium truncate">{c.name ?? "—"}</p>
+                        <p className="text-[var(--text-muted)] text-xs truncate">{c.email}</p>
+                        <Link href={`/admin/athletes/${c.athleteId}`} className="text-xs text-[var(--text-faint)] hover:text-[var(--text-secondary)]">
+                          Ver detalhe →
+                        </Link>
+                      </div>
+                      <LinkCell service="Strava" status={c.strava} />
+                      <LinkCell service="Intervals.icu" status={c.intervals} />
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </>
