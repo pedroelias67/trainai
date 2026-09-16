@@ -21,6 +21,7 @@ const athleteSelect = {
   intervalsIcuLastPushAt: true,
   intervalsIcuPushError: true,
   intervalsIcuHasRunThreshold: true,
+  intervalsIcuWeekOnCalendar: true,
   intervalsIcuCheckedAt: true,
   trainingPlans: { where: { status: "ACTIVE" as const }, select: { id: true }, take: 1 },
 } as const;
@@ -47,6 +48,7 @@ export async function loadConnections(): Promise<UserConnections[]> {
       intervalsIcuLastPushAt: a.intervalsIcuLastPushAt,
       intervalsIcuPushError: a.intervalsIcuPushError,
       intervalsIcuHasRunThreshold: a.intervalsIcuHasRunThreshold,
+      intervalsIcuWeekOnCalendar: a.intervalsIcuWeekOnCalendar,
       hasActivePlan: a.trainingPlans.length > 0,
     };
     const strava = stravaStatus(facts);

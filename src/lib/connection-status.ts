@@ -16,6 +16,8 @@ export type ConnectionFacts = {
   intervalsIcuLastPushAt: Date | null;
   intervalsIcuPushError: string | null;
   intervalsIcuHasRunThreshold: boolean | null;
+  /** This week's sessions are on the Intervals.icu calendar. Null when unknown. */
+  intervalsIcuWeekOnCalendar: boolean | null;
 
   /** Weekly sends only matter to someone following a plan. */
   hasActivePlan: boolean;
@@ -88,8 +90,17 @@ export function intervalsStatus(f: ConnectionFacts, now = new Date()): LinkStatu
     };
   }
 
+  // What the calendar says beats any timestamp: a week sent before we started
+  // recording sends is still on the watch.
+  if (f.intervalsIcuWeekOnCalendar === false) {
+    return { level: "warning", label: "Semana atual por enviar", detail: "Estes treinos não estão no relógio" };
+  }
+  if (f.intervalsIcuWeekOnCalendar === true) {
+    return { level: "ok", label: "Semana atual no relógio" };
+  }
+
   if (f.hasActivePlan && !f.intervalsIcuLastPushAt) {
-    return { level: "warning", label: "Nenhuma semana enviada", detail: "O relógio não tem treinos da app" };
+    return { level: "warning", label: "Nenhuma semana enviada", detail: "O relógio pode não ter treinos da app" };
   }
 
   if (f.hasActivePlan && f.intervalsIcuLastPushAt && daysSince(f.intervalsIcuLastPushAt, now) > QUIET_DAYS) {

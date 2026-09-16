@@ -7,7 +7,7 @@ const ago = (days: number) => new Date(now.getTime() - days * 24 * 60 * 60 * 100
 const facts = (over: Partial<ConnectionFacts> = {}): ConnectionFacts => ({
   stravaConnected: true, stravaSyncError: null, stravaSyncErrorAt: null, lastActivityAt: ago(1),
   intervalsConnected: true, intervalsIcuLastPushAt: ago(2), intervalsIcuPushError: null,
-  intervalsIcuHasRunThreshold: true, hasActivePlan: true, ...over,
+  intervalsIcuHasRunThreshold: true, intervalsIcuWeekOnCalendar: null, hasActivePlan: true, ...over,
 });
 
 describe("stravaStatus", () => {
@@ -46,6 +46,21 @@ describe("intervalsStatus", () => {
   it("flags the missing threshold pace, the fault that looks like everything working", () => {
     expect(intervalsStatus(facts({ intervalsIcuHasRunThreshold: false }), now))
       .toMatchObject({ level: "warning", label: "Falta o ritmo de limiar" });
+  });
+
+  it("trusts the calendar over any timestamp", () => {
+    // A week sent before sends were recorded is still on the watch, and one sent
+    // yesterday to a different week is not this week.
+    expect(intervalsStatus(facts({ intervalsIcuWeekOnCalendar: true, intervalsIcuLastPushAt: null }), now))
+      .toEqual({ level: "ok", label: "Semana atual no relógio" });
+    expect(intervalsStatus(facts({ intervalsIcuWeekOnCalendar: false, intervalsIcuLastPushAt: ago(1) }), now))
+      .toMatchObject({ level: "warning", label: "Semana atual por enviar" });
+  });
+
+  it("still reports a failed send or a missing threshold first", () => {
+    expect(intervalsStatus(facts({ intervalsIcuWeekOnCalendar: true, intervalsIcuPushError: "Chave recusada" }), now).level).toBe("error");
+    expect(intervalsStatus(facts({ intervalsIcuWeekOnCalendar: true, intervalsIcuHasRunThreshold: false }), now).label)
+      .toBe("Falta o ritmo de limiar");
   });
 
   it("notices a plan whose weeks are not reaching the watch", () => {

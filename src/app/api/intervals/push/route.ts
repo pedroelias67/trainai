@@ -10,7 +10,10 @@ import {
   replaceEvents,
 } from "@/lib/intervals-icu";
 import { getSessionUserId } from "@/lib/session";
-import { recordIntervalsCheck, recordIntervalsPush, THRESHOLD_MISSING_WARNING } from "@/lib/intervals-connection";
+import {
+  checkWeekOnCalendar, recordIntervalsCheck, recordIntervalsPush, recordWeekOnCalendar,
+  THRESHOLD_MISSING_WARNING,
+} from "@/lib/intervals-connection";
 
 /**
  * Pushes a training week's sessions to the athlete's Intervals.icu calendar,
@@ -61,6 +64,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: result.error }, { status: 502 });
   }
   await recordIntervalsPush(athlete.id, null);
+  await recordWeekOnCalendar(athlete.id, await checkWeekOnCalendar(athlete));
 
   // The workouts are on the calendar, but Intervals.icu will strip their pace
   // targets on the way to the watch unless the athlete has a run threshold pace

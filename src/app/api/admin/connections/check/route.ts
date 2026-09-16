@@ -6,7 +6,7 @@ import { requireAdmin } from "@/lib/admin";
 import { loadConnections } from "@/lib/admin-connections";
 import { checkStravaConnection } from "@/lib/strava-connection";
 import { checkIntervalsConnection } from "@/lib/intervals-icu";
-import { recordIntervalsCheck } from "@/lib/intervals-connection";
+import { checkWeekOnCalendar, recordIntervalsCheck, recordWeekOnCalendar } from "@/lib/intervals-connection";
 
 /**
  * Tests every link for real, stores what it finds, and returns the updated view.
@@ -31,6 +31,7 @@ export async function POST() {
         checkIntervalsConnection(a.intervalsIcuApiKey, a.intervalsIcuAthleteId)
           .then(check => recordIntervalsCheck(a.id, check))
       );
+      jobs.push(checkWeekOnCalendar(a).then(on => recordWeekOnCalendar(a.id, on)));
     }
     // One athlete's failure is a result to show, not a reason to stop the rest.
     await Promise.allSettled(jobs);

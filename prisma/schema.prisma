@@ -118,6 +118,9 @@ model Athlete {
   // Without a run threshold pace there, Intervals.icu strips pace targets on the
   // way to the watch. Null until checked.
   intervalsIcuHasRunThreshold Boolean?
+  // Whether this week's sessions are actually on their Intervals.icu calendar,
+  // which is the question a watch answers, unlike "when did we last send".
+  intervalsIcuWeekOnCalendar Boolean?
   intervalsIcuCheckedAt    DateTime?
   pushSubscription Json?
   // "system" until the athlete picks one, so a first visit can follow the device.

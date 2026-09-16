@@ -431,21 +431,39 @@ export function formatThresholdPace(secsPerKm: number): string {
   return `${formatPaceSecs(secsPerKm)}/km`;
 }
 
-/** Our events on the athlete's calendar in a date range, keyed by external_id. */
+/**
+ * Which of our sessions are on the athlete's calendar in a date range.
+ *
+ * Answers the only question that matters about the link — are this week's
+ * workouts actually there — rather than when we last tried to put them there.
+ * Returns null when the calendar could not be read, which is not the same as
+ * empty.
+ */
+export async function pushedSessionIds(
+  apiKey: string,
+  athleteId: string,
+  oldest: string,
+  newest: string
+): Promise<Set<string> | null> {
+  const found = await ourEventIds(apiKey, athleteId, oldest, newest);
+  return found && new Set([...found.keys()].map(id => id.replace("trainai-", "")));
+}
+
+/** Our events on the athlete's calendar in a date range, or null if it could not be read. */
 async function ourEventIds(
   apiKey: string,
   athleteId: string,
   oldest: string,
   newest: string
-): Promise<Map<string, number>> {
+): Promise<Map<string, number> | null> {
   const res = await fetch(
     `${API}/athlete/${athleteId}/events?oldest=${oldest}&newest=${newest}`,
     { headers: { Authorization: authHeader(apiKey) } }
-  );
-  if (!res.ok) return new Map();
+  ).catch(() => null);
+  if (!res?.ok) return null;
 
   const events = await res.json().catch(() => null);
-  if (!Array.isArray(events)) return new Map();
+  if (!Array.isArray(events)) return null;
 
   const found = new Map<string, number>();
   for (const e of events) {
@@ -479,7 +497,8 @@ export async function replaceEvents(
   if (events.length === 0) return { ok: true, count: 0 };
 
   const dates = events.map(e => e.start_date_local.split("T")[0]).sort();
-  const existing = await ourEventIds(apiKey, athleteId, dates[0], dates[dates.length - 1]);
+  // A calendar we could not read means nothing to replace; the upsert still stands.
+  const existing = (await ourEventIds(apiKey, athleteId, dates[0], dates[dates.length - 1])) ?? new Map();
 
   await Promise.all(
     events
