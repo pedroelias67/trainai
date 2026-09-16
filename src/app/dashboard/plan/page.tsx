@@ -8,6 +8,7 @@ import { WeeklyAnalysis } from "@/components/dashboard/WeeklyAnalysis";
 import { PlanWeekGrid } from "@/components/dashboard/PlanWeekGrid";
 import { PlanWeekCollapsible } from "@/components/dashboard/PlanWeekCollapsible";
 import { ArchivePlan } from "@/components/dashboard/ArchivePlan";
+import { GeneratePlanForEvent } from "@/components/dashboard/GeneratePlanForEvent";
 import { getSessionUserId } from "@/lib/session";
 
 
@@ -35,6 +36,16 @@ export default async function PlanPage() {
   if (!athlete) redirect("/onboarding");
 
   const plan = athlete.trainingPlans[0];
+
+  // Races already entered that no active plan covers — the state an account is
+  // left in when generation fails partway through the onboarding.
+  const pendingEvents = plan
+    ? []
+    : await prisma.event.findMany({
+        where: { athleteId: athlete.id, date: { gte: new Date() } },
+        orderBy: { date: "asc" },
+        select: { id: true, name: true, date: true, distance: true },
+      });
 
   return (
     <div className="min-h-screen bg-[var(--bg-base)]">
@@ -67,8 +78,15 @@ export default async function PlanPage() {
           <div className="card text-center py-20">
             <p className="text-4xl mb-4">📋</p>
             <h2 className="text-xl font-bold text-[var(--text-primary)] mb-2">Sem plano ativo</h2>
-            <p className="text-[var(--text-muted)] text-sm mb-6">Cria um evento para gerar o teu plano personalizado</p>
-            <Link href="/onboarding" className="btn-primary inline-block">Criar plano</Link>
+            <p className="text-[var(--text-muted)] text-sm mb-6">
+              {pendingEvents.length > 0
+                ? "Gera o plano para uma prova que já tens, ou cria uma nova."
+                : "Cria um evento para gerar o teu plano personalizado"}
+            </p>
+            <Link href="/onboarding" className={pendingEvents.length > 0 ? "btn-secondary inline-block" : "btn-primary inline-block"}>
+              {pendingEvents.length > 0 ? "Criar outra prova" : "Criar plano"}
+            </Link>
+            <GeneratePlanForEvent events={pendingEvents.map(e => ({ ...e, date: e.date.toISOString() }))} />
           </div>
         ) : (
           <div>

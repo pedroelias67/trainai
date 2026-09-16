@@ -80,6 +80,29 @@ function LinkCell({ service, status }: { service: string; status: LinkStatus }) 
   );
 }
 
+type Stage = "conta" | "perfil" | "evento" | "plano" | "a-treinar" | "parado";
+type Progress = {
+  userId: string;
+  athleteId: string;
+  name: string | null;
+  email: string;
+  createdAt: string;
+  lastLoginAt: string | null;
+  progress: { stage: Stage; label: string; detail?: string; stuck: boolean };
+};
+
+/** Sign-ins have only been recorded since this deploy; before it, silence means nothing. */
+const LOGIN_TRACKING_SINCE = new Date("2026-09-14T22:00:00Z");
+
+const STAGE_STYLE: Record<Stage, string> = {
+  conta: "bg-[var(--bg-hover)] text-[var(--text-secondary)] border-[var(--border-hover)]",
+  perfil: "bg-[var(--bg-hover)] text-[var(--text-secondary)] border-[var(--border-hover)]",
+  evento: "bg-red-500/10 text-red-400 border-red-500/20",
+  plano: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+  parado: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+  "a-treinar": "bg-green-500/10 text-green-400 border-green-500/20",
+};
+
 type Stats = {
   totalUsers: number;
   verifiedUsers: number;
@@ -131,7 +154,7 @@ function relativeTime(date: string) {
 
 export default function AdminUsersPage() {
   const router = useRouter();
-  const [tab, setTab] = useState<"users" | "invites" | "connections" | "stats" | "activity">("users");
+  const [tab, setTab] = useState<"users" | "invites" | "connections" | "progress" | "stats" | "activity">("users");
 
   // Users state
   const [users, setUsers] = useState<User[]>([]);
@@ -158,6 +181,9 @@ export default function AdminUsersPage() {
   const [connections, setConnections] = useState<Connection[] | null>(null);
   const [checking, setChecking] = useState(false);
   const [checkNote, setCheckNote] = useState<string | null>(null);
+
+  // Progress state
+  const [progress, setProgress] = useState<Progress[] | null>(null);
 
   // Stats state
   const [stats, setStats] = useState<Stats | null>(null);
@@ -188,6 +214,14 @@ export default function AdminUsersPage() {
     fetch("/api/admin/connections")
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => { if (Array.isArray(data)) setConnections(data); })
+      .catch(() => {});
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab !== "users" && tab !== "progress") return;
+    fetch("/api/admin/progress")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (Array.isArray(data)) setProgress(data); })
       .catch(() => {});
   }, [tab]);
 
@@ -359,11 +393,14 @@ export default function AdminUsersPage() {
       <main className="max-w-5xl mx-auto px-6 py-8">
         {/* Tabs */}
         <div className="flex gap-1 mb-6 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl p-1 w-fit flex-wrap">
-          {(["users", "invites", "connections", "stats", "activity"] as const).map((t) => {
-            const labels = { users: "Utilizadores", invites: "Convites", connections: "Ligações", stats: "Estatísticas", activity: "Atividade" };
-            const problems = t === "connections" && connections
-              ? connections.filter((c) => c.worst === "error" || c.worst === "warning").length
-              : 0;
+          {(["users", "invites", "connections", "progress", "stats", "activity"] as const).map((t) => {
+            const labels = { users: "Utilizadores", invites: "Convites", connections: "Ligações", progress: "Percurso", stats: "Estatísticas", activity: "Atividade" };
+            const problems =
+              t === "connections" && connections
+                ? connections.filter((c) => c.worst === "error" || c.worst === "warning").length
+                : t === "progress" && progress
+                ? progress.filter((p) => p.progress.stuck).length
+                : 0;
             return (
               <button
                 key={t}
@@ -662,6 +699,59 @@ export default function AdminUsersPage() {
                       </div>
                       <LinkCell service="Strava" status={c.strava} />
                       <LinkCell service="Intervals.icu" status={c.intervals} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* ── PROGRESS TAB ── */}
+        {tab === "progress" && (
+          <>
+            <div className="mb-6">
+              <h1 className="text-2xl font-bold text-[var(--text-primary)]">Percurso</h1>
+              <p className="text-[var(--text-muted)] text-sm mt-0.5">
+                Do registo ao primeiro treino. Quem ficou pelo caminho aparece primeiro.
+              </p>
+            </div>
+
+            {!progress ? (
+              <div className="card text-center py-12 text-[var(--text-muted)] text-sm">A carregar…</div>
+            ) : (
+              <div className="space-y-3">
+                {progress.map((p) => (
+                  <div key={p.userId} className={`card ${p.progress.stuck ? "border-yellow-500/30" : ""}`}>
+                    <div className="flex items-start justify-between gap-4 flex-wrap">
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <p className="text-[var(--text-primary)] text-sm font-medium">{p.name ?? "—"}</p>
+                          <span className={`text-xs px-2 py-0.5 rounded-full border ${STAGE_STYLE[p.progress.stage]}`}>
+                            {p.progress.label}
+                          </span>
+                          {p.progress.stuck && (
+                            <span className="text-yellow-400 text-xs font-semibold">precisa de ajuda</span>
+                          )}
+                        </div>
+                        <p className="text-[var(--text-muted)] text-xs mt-0.5">{p.email}</p>
+                        {p.progress.detail && (
+                          <p className="text-[var(--text-secondary)] text-xs mt-1">{p.progress.detail}</p>
+                        )}
+                        <p className="text-[var(--text-faint)] text-xs mt-1">
+                          Registado {relativeTime(p.createdAt)}
+                          {" · "}
+                          {p.lastLoginAt
+                            ? `último acesso ${relativeTime(p.lastLoginAt)}`
+                            : new Date(p.createdAt) < LOGIN_TRACKING_SINCE
+                            ? "acessos ainda não registados nessa altura"
+                            : "nunca entrou"}
+                        </p>
+                      </div>
+                      <Link href={`/admin/athletes/${p.athleteId}`}
+                        className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all shrink-0">
+                        Ver detalhe →
+                      </Link>
                     </div>
                   </div>
                 ))}

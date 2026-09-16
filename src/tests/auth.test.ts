@@ -13,6 +13,11 @@ const mockPrisma = prisma as unknown as {
   };
 };
 
+/** An athlete row shaped as the login route asks for it. */
+function athleteWith(events: number, trainingPlans: number) {
+  return { id: "athlete-1", _count: { events, trainingPlans } };
+}
+
 // Helper to make a fake POST request
 function makeRequest(body: unknown) {
   return new Request("http://localhost/api/auth/login", {
@@ -45,7 +50,7 @@ describe("POST /api/auth/login", () => {
       passwordHash: "hashed_correct_password",
       emailVerified: true,
       verificationToken: null,
-      athlete: { id: "athlete-1" },
+      athlete: athleteWith(1, 1),
     });
 
     const { POST } = await import("@/app/api/auth/login/route");
@@ -63,7 +68,7 @@ describe("POST /api/auth/login", () => {
       passwordHash: "hashed_correct_password",
       emailVerified: true,
       verificationToken: null,
-      athlete: { id: "athlete-1" },
+      athlete: athleteWith(1, 1),
     });
 
     const { POST } = await import("@/app/api/auth/login/route");
@@ -91,7 +96,7 @@ describe("Account lockout", () => {
     verificationToken: null,
     failedLoginCount: 0,
     lockedUntil: null,
-    athlete: { id: "athlete-1" },
+    athlete: athleteWith(1, 1),
     ...over,
   });
 
@@ -154,7 +159,7 @@ describe("Sessions on login", () => {
   const user = (over: Record<string, unknown> = {}) => ({
     id: "user-1", email: "test@test.com", passwordHash: "hashed_correct_password",
     emailVerified: true, verificationToken: null, failedLoginCount: 0, lockedUntil: null,
-    suspendedAt: null, athlete: { id: "athlete-1", fitnessLevel: "ADVANCED" }, ...over,
+    suspendedAt: null, athlete: athleteWith(1, 1), ...over,
   });
 
   beforeEach(() => vi.clearAllMocks());
@@ -187,5 +192,34 @@ describe("Sessions on login", () => {
     const res = await POST(makeRequest({ email: "test@test.com", password: "wrong_password" }) as never);
     expect(res.status).toBe(401);
     expect((await res.json()).code).toBeUndefined();
+  });
+});
+
+describe("Where login sends people", () => {
+  const user = (athlete: unknown) => ({
+    id: "user-1", email: "test@test.com", passwordHash: "hashed_correct_password",
+    emailVerified: true, verificationToken: null, failedLoginCount: 0, lockedUntil: null,
+    suspendedAt: null, athlete,
+  });
+
+  beforeEach(() => vi.clearAllMocks());
+
+  async function redirectFor(athlete: unknown) {
+    mockPrisma.user.findUnique.mockResolvedValue(user(athlete));
+    const { POST } = await import("@/app/api/auth/login/route");
+    const res = await POST(makeRequest({ email: "test@test.com", password: "correct_password" }) as never);
+    return (await res.json()).redirectTo;
+  }
+
+  it("takes someone who set nothing up to the onboarding", async () => {
+    // The old test was "does the athlete have a fitness level", which has a
+    // default and so was true for everyone, empty account included.
+    expect(await redirectFor(athleteWith(0, 0))).toBe("/onboarding");
+  });
+
+  it("takes everyone else to the dashboard", async () => {
+    expect(await redirectFor(athleteWith(1, 0))).toBe("/dashboard");
+    expect(await redirectFor(athleteWith(0, 1))).toBe("/dashboard");
+    expect(await redirectFor(athleteWith(2, 3))).toBe("/dashboard");
   });
 });

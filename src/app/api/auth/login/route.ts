@@ -6,6 +6,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { createSession, SUSPENDED_MESSAGE } from "@/lib/session";
 import { afterFailure, cleared, isLocked, minutesLeft } from "@/lib/login-lock";
+import { needsOnboarding } from "@/lib/athlete-progress";
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -19,7 +20,7 @@ export async function POST(req: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      include: { athlete: true },
+      include: { athlete: { select: { id: true, _count: { select: { events: true, trainingPlans: true } } } } },
     });
 
     if (!user || !user.passwordHash) {
@@ -69,14 +70,19 @@ export async function POST(req: NextRequest) {
 
     await createSession(user.id, req.headers.get("user-agent"));
 
-    const hasAthlete = !!user.athlete;
-    const hasCompletedOnboarding = hasAthlete && !!user.athlete?.fitnessLevel;
+    // Not "does the athlete have a fitness level": that column has a default and
+    // registration creates the row, so it was true for everyone — and people who
+    // had set nothing up landed on an empty dashboard.
+    const setUp = user.athlete && !needsOnboarding({
+      eventCount: user.athlete._count.events,
+      planCount: user.athlete._count.trainingPlans,
+    });
 
     return NextResponse.json({
       id: user.id,
       name: user.name,
       email: user.email,
-      redirectTo: hasCompletedOnboarding ? "/dashboard" : "/onboarding",
+      redirectTo: setUp ? "/dashboard" : "/onboarding",
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
