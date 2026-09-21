@@ -6,7 +6,7 @@ import {
   bestTimeForDistance,
   type RunForRecords,
 } from "@/lib/personal-records";
-import { clockParts, formatClock, formatPacePerKm } from "@/lib/format";
+import { clockParts, formatClock, formatPacePerKm, paceToSeconds } from "@/lib/format";
 
 describe("matchesDistance", () => {
   it("accepts an activity that really covers the distance", () => {
@@ -114,6 +114,15 @@ describe("bestTimeForDistance", () => {
   it("skips GPS glitches", () => {
     const glitch = run({ distance: 21100, duration: 600, bestEfforts: [{ name: "Half-Marathon", elapsed_time: 600 }] });
     expect(bestTimeForDistance([glitch], HALF)).toBeNull();
+  });
+});
+
+describe("paceToSeconds", () => {
+  it("reads a written pace, and rejects what is not one", () => {
+    expect(paceToSeconds("5:25/km")).toBe(325);
+    expect(paceToSeconds("6:00/km")).toBe(360);
+    expect(paceToSeconds("N/A")).toBeNull();
+    expect(paceToSeconds(null)).toBeNull();
   });
 });
 

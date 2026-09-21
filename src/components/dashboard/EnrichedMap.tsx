@@ -16,6 +16,8 @@ interface Props {
   height?: number;
   /** Trims the chrome for small embeds: tighter padding and no elevation profile. */
   compact?: boolean;
+  /** Off when the track carries no heart rate — a shared route, for one. */
+  showHeartRate?: boolean;
 }
 
 type ColorBy = "pace" | "hr";
@@ -45,7 +47,7 @@ function hrToColor(hr: number): string {
   return "#ef4444"; // red Z5
 }
 
-export default function EnrichedMap({ gpsTrack, elevationGain, height = 380, compact = false }: Props) {
+export default function EnrichedMap({ gpsTrack, elevationGain, height = 380, compact = false, showHeartRate = true }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
   const [colorBy, setColorBy] = useState<ColorBy>("pace");
@@ -167,6 +169,7 @@ export default function EnrichedMap({ gpsTrack, elevationGain, height = 380, com
         >
           Pace
         </button>
+        {showHeartRate && (
         <button
           onClick={() => setColorBy("hr")}
           className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
@@ -175,6 +178,7 @@ export default function EnrichedMap({ gpsTrack, elevationGain, height = 380, com
         >
           FC
         </button>
+        )}
       </div>
 
       {/* Map */}

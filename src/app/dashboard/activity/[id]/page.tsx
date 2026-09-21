@@ -98,6 +98,9 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
 
         {/* Share Card */}
         <ActivityShareCard
+          activityId={activity.id}
+          shareToken={activity.shareToken}
+          trimMap={athlete.shareTrimMap}
           name={activity.name ?? "Atividade"}
           distance={activity.distance ? (activity.distance / 1000).toFixed(2) : null}
           duration={activity.duration ? `${Math.floor(activity.duration / 3600)}h ${Math.floor((activity.duration % 3600) / 60)}min` : null}

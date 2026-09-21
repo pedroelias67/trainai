@@ -123,6 +123,9 @@ model Athlete {
   intervalsIcuWeekOnCalendar Boolean?
   intervalsIcuCheckedAt    DateTime?
   pushSubscription Json?
+  // Hide the first and last few hundred metres of a shared route, so a public map
+  // does not show where the athlete lives.
+  shareTrimMap    Boolean   @default(true)
   // "system" until the athlete picks one, so a first visit can follow the device.
   // Existing rows hold "dark", which now correctly means a deliberate choice.
   theme           String    @default("system")
@@ -267,6 +270,10 @@ model Activity {
   gpsTrack        Json?     // array de {lat, lng, ele, hr, pace} por ponto
   splits          Json?     // splits por km
   rawData         Json?
+  // Set when the athlete publishes this activity: an unguessable id that opens a
+  // read-only page without an account. Null means it is private again.
+  shareToken      String?   @unique
+  sharedAt        DateTime?
   shoeId          String?
   createdAt       DateTime  @default(now())
 

@@ -27,3 +27,12 @@ export function formatClock(seconds: number): string {
   const { h, m, s } = clockParts(seconds);
   return h > 0 ? `${h}:${pad(m)}:${pad(s)}` : `${m}:${pad(s)}`;
 }
+
+/** "5:25/km" → 325 seconds. Null for anything that is not a written pace. */
+export function paceToSeconds(pace: string | null): number | null {
+  if (!pace) return null;
+  const m = pace.match(/^(\d{1,2}):(\d{2})/);
+  if (!m) return null;
+  const secs = Number(m[1]) * 60 + Number(m[2]);
+  return secs > 0 ? secs : null;
+}
