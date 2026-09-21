@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { projectTrack } from "@/lib/share-image";
 import type { TrackPoint } from "@/lib/share-privacy";
 
@@ -32,6 +32,16 @@ export default function ActivityShareCard({
 }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawing, setDrawing] = useState(false);
+  // A share sheet exists on phones and on some desktops, and nowhere else. The
+  // buttons say what they will actually do — on a computer that is copying a
+  // link and saving a file, not "sharing". Read after mount: the server has no
+  // way to know, and guessing would make the first paint disagree with itself.
+  const [hasShareSheet, setHasShareSheet] = useState(false);
+  const [canShareFiles, setCanShareFiles] = useState(false);
+  useEffect(() => {
+    setHasShareSheet(typeof navigator !== "undefined" && typeof navigator.share === "function");
+    setCanShareFiles(typeof navigator !== "undefined" && typeof navigator.canShare === "function");
+  }, []);
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState<string | null>(
     shareToken ? `${typeof window === "undefined" ? "" : window.location.origin}/t/${shareToken}` : null
@@ -222,7 +232,7 @@ export default function ActivityShareCard({
           disabled={busy}
           className="px-3 py-1.5 bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)] border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50"
         >
-          {busy ? "A preparar…" : copied ? "✓ Link copiado!" : "↗ Partilhar"}
+          {busy ? "A preparar…" : copied ? "✓ Link copiado!" : hasShareSheet ? "↗ Partilhar" : "⧉ Copiar link"}
         </button>
       </div>
 
@@ -260,10 +270,12 @@ export default function ActivityShareCard({
 
         <button onClick={shareImage} disabled={drawing}
           className="w-full px-3 py-2 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs font-medium transition-all disabled:opacity-50">
-          {drawing ? "A desenhar…" : "🖼 Partilhar como imagem"}
+          {drawing ? "A desenhar…" : canShareFiles ? "🖼 Partilhar como imagem" : "🖼 Guardar imagem"}
         </button>
         <p className="text-[var(--text-faint)] text-xs">
-          Para WhatsApp ou Instagram: vê-se sem abrir nada, e leva só a silhueta do percurso.
+          {canShareFiles
+            ? "Para WhatsApp ou Instagram: vê-se sem abrir nada, e leva só a silhueta do percurso."
+            : "Guarda um quadrado pronto a enviar, com a silhueta do percurso e mais nada."}
         </p>
       </div>
       <canvas ref={canvasRef} className="hidden" />
