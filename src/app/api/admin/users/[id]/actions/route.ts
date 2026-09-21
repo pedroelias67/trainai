@@ -8,10 +8,11 @@ import { accountStatus, accountStatusSelect, ADMIN_EMAIL, requireAdmin } from "@
 import { revokeAllSessions } from "@/lib/session";
 import { cleared } from "@/lib/login-lock";
 import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail } from "@/lib/email";
+import { emailWeekReport, generateWeekReport, lastFinishedWeek } from "@/lib/weekly-report";
 
 const ACTIONS = [
   "activate", "unlock", "resend-verification", "send-password-reset", "send-welcome",
-  "suspend", "unsuspend", "revoke-sessions",
+  "suspend", "unsuspend", "revoke-sessions", "send-weekly-report",
 ] as const;
 type Action = (typeof ACTIONS)[number];
 
@@ -126,6 +127,25 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         }
         await sendWelcomeEmail(user.email, user.name ?? "atleta");
         message = `Email de boas-vindas enviado para ${user.email}.`;
+        break;
+      }
+
+      case "send-weekly-report": {
+        // Two different failures land here: a report that was never produced —
+        // Sunday's job ran out of time — and one produced but never delivered.
+        const athlete = await prisma.athlete.findUnique({ where: { userId: id }, select: { id: true } });
+        if (!athlete) {
+          return NextResponse.json({ error: "Este utilizador não tem perfil de atleta" }, { status: 400 });
+        }
+        const week = await lastFinishedWeek(athlete.id);
+        if (!week) {
+          return NextResponse.json({ error: "Ainda não há nenhuma semana terminada para resumir" }, { status: 400 });
+        }
+        const { created } = await generateWeekReport(week.id);
+        const { sentTo } = await emailWeekReport(week.id);
+        message = created
+          ? `Relatório da semana ${week.weekNumber} gerado e enviado para ${sentTo}.`
+          : `Relatório da semana ${week.weekNumber} reenviado para ${sentTo}.`;
         break;
       }
 

@@ -19,7 +19,7 @@ type AccountStatus = {
 
 type UserAction =
   | "activate" | "unlock" | "resend-verification" | "send-password-reset" | "send-welcome"
-  | "suspend" | "unsuspend" | "revoke-sessions";
+  | "suspend" | "unsuspend" | "revoke-sessions" | "send-weekly-report";
 
 type User = {
   id: string;
@@ -88,6 +88,7 @@ type Progress = {
   email: string;
   createdAt: string;
   lastLoginAt: string | null;
+  lastReportAt: string | null;
   progress: { stage: Stage; label: string; detail?: string; stuck: boolean };
 };
 
@@ -519,6 +520,11 @@ export default function AdminUsersPage() {
                           {acting === `${user.id}:send-welcome` ? "A enviar…" : "Enviar email de boas-vindas"}
                         </button>
                       )}
+                      <button onClick={() => runAction(user, "send-weekly-report")} disabled={acting !== null}
+                        title="Gera o resumo da última semana terminada, se ainda não existir, e envia-o por email"
+                        className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all disabled:opacity-50">
+                        {acting === `${user.id}:send-weekly-report` ? "A preparar…" : "Enviar resumo semanal"}
+                      </button>
                       <button onClick={() => runAction(user, "send-password-reset")} disabled={acting !== null}
                         className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all disabled:opacity-50">
                         {acting === `${user.id}:send-password-reset` ? "A enviar…" : "Enviar link de nova password"}
@@ -738,6 +744,11 @@ export default function AdminUsersPage() {
                         {p.progress.detail && (
                           <p className="text-[var(--text-secondary)] text-xs mt-1">{p.progress.detail}</p>
                         )}
+                        <p className="text-[var(--text-faint)] text-xs mt-1">
+                          {p.lastReportAt
+                            ? `Último resumo semanal ${relativeTime(p.lastReportAt)}`
+                            : "Nunca recebeu resumo semanal"}
+                        </p>
                         <p className="text-[var(--text-faint)] text-xs mt-1">
                           Registado {relativeTime(p.createdAt)}
                           {" · "}

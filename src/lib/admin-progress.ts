@@ -9,6 +9,8 @@ export type UserProgress = {
   createdAt: Date;
   lastLoginAt: Date | null;
   progress: Progress;
+  /** When this athlete last had a weekly summary. Null means never. */
+  lastReportAt: Date | null;
 };
 
 /** Everyone's place on the path from registering to training, the stuck ones first. */
@@ -16,7 +18,7 @@ export async function loadProgress(): Promise<UserProgress[]> {
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
 
-  const [users, activities, upcoming] = await Promise.all([
+  const [users, activities, upcoming, reports] = await Promise.all([
     prisma.user.findMany({
       where: { athlete: { isNot: null } },
       select: {
@@ -36,7 +38,9 @@ export async function loadProgress(): Promise<UserProgress[]> {
       where: { cancelled: false, date: { gte: startOfToday }, week: { plan: { status: "ACTIVE" } } },
       _count: { _all: true },
     }),
+    prisma.weeklyReport.groupBy({ by: ["athleteId"], _max: { createdAt: true } }),
   ]);
+  const lastReport = new Map(reports.map(r => [r.athleteId, r._max.createdAt]));
 
   // Sessions come back per week; map them on to their athlete in one more query.
   const weeks = upcoming.length
@@ -58,6 +62,7 @@ export async function loadProgress(): Promise<UserProgress[]> {
     return {
       userId: u.id, athleteId: a.id, name: u.name, email: u.email,
       createdAt: u.createdAt, lastLoginAt: u.lastLoginAt,
+      lastReportAt: lastReport.get(a.id) ?? null,
       progress: athleteProgress({
         createdAt: u.createdAt,
         lastLoginAt: u.lastLoginAt,

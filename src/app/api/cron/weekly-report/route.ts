@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { analyzeWeekAndAdapt, suggestSessionAdaptations, detailSessions } from "@/lib/claude";
 import { sendWeeklyReportEmail } from "@/lib/email";
+import { emailWeekReport } from "@/lib/weekly-report";
 import { sendWeekToWatch } from "@/lib/watch-sync";
 import * as Sentry from "@sentry/nextjs";
 import { differenceInWeeks } from "date-fns";
@@ -310,25 +311,10 @@ export async function GET(req: NextRequest) {
         }
       }
 
-      // Send weekly email report
+      // Sent through the same path as the admin's "send it now" button, so the
+      // two cannot drift apart.
       try {
-        const report = await prisma.weeklyReport.findUnique({ where: { weekId: week.id } });
-        const weeksToEvent = Math.max(
-          differenceInWeeks(week.plan.event.date, new Date()),
-          0
-        );
-        await sendWeeklyReportEmail(athlete.user.email, athlete.user.name ?? "Atleta", {
-          weekNumber: week.weekNumber,
-          completedSessions: report?.completedSessions ?? week.sessions.filter(s => s.completed).length,
-          plannedSessions: week.sessions.length,
-          actualDistance: report?.actualDistance ?? 0,
-          plannedDistance: week.totalDistance,
-          aiSummary: analysis.summary,
-          nextWeekAdaptations: analysis.nextWeekAdjustments ?? null,
-          eventName: week.plan.event.name,
-          weeksToEvent,
-          adaptationFailed,
-        });
+        await emailWeekReport(week.id, { adaptationFailed });
       } catch (emailErr) {
         console.error("Weekly email error:", emailErr);
         Sentry.captureException(emailErr, {
