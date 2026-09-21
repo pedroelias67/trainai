@@ -6,9 +6,13 @@ import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/session";
 import { reschedulePlan } from "@/lib/reschedule";
 
+// Everything the preferences form holds, not just the days: saving only part of
+// a form the athlete filled in loses the rest without saying so.
 const schema = z.object({
   preferredDays: z.array(z.number().int().min(1).max(7)).min(2),
   longRunDay: z.number().int().min(1).max(7),
+  weeklyHours: z.number().positive().max(40).optional(),
+  fitnessLevel: z.enum(["BEGINNER", "INTERMEDIATE", "ADVANCED", "ELITE"]).optional(),
 });
 
 /**
@@ -26,7 +30,7 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Escolhe pelo menos dois dias de treino" }, { status: 400 });
   }
-  const { preferredDays, longRunDay } = parsed.data;
+  const { preferredDays, longRunDay, weeklyHours, fitnessLevel } = parsed.data;
 
   const athlete = await prisma.athlete.findUnique({
     where: { userId },
@@ -39,7 +43,11 @@ export async function POST(req: NextRequest) {
 
   await prisma.athlete.update({
     where: { id: athlete.id },
-    data: { preferredDays, longRunDay, trainingDaysPerWeek: preferredDays.length },
+    data: {
+      preferredDays, longRunDay, trainingDaysPerWeek: preferredDays.length,
+      ...(weeklyHours !== undefined ? { weeklyHours } : {}),
+      ...(fitnessLevel !== undefined ? { fitnessLevel } : {}),
+    },
   });
 
   const result = await reschedulePlan(athlete.id, plan.id, preferredDays, longRunDay);

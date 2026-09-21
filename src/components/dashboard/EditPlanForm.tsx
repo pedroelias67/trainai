@@ -66,12 +66,12 @@ export function EditPlanForm({
       const res = await fetch("/api/training-plans/reschedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ preferredDays, longRunDay }),
+        body: JSON.stringify({ preferredDays, longRunDay, weeklyHours, fitnessLevel }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Erro ao reagendar");
       setDone(
-        `${data.moved} treino${data.moved === 1 ? "" : "s"} mudado${data.moved === 1 ? "" : "s"} de dia` +
+        `Preferências guardadas. ${data.moved} treino${data.moved === 1 ? "" : "s"} mudado${data.moved === 1 ? "" : "s"} de dia` +
         (data.dropped > 0 ? `, ${data.dropped} cancelado${data.dropped === 1 ? "" : "s"} por falta de dias` : "") +
         ". O relógio já tem as datas novas."
       );
