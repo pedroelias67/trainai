@@ -10,6 +10,7 @@ import { PlanWeekCollapsible } from "@/components/dashboard/PlanWeekCollapsible"
 import { ArchivePlan } from "@/components/dashboard/ArchivePlan";
 import { GeneratePlanForEvent } from "@/components/dashboard/GeneratePlanForEvent";
 import { getSessionUserId } from "@/lib/session";
+import { parseWeekAnalysis } from "@/lib/week-analysis";
 
 
 export default async function PlanPage() {
@@ -90,6 +91,9 @@ export default async function PlanPage() {
               {pendingEvents.length > 0 ? "Criar outra prova" : "Criar plano"}
             </Link>
             <GeneratePlanForEvent events={pendingEvents.map(e => ({ ...e, date: e.date.toISOString() }))} />
+            <Link href="/dashboard/plans" className="block mt-8 text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-xs transition-colors">
+              Histórico de planos →
+            </Link>
           </div>
         ) : (
           <div>
@@ -111,6 +115,9 @@ export default async function PlanPage() {
                   Editar preferências
                 </Link>
                 <ArchivePlan planId={plan.id} />
+                <Link href="/dashboard/plans" className="text-[var(--text-muted)] hover:text-[var(--text-secondary)] text-xs transition-colors">
+                  Histórico de planos →
+                </Link>
               </div>
             </div>
 
@@ -205,7 +212,7 @@ export default async function PlanPage() {
                           <WeeklyAnalysis
                             weekId={week.id}
                             weekNumber={week.weekNumber}
-                            savedAnalysis={week.aiAnalysis ? JSON.parse(week.aiAnalysis as string) : null}
+                            savedAnalysis={parseWeekAnalysis(week.aiAnalysis)}
                           />
                         </div>
                       )}

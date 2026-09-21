@@ -1,12 +1,11 @@
 "use client";
 
 import { useState } from "react";
+import type { WeekAnalysis } from "@/lib/week-analysis";
 
-interface Analysis {
-  summary: string;
-  adaptations: string;
-  nextWeekAdjustments: string;
-}
+// Shared with whatever reads the stored analysis: the two halves beyond the
+// summary are not always there.
+type Analysis = WeekAnalysis;
 
 interface Props {
   weekId: string;
@@ -79,14 +78,20 @@ export function WeeklyAnalysis({ weekId, weekNumber, savedAnalysis }: Props) {
                 <p className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-widest mb-2">Resumo da semana</p>
                 <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{analysis.summary}</p>
               </div>
-              <div className="bg-[var(--bg-subtle)] rounded-xl p-4">
-                <p className="text-xs font-semibold text-blue-400 uppercase tracking-widest mb-2">Adaptação fisiológica</p>
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{analysis.adaptations}</p>
-              </div>
-              <div className="bg-green-500/5 border border-green-500/15 rounded-xl p-4">
-                <p className="text-xs font-semibold text-green-400 uppercase tracking-widest mb-2">Ajustes para a semana seguinte</p>
-                <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{analysis.nextWeekAdjustments}</p>
-              </div>
+              {/* An older analysis may be the summary and nothing else; a heading
+                  with nothing under it reads as a fault. */}
+              {analysis.adaptations && (
+                <div className="bg-[var(--bg-subtle)] rounded-xl p-4">
+                  <p className="text-xs font-semibold text-blue-400 uppercase tracking-widest mb-2">Adaptação fisiológica</p>
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{analysis.adaptations}</p>
+                </div>
+              )}
+              {analysis.nextWeekAdjustments && (
+                <div className="bg-green-500/5 border border-green-500/15 rounded-xl p-4">
+                  <p className="text-xs font-semibold text-green-400 uppercase tracking-widest mb-2">Ajustes para a semana seguinte</p>
+                  <p className="text-sm text-[var(--text-secondary)] leading-relaxed">{analysis.nextWeekAdjustments}</p>
+                </div>
+              )}
               <button onClick={runAnalysis} disabled={loading}
                 className="text-xs text-[var(--text-faint)] hover:text-[var(--text-secondary)] transition-colors">
                 {loading ? "A reanalisar…" : "Reanalisar"}

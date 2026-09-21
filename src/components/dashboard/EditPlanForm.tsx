@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 // 1=Segunda ... 6=Sábado, 7=Domingo
 const DAYS_OF_WEEK = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -208,13 +209,25 @@ export function EditPlanForm({
         </div>
       </div>
 
-      {/* Warning */}
+      {/* What actually happens, in full: the old warning said the plan would be
+          replaced and stopped there, leaving the athlete to wonder what became
+          of the weeks they had trained. */}
       {hasPlan && (
         <div className="flex gap-3 p-4 rounded-xl border border-yellow-500/20 bg-yellow-500/5">
           <span className="text-yellow-400 text-lg shrink-0">⚠️</span>
-          <p className="text-sm text-yellow-300/80">
-            O plano atual será substituído por um novo plano gerado com as preferências atualizadas. As atividades registadas não serão afetadas.
-          </p>
+          <div className="text-sm text-yellow-300/80 space-y-2">
+            <p>
+              Gravar aqui cria um <strong>plano novo</strong>, de hoje até à prova, com estas preferências.
+            </p>
+            <ul className="space-y-1 text-[13px]">
+              <li>• O plano atual passa a arquivado — podes consultá-lo em{" "}
+                <Link href="/dashboard/plans" className="underline underline-offset-2">Histórico de planos</Link>.
+              </li>
+              <li>• As tuas atividades e recordes não são afetados.</li>
+              <li>• Os treinos que já fizeste hoje ficam marcados como feitos no plano novo.</li>
+              <li>• As semanas anteriores ficam no plano arquivado; o novo começa hoje.</li>
+            </ul>
+          </div>
         </div>
       )}
 
@@ -226,7 +239,7 @@ export function EditPlanForm({
             </svg>
             A regenerar plano com IA… pode demorar 30s
           </span>
-        ) : hasPlan ? "Regenerar plano →" : "Gerar plano →"}
+        ) : hasPlan ? "Guardar e gerar plano novo →" : "Gerar plano →"}
       </button>
     </form>
   );
