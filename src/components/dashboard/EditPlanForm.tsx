@@ -50,6 +50,39 @@ export function EditPlanForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  const [rescheduling, setRescheduling] = useState(false);
+  const [done, setDone] = useState<string | null>(null);
+
+  /**
+   * Moves the rest of the plan on to the new days, leaving the plan itself
+   * alone. Regenerating for a change of calendar throws away the progression
+   * built so far, which is a steep price for "I now train on Tuesdays".
+   */
+  async function handleReschedule() {
+    setRescheduling(true);
+    setError("");
+    setDone(null);
+    try {
+      const res = await fetch("/api/training-plans/reschedule", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferredDays, longRunDay }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Erro ao reagendar");
+      setDone(
+        `${data.moved} treino${data.moved === 1 ? "" : "s"} mudado${data.moved === 1 ? "" : "s"} de dia` +
+        (data.dropped > 0 ? `, ${data.dropped} cancelado${data.dropped === 1 ? "" : "s"} por falta de dias` : "") +
+        ". O relógio já tem as datas novas."
+      );
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro inesperado");
+    } finally {
+      setRescheduling(false);
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!eventId) { setError("Sem evento ativo para regenerar o plano."); return; }
@@ -209,6 +242,28 @@ export function EditPlanForm({
         </div>
       </div>
 
+      {done && (
+        <div className="p-4 rounded-xl border border-green-500/20 bg-green-500/5 text-sm text-green-400">{done}</div>
+      )}
+
+      {/* Changing the calendar is the common case, and the cheap one. */}
+      {hasPlan && (
+        <div className="card space-y-3">
+          <div>
+            <p className="text-[var(--text-primary)] text-sm font-semibold">Só mudei os dias em que posso treinar</p>
+            <p className="text-[var(--text-muted)] text-xs mt-1 leading-relaxed">
+              Os treinos que faltam mudam de dia e o plano mantém-se: a mesma progressão, as mesmas
+              semanas, o mesmo histórico. O longo vai para o dia que escolheste e os treinos duros
+              não ficam em dias seguidos.
+            </p>
+          </div>
+          <button type="button" onClick={handleReschedule} disabled={rescheduling || loading}
+            className="btn-primary w-full py-3 text-sm disabled:opacity-50">
+            {rescheduling ? "A reagendar…" : "Mudar os dias no plano atual →"}
+          </button>
+        </div>
+      )}
+
       {/* What actually happens, in full: the old warning said the plan would be
           replaced and stopped there, leaving the athlete to wonder what became
           of the weeks they had trained. */}
@@ -231,7 +286,8 @@ export function EditPlanForm({
         </div>
       )}
 
-      <button type="submit" disabled={loading || !eventId} className="btn-primary w-full py-4 text-base">
+      <button type="submit" disabled={loading || rescheduling || !eventId}
+        className={`w-full py-4 text-base ${hasPlan ? "btn-secondary" : "btn-primary"}`}>
         {loading ? (
           <span className="flex items-center justify-center gap-2">
             <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">

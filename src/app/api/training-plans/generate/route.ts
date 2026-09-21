@@ -9,6 +9,7 @@ import { currentOrNextWeekId, removePlanFromWatch, sendWeekToWatch } from "@/lib
 import { generatePlanSkeleton, detailSessions } from "@/lib/claude";
 import { capLongRun } from "@/lib/race-distances";
 import { linkTrainedSessions } from "@/lib/link-activities";
+import { summariseRecentTraining } from "@/lib/recent-training";
 import { HORIZON_WEEKS } from "@/lib/plan-horizon";
 import { getSessionUserId } from "@/lib/session";
 
@@ -68,6 +69,14 @@ export async function POST(req: NextRequest) {
       goalTime: event.goalTime ?? undefined,
     };
 
+    // A plan generated mid-block should continue from the volume the athlete has
+    // built, not restart at whatever their declared level implies.
+    const recentActivities = await prisma.activity.findMany({
+      where: { athleteId: athlete.id, date: { gte: new Date(Date.now() - 28 * 24 * 60 * 60 * 1000) } },
+      select: { date: true, distance: true, sport: true },
+    });
+    const recentTraining = summariseRecentTraining(recentActivities);
+
     // Structure first — seconds rather than minutes — so the athlete gets a
     // browsable plan straight away. The prose follows, one week at a time.
     const planJson = await generatePlanSkeleton({
@@ -95,6 +104,7 @@ export async function POST(req: NextRequest) {
       },
       currentDate: today.toISOString().split("T")[0],
       weeksUntilEvent,
+      recentTraining,
       // Only the horizon is written now; the Monday job tops it up each week, so
       // a plan for an event months away costs the same to create as a short one.
       weeksToGenerate: Math.min(weeksUntilEvent, HORIZON_WEEKS),

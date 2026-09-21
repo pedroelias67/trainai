@@ -1,6 +1,7 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { inferThresholdPace, zonePaceTable } from "./intervals-icu";
 import { raceGuidance } from "./race-distances";
+import { recentTrainingGuidance, type RecentTraining } from "./recent-training";
 
 export const claude = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -33,6 +34,8 @@ export interface TrainingPlanRequest {
   };
   currentDate: string;
   weeksUntilEvent: number;
+  /** What the athlete has actually been running lately, so a plan continues from there. */
+  recentTraining?: RecentTraining | null;
   /** How many weeks to materialise now; the rest are added as the athlete advances. */
   weeksToGenerate?: number;
 }
@@ -234,6 +237,7 @@ Data de hoje: ${request.currentDate} | Semanas disponíveis: ${request.weeksUnti
 
 ${calendarRules(request.athlete)}
 ${raceGuidance(request.event.distance)}
+${recentTrainingGuidance(request.recentTraining ?? null)}
 ${triathlonGuidance(request.event.sport)}
 ${request.weeksUntilEvent <= 3
   ? `ATENÇÃO — PLANO CURTO: só há ${request.weeksUntilEvent} semana(s) até ao evento. Não há tempo para
