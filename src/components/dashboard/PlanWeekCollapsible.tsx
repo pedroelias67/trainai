@@ -9,10 +9,12 @@ interface Props {
   weekId: string;
   zipHref: string;
   intervalsConnected?: boolean;
+  /** The week is over: nothing left to send to a watch. */
+  past?: boolean;
 }
 
 export function PlanWeekCollapsible({
-  defaultOpen, header, children, weekId, zipHref, intervalsConnected = false,
+  defaultOpen, header, children, weekId, zipHref, intervalsConnected = false, past = false,
 }: Props) {
   const [open, setOpen] = useState(defaultOpen);
   const [pushState, setPushState] = useState<"idle" | "loading" | "done" | "error">("idle");
@@ -58,7 +60,9 @@ export function PlanWeekCollapsible({
             </svg>
           </div>
         </button>
-        {intervalsConnected && (
+        {/* Sending a week that has already been trained would rewrite what the
+            athlete did, so there is nothing to offer here. */}
+        {intervalsConnected && !past && (
           <button
             onClick={pushToWatch}
             disabled={pushState === "loading"}

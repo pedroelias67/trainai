@@ -37,6 +37,9 @@ export default async function PlanPage() {
 
   const plan = athlete.trainingPlans[0];
 
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+
   // Races already entered that no active plan covers — the state an account is
   // left in when generation fails partway through the onboarding.
   const pendingEvents = plan
@@ -161,6 +164,7 @@ export default async function PlanPage() {
                       header={weekHeader}
                       zipHref={`/api/weeks/${week.id}/export-tcx-zip`}
                       intervalsConnected={!!athlete.intervalsIcuApiKey}
+                      past={week.endDate < startOfToday}
                     >
                       {/* Sessions */}
                       <PlanWeekGrid sessions={week.sessions.map((s) => ({
