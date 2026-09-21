@@ -7,7 +7,9 @@
 // changes, and the button stays as a way to force it.
 
 import { prisma } from "@/lib/prisma";
-import { buildCalendarEvent, inferThresholdPace, replaceEvents } from "@/lib/intervals-icu";
+import {
+  buildCalendarEvent, deleteEventsForSessions, inferThresholdPace, replaceEvents,
+} from "@/lib/intervals-icu";
 import {
   checkWeekOnCalendar, recordIntervalsPush, recordWeekOnCalendar,
 } from "@/lib/intervals-connection";
@@ -112,4 +114,43 @@ export async function currentOrNextWeekId(planId: string): Promise<string | null
     select: { id: true },
   });
   return week?.id ?? null;
+}
+
+/**
+ * Takes a plan's remaining workouts off the athlete's calendar.
+ *
+ * For when a plan stops being the one in force — archived, or replaced by a new
+ * one for the same race. Without this its sessions stayed on the watch beside
+ * the new plan's, two workouts a day, and the athlete had no way to tell which
+ * was which. Past sessions are left: they are a record of what was trained.
+ */
+export async function removePlanFromWatch(athleteId: string, planId: string): Promise<number> {
+  try {
+    const athlete = await prisma.athlete.findUnique({
+      where: { id: athleteId },
+      select: { intervalsIcuApiKey: true, intervalsIcuAthleteId: true },
+    });
+    if (!athlete?.intervalsIcuApiKey || !athlete.intervalsIcuAthleteId) return 0;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const sessions = await prisma.trainingSession.findMany({
+      where: { week: { planId, plan: { athleteId } }, date: { gte: today } },
+      select: { id: true, date: true },
+      orderBy: { date: "asc" },
+    });
+    if (sessions.length === 0) return 0;
+
+    return await deleteEventsForSessions(
+      athlete.intervalsIcuApiKey,
+      athlete.intervalsIcuAthleteId,
+      sessions.map(s => s.id),
+      sessions[0].date.toISOString().slice(0, 10),
+      sessions[sessions.length - 1].date.toISOString().slice(0, 10)
+    );
+  } catch {
+    // Archiving a plan must not fail because a calendar was unreachable.
+    return 0;
+  }
 }

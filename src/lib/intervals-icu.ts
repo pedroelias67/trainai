@@ -477,6 +477,41 @@ async function ourEventIds(
 }
 
 /**
+ * Removes our events for the given sessions from the athlete's calendar.
+ *
+ * Archiving a plan used to leave its workouts sitting there, so a new plan for
+ * the same race put a second workout on every day — and the watch showed both.
+ * Only events this app wrote are touched.
+ */
+export async function deleteEventsForSessions(
+  apiKey: string,
+  athleteId: string,
+  sessionIds: string[],
+  oldest: string,
+  newest: string
+): Promise<number> {
+  if (sessionIds.length === 0) return 0;
+
+  const existing = await ourEventIds(apiKey, athleteId, oldest, newest);
+  if (!existing) return 0;
+
+  const wanted = new Set(sessionIds.map(id => `trainai-${id}`));
+  const ids = [...existing.entries()].filter(([ext]) => wanted.has(ext)).map(([, id]) => id);
+
+  const results = await Promise.all(
+    ids.map(id =>
+      fetch(`${API}/athlete/${athleteId}/events/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: authHeader(apiKey) },
+      })
+        .then(res => res.ok)
+        .catch(() => false)
+    )
+  );
+  return results.filter(Boolean).length;
+}
+
+/**
  * Replaces our events rather than updating them in place.
  *
  * Intervals.icu hands a workout to Garmin when the event is created. Updating

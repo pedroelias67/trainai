@@ -1,5 +1,6 @@
 import Anthropic from "@anthropic-ai/sdk";
 import { inferThresholdPace, zonePaceTable } from "./intervals-icu";
+import { raceGuidance } from "./race-distances";
 
 export const claude = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -232,6 +233,7 @@ Objetivo: ${request.event.goalType}${request.event.goalTime ? ` em ${request.eve
 Data de hoje: ${request.currentDate} | Semanas disponíveis: ${request.weeksUntilEvent}
 
 ${calendarRules(request.athlete)}
+${raceGuidance(request.event.distance)}
 ${triathlonGuidance(request.event.sport)}
 ${request.weeksUntilEvent <= 3
   ? `ATENÇÃO — PLANO CURTO: só há ${request.weeksUntilEvent} semana(s) até ao evento. Não há tempo para
@@ -419,6 +421,7 @@ SEMANAS JÁ PLANEADAS:
 ${historico}
 
 ${calendarRules(params.athlete)}
+${raceGuidance(params.event.distance)}
 ${triathlonGuidance(params.event.sport)}
 Gera as semanas ${params.fromWeek} a ${params.toWeek}, continuando a progressão acima — não recomeces
 pela base. Depois da semana ${params.toWeek} faltarão ${semanasAteEvento} semanas até ao evento:

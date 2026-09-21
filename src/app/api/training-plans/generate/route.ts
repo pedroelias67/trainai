@@ -5,8 +5,9 @@ export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { currentOrNextWeekId, sendWeekToWatch } from "@/lib/watch-sync";
+import { currentOrNextWeekId, removePlanFromWatch, sendWeekToWatch } from "@/lib/watch-sync";
 import { generatePlanSkeleton, detailSessions } from "@/lib/claude";
+import { capLongRun } from "@/lib/race-distances";
 import { HORIZON_WEEKS } from "@/lib/plan-horizon";
 import { getSessionUserId } from "@/lib/session";
 
@@ -100,6 +101,12 @@ export async function POST(req: NextRequest) {
 
     const planData = JSON.parse(planJson);
 
+    // The prompt states the long-run ceiling for this race; this is what holds
+    // the model to it. A plan is written once and trained for weeks.
+    for (const week of planData.weeks ?? []) {
+      week.sessions = (week.sessions ?? []).map((s: any) => capLongRun(s, event.distance));
+    }
+
     // Enforce max sessions per week — priority: LONG > INTERVALS > TEMPO > STRENGTH > EASY > RECOVERY
     const sessionPriority: Record<string, number> = {
       LONG: 6, INTERVALS: 5, TEMPO: 4, STRENGTH: 3, BRICK: 3, SWIM: 3, EASY: 2, RECOVERY: 1, RACE: 7,
@@ -174,6 +181,21 @@ export async function POST(req: NextRequest) {
           (sum: number, s: any) => sum + (s.plannedDurationMin ?? 0), 0
         );
       }
+    }
+
+    // One plan is in force at a time: the dashboard and the plan page each take
+    // "the" active plan, and a second one would make that an arbitrary choice.
+    const superseded = await prisma.trainingPlan.findMany({
+      where: { athleteId: athlete.id, status: "ACTIVE" },
+      select: { id: true },
+    });
+    if (superseded.length > 0) {
+      await prisma.trainingPlan.updateMany({
+        where: { id: { in: superseded.map(p => p.id) } },
+        data: { status: "ARCHIVED" },
+      });
+      // And their workouts come off the watch, or the athlete gets two a day.
+      for (const old of superseded) await removePlanFromWatch(athlete.id, old.id);
     }
 
     const plan = await prisma.trainingPlan.create({

@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { extendPlanSkeleton } from "@/lib/claude";
+import { capLongRun } from "@/lib/race-distances";
 
 /**
  * Plans are kept on a rolling horizon: this many weeks are materialised ahead of
@@ -97,7 +98,8 @@ export async function topUpPlanHorizon(planId: string, maxWeeks = 2): Promise<nu
         totalDistance: week.totalDistanceKm ?? null,
         totalDuration: week.totalDurationMin ?? null,
         sessions: {
-          create: (week.sessions ?? []).map((s: any) => {
+          create: (week.sessions ?? []).map((raw: any) => {
+            const s = capLongRun(raw, plan.event.distance);
             const sessionDate = new Date(weekStart.getTime());
             sessionDate.setDate(sessionDate.getDate() + (Number(s.dayOfWeek) - 1));
             return {
