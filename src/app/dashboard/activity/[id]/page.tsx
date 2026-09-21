@@ -8,6 +8,8 @@ import ActivityShareCard from "@/components/dashboard/ActivityShareCard";
 import { LogoFull } from "@/components/ui/Logo";
 import { ShoeSelector } from "@/components/dashboard/ShoeSelector";
 import { getSessionUserId } from "@/lib/session";
+import { trimTrackEnds } from "@/lib/share-privacy";
+import { formatClock } from "@/lib/format";
 
 const sportLabels: Record<string, string> = {
   RUNNING: "Corrida", CYCLING: "Ciclismo", SWIMMING: "Natação",
@@ -101,9 +103,10 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
           activityId={activity.id}
           shareToken={activity.shareToken}
           trimMap={athlete.shareTrimMap}
+          route={athlete.shareTrimMap ? trimTrackEnds(gpsTrack ?? []) : gpsTrack ?? []}
           name={activity.name ?? "Atividade"}
           distance={activity.distance ? (activity.distance / 1000).toFixed(2) : null}
-          duration={activity.duration ? `${Math.floor(activity.duration / 3600)}h ${Math.floor((activity.duration % 3600) / 60)}min` : null}
+          duration={activity.duration ? formatClock(activity.duration) : null}
           avgPace={activity.avgPace ?? null}
           avgHR={activity.avgHR ?? null}
           date={activity.date.toISOString()}

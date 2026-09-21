@@ -1,5 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
+import { projectTrack } from "@/lib/share-image";
+import type { TrackPoint } from "@/lib/share-privacy";
 
 interface Props {
   activityId: string;
@@ -7,6 +9,8 @@ interface Props {
   shareToken: string | null;
   /** The athlete's setting: hide the first and last stretch of the route. */
   trimMap: boolean;
+  /** The route for the image, already trimmed to the setting. Empty draws none. */
+  route: TrackPoint[];
   name: string;
   distance: string | null;
   duration: string | null;
@@ -24,8 +28,10 @@ const sportEmojis: Record<string, string> = {
 };
 
 export default function ActivityShareCard({
-  activityId, shareToken, trimMap: initialTrim, name, distance, duration, avgPace, avgHR, date, sport,
+  activityId, shareToken, trimMap: initialTrim, route, name, distance, duration, avgPace, avgHR, date, sport,
 }: Props) {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [drawing, setDrawing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [url, setUrl] = useState<string | null>(
     shareToken ? `${typeof window === "undefined" ? "" : window.location.origin}/t/${shareToken}` : null
@@ -80,6 +86,115 @@ export default function ActivityShareCard({
     }
   }
 
+  /**
+   * Draws the card as a square image for the places a link is worse than a
+   * picture — a chat, a story — where it is seen without anyone opening
+   * anything, and carries no route beyond its own silhouette.
+   */
+  async function buildImage(): Promise<Blob | null> {
+    const canvas = canvasRef.current;
+    if (!canvas) return null;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return null;
+
+    const S = 1080;
+    canvas.width = S;
+    canvas.height = S;
+    // The page's own font, once the browser has it; otherwise whatever it has.
+    await document.fonts?.ready?.catch(() => {});
+    const font = (weight: number, size: number) => `${weight} ${size}px Inter, system-ui, sans-serif`;
+
+    ctx.fillStyle = "#0a0a0a";
+    ctx.fillRect(0, 0, S, S);
+    ctx.fillStyle = "#22c55e";
+    ctx.fillRect(0, 0, S, 14);
+
+    const pad = 88;
+    ctx.textBaseline = "alphabetic";
+    ctx.font = font(800, 46);
+    ctx.fillStyle = "#22c55e";
+    ctx.fillText("TrainAI", pad, 140);
+
+    ctx.font = font(500, 32);
+    ctx.fillStyle = "#8a8a94";
+    ctx.textAlign = "right";
+    ctx.fillText(formattedDate, S - pad, 140);
+    ctx.textAlign = "left";
+
+    if (distance) {
+      ctx.font = font(900, 190);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(distance, pad, 330);
+      const w = ctx.measureText(distance).width;
+      ctx.font = font(600, 58);
+      ctx.fillStyle = "#8a8a94";
+      ctx.fillText("km", pad + w + 18, 330);
+    }
+
+    const stats = [
+      duration ? { label: "Duração", value: duration } : null,
+      avgPace ? { label: "Pace", value: avgPace } : null,
+      avgHR ? { label: "FC média", value: `${avgHR} bpm` } : null,
+    ].filter((s): s is { label: string; value: string } => s !== null);
+
+    stats.forEach((stat, i) => {
+      const x = pad + i * ((S - pad * 2) / Math.max(stats.length, 1));
+      ctx.font = font(700, 50);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(stat.value, x, 440);
+      ctx.font = font(500, 30);
+      ctx.fillStyle = "#7e7e88";
+      ctx.fillText(stat.label, x, 486);
+    });
+
+    const points = projectTrack(route, { width: S, height: 400, padding: pad });
+    if (points.length > 1) {
+      ctx.save();
+      ctx.translate(0, 540);
+      ctx.strokeStyle = "#22c55e";
+      ctx.lineWidth = 10;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.beginPath();
+      points.forEach((p, i) => (i === 0 ? ctx.moveTo(p.x, p.y) : ctx.lineTo(p.x, p.y)));
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    ctx.font = font(500, 34);
+    ctx.fillStyle = "#a1a1aa";
+    const caption = `${sportLabels[sport] ?? sport} · ${name}`;
+    ctx.fillText(caption.length > 46 ? `${caption.slice(0, 45)}…` : caption, pad, S - 80);
+
+    return new Promise(resolve => canvas.toBlob(resolve, "image/png"));
+  }
+
+  async function shareImage() {
+    setDrawing(true);
+    setError(null);
+    try {
+      const blob = await buildImage();
+      if (!blob) throw new Error("Não foi possível criar a imagem");
+      const file = new File([blob], `trainai-${name.replace(/\s+/g, "-").toLowerCase()}.png`, { type: "image/png" });
+
+      if (navigator.canShare?.({ files: [file] })) {
+        await navigator.share({ files: [file], title: name }).catch(() => {});
+      } else {
+        // No share sheet — a download is the next best thing on a computer.
+        const href = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = href;
+        a.download = file.name;
+        a.click();
+        setTimeout(() => URL.revokeObjectURL(href), 2000);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro inesperado");
+    } finally {
+      setDrawing(false);
+    }
+  }
+
   const handleShare = async () => {
     const link = url ?? (await publish());
     if (!link) return;
@@ -107,7 +222,7 @@ export default function ActivityShareCard({
           disabled={busy}
           className="px-3 py-1.5 bg-[var(--bg-hover)] hover:bg-[var(--bg-hover)] border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-medium rounded-lg transition-colors flex items-center gap-1.5 disabled:opacity-50"
         >
-          {busy ? "A preparar…" : copied ? "✓ Link copiado!" : url ? "↗ Partilhar" : "↗ Criar link"}
+          {busy ? "A preparar…" : copied ? "✓ Link copiado!" : "↗ Partilhar"}
         </button>
       </div>
 
@@ -142,7 +257,16 @@ export default function ActivityShareCard({
           </div>
         )}
         {error && <p className="text-xs text-red-400">{error}</p>}
+
+        <button onClick={shareImage} disabled={drawing}
+          className="w-full px-3 py-2 rounded-xl border border-[var(--border-hover)] bg-[var(--bg-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs font-medium transition-all disabled:opacity-50">
+          {drawing ? "A desenhar…" : "🖼 Partilhar como imagem"}
+        </button>
+        <p className="text-[var(--text-faint)] text-xs">
+          Para WhatsApp ou Instagram: vê-se sem abrir nada, e leva só a silhueta do percurso.
+        </p>
       </div>
+      <canvas ref={canvasRef} className="hidden" />
 
       {/* Share card visual */}
       <div className="rounded-xl overflow-hidden border border-[var(--border-hover)]" style={{ background: "#0a0a0a" }}>
