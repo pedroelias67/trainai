@@ -106,7 +106,9 @@ Responde APENAS com JSON válido, sem markdown.`;
 
   const message = await claude.messages.create({
     model: CLAUDE_MODEL,
-    max_tokens: 2048,
+    // A full training week came back at 1534 tokens; 2048 left little room, and
+    // a response cut short is invalid JSON, which loses the whole report.
+    max_tokens: 4000,
     messages: [{ role: "user", content: prompt }],
   });
 

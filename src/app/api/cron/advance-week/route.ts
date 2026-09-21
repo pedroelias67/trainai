@@ -5,11 +5,12 @@ export const maxDuration = 300;
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import * as Sentry from "@sentry/nextjs";
-import { startOfWeek, differenceInWeeks } from "date-fns";
+import { startOfWeek, differenceInWeeks, subDays } from "date-fns";
 import { topUpPlanHorizon } from "@/lib/plan-horizon";
 
-// Leaves room within the 300s limit to finish the plan in progress.
-const BUDGET_MS = 200_000;
+// Leaves room within the 300s limit to finish the plan in progress, and for the
+// weekly-report catch-up that follows.
+const BUDGET_MS = 150_000;
 
 // Called by Vercel Cron every Monday at 00:01
 export async function GET(req: NextRequest) {
@@ -69,5 +70,25 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  return NextResponse.json({ updated, extended, restantes, total: activePlans.length });
+  // Sunday's report job stops when it runs out of time, and until now the
+  // athletes it had not reached were simply dropped. This finishes that list,
+  // four hours later, for the week that ended last night.
+  let relatorios: unknown = "não tentado";
+  try {
+    const ontem = subDays(new Date(), 1);
+    const url = `${process.env.NEXTAUTH_URL ?? "https://trainai.pedroelias.com"}/api/cron/weekly-report`
+      + `?weekStart=${startOfWeek(ontem, { weekStartsOn: 1 }).toISOString().slice(0, 10)}`;
+    const res = await fetch(url, {
+      headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
+      // Awaited, unlike the self-call this replaces: aborting early is what
+      // killed the invocation doing the work.
+      signal: AbortSignal.timeout(120_000),
+    });
+    relatorios = res.ok ? await res.json() : `HTTP ${res.status}`;
+  } catch (err) {
+    relatorios = err instanceof Error ? err.message : "erro";
+    Sentry.captureException(err, { tags: { job: "advance-week", stage: "weekly-report-catchup" } });
+  }
+
+  return NextResponse.json({ updated, extended, restantes, total: activePlans.length, relatorios });
 }

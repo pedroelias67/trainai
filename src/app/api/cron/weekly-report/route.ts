@@ -16,7 +16,6 @@ import { startOfWeek, endOfWeek, subDays, startOfDay } from "date-fns";
 // within the 300s limit to finish the athlete in progress.
 const BUDGET_MS = 200_000;
 // Bounds the self-continuation, so a persistent failure cannot loop forever.
-const MAX_DEPTH = 10;
 
 // Called by Vercel Cron every Sunday at 20:00
 export async function GET(req: NextRequest) {
@@ -26,13 +25,16 @@ export async function GET(req: NextRequest) {
   }
 
   const startedAt = Date.now();
-  const depth = Number(new URL(req.url).searchParams.get("depth") ?? 0);
 
   // The job runs on Sunday evening, so the week being reported on is the one
   // now ending — not subWeeks(now, 1), which pointed at the week before that
   // and matched nothing for a plan in its first week.
-  const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(new Date(), { weekStartsOn: 1 });
+  // Normally the week now ending. A catch-up run on Monday asks for the week
+  // that ended the night before instead.
+  const pedido = new URL(req.url).searchParams.get("weekStart");
+  const referencia = pedido ? new Date(`${pedido}T12:00:00Z`) : new Date();
+  const weekStart = startOfWeek(referencia, { weekStartsOn: 1 });
+  const weekEnd = endOfWeek(referencia, { weekStartsOn: 1 });
 
   // Matching on startDate alone: a week that starts inside the window ends
   // inside it by construction, and comparing endDate meant relying on two
@@ -60,12 +62,25 @@ export async function GET(req: NextRequest) {
 
   // Deduplicate: one week per athlete (newest plan wins)
   const seen = new Set<string>();
-  const weeks = allWeeks.filter(w => {
+  const candidatos = allWeeks.filter(w => {
     const athleteId = w.plan.athleteId;
     if (seen.has(athleteId)) return false;
     seen.add(athleteId);
     return true;
   });
+
+  // Served in order of who has waited longest for a report. By plan age, the
+  // athlete whose plan was oldest came last every week — and when the budget
+  // ran out, it was always the same person who got nothing.
+  const ultimos = await prisma.weeklyReport.groupBy({
+    by: ["athleteId"],
+    where: { athleteId: { in: candidatos.map(w => w.plan.athleteId) } },
+    _max: { createdAt: true },
+  });
+  const ultimoPor = new Map(ultimos.map(u => [u.athleteId, u._max.createdAt?.getTime() ?? 0]));
+  const weeks = candidatos.sort(
+    (a, b) => (ultimoPor.get(a.plan.athleteId) ?? 0) - (ultimoPor.get(b.plan.athleteId) ?? 0)
+  );
 
   let generated = 0;
   let restantes = false;
@@ -332,18 +347,17 @@ export async function GET(req: NextRequest) {
     }
   }
 
-  if (restantes && depth < MAX_DEPTH && process.env.NEXTAUTH_URL) {
-    // Dispatch the continuation and abort locally: waiting for it would nest
-    // the remaining work inside this invocation's budget, which is the problem
-    // being solved. The receiving invocation runs on its own.
-    await fetch(
-      `${process.env.NEXTAUTH_URL}/api/cron/weekly-report?depth=${depth + 1}`,
-      {
-        headers: { Authorization: `Bearer ${process.env.CRON_SECRET}` },
-        signal: AbortSignal.timeout(2000),
-      }
-    ).catch(() => {});
+  if (restantes) {
+    // No self-call: it dispatched a continuation and aborted after two seconds,
+    // which on Vercel takes the receiving invocation down with it — so whoever
+    // the budget cut off silently never got a report. The Monday job asks for
+    // this same week and finishes the list.
+    Sentry.captureMessage("Weekly report: athletes left for the Monday catch-up", {
+      level: "info",
+      tags: { job: "weekly-report" },
+      extra: { weekStart: weekStart.toISOString(), done: generated, ofTotal: weeks.length },
+    });
   }
 
-  return NextResponse.json({ generated, weeks: weeks.length, depth, restantes });
+  return NextResponse.json({ generated, weeks: weeks.length, restantes, weekStart: weekStart.toISOString().slice(0, 10) });
 }
