@@ -253,9 +253,15 @@ export function EditPlanForm({
             <p className="text-[var(--text-primary)] text-sm font-semibold">Só mudei os dias em que posso treinar</p>
             <p className="text-[var(--text-muted)] text-xs mt-1 leading-relaxed">
               Os treinos que faltam mudam de dia e o plano mantém-se: a mesma progressão, as mesmas
-              semanas, o mesmo histórico. O longo vai para o dia que escolheste e os treinos duros
-              não ficam em dias seguidos.
+              semanas, o mesmo histórico. Um treino que já está num dia que continuas a ter livre
+              não se mexe.
             </p>
+            <ul className="text-[var(--text-muted)] text-xs mt-2 space-y-1 leading-relaxed">
+              <li>• O longo passa para o dia que escolheste para longo.</li>
+              <li>• Se a mudança juntar dois treinos duros, são separados.</li>
+              <li>• Se ficares com menos dias do que treinos, os menos importantes são cancelados.</li>
+              <li>• O relógio recebe as datas novas.</li>
+            </ul>
           </div>
           <button type="button" onClick={handleReschedule} disabled={rescheduling || loading}
             className="btn-primary w-full py-3 text-sm disabled:opacity-50">
@@ -281,6 +287,8 @@ export function EditPlanForm({
               <li>• As tuas atividades e recordes não são afetados.</li>
               <li>• Os treinos que já fizeste hoje ficam marcados como feitos no plano novo.</li>
               <li>• As semanas anteriores ficam no plano arquivado; o novo começa hoje.</li>
+              <li>• O plano novo parte do que tens corrido nas últimas semanas — volume, treinos por semana e o treino mais longo.</li>
+              <li>• No relógio, os treinos do plano antigo são retirados e a semana nova é enviada.</li>
             </ul>
           </div>
         </div>

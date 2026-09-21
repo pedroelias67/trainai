@@ -37,7 +37,7 @@ export default async function EditPlanPage() {
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-[var(--text-primary)]">Preferências de treino</h1>
           <p className="text-[var(--text-muted)] text-sm mt-1">
-            Ajusta as tuas preferências e regenera o plano com IA
+            Muda os dias no plano que tens, ou gera um plano novo com estas preferências
           </p>
         </div>
 
