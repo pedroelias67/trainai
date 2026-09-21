@@ -5,6 +5,7 @@ export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { currentOrNextWeekId, sendWeekToWatch } from "@/lib/watch-sync";
 import { generatePlanSkeleton, detailSessions } from "@/lib/claude";
 import { HORIZON_WEEKS } from "@/lib/plan-horizon";
 import { getSessionUserId } from "@/lib/session";
@@ -275,6 +276,11 @@ export async function POST(req: NextRequest) {
         console.error("First week detailing failed:", detailErr);
       }
     }
+
+    // The plan exists and its first week is written: put it on the watch now,
+    // rather than waiting for the athlete to discover the button.
+    const firstWeekId = await currentOrNextWeekId(plan.id);
+    if (firstWeekId) await sendWeekToWatch(athlete.id, firstWeekId);
 
     return NextResponse.json({ ...plan, firstWeekDetailed }, { status: 201 });
   } catch (err) {

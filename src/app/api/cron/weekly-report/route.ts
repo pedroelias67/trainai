@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { analyzeWeekAndAdapt, suggestSessionAdaptations, detailSessions } from "@/lib/claude";
 import { sendWeeklyReportEmail } from "@/lib/email";
+import { sendWeekToWatch } from "@/lib/watch-sync";
 import * as Sentry from "@sentry/nextjs";
 import { differenceInWeeks } from "date-fns";
 import { startOfWeek, endOfWeek, subDays, startOfDay } from "date-fns";
@@ -255,6 +256,10 @@ export async function GET(req: NextRequest) {
             data: { adaptationsApplied: true, adaptations: adaptationSummary || "Plano mantém-se." },
           });
         }
+
+        // Sunday night, with next week written and adjusted: the one moment where
+        // the watch would otherwise be a week behind until someone remembered it.
+        if (nextWeek) await sendWeekToWatch(athlete.id, nextWeek.id);
       } catch (adaptErr) {
         // The report is still worth sending, but the athlete must not be left
         // assuming next week was adjusted when it was not.

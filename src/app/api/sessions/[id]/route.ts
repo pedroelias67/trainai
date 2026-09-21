@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/session";
+import { sendWeekToWatch } from "@/lib/watch-sync";
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const userId = await getSessionUserId();
@@ -50,5 +51,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 
   const updated = await prisma.trainingSession.update({ where: { id }, data });
+
+  // The watch is holding the version the athlete just changed.
+  await sendWeekToWatch(athlete.id, session.weekId);
+
   return NextResponse.json(updated);
 }

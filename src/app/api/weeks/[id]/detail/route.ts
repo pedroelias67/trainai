@@ -4,6 +4,7 @@ export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { sendWeekToWatch } from "@/lib/watch-sync";
 import { detailSessions } from "@/lib/claude";
 import { getSessionUserId } from "@/lib/session";
 
@@ -79,6 +80,10 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     });
     detailed++;
   }
+
+  // Detailing is what writes the steps the watch guides by: before it, the week
+  // on the calendar is a rough reading of the coach's prose.
+  if (detailed > 0) await sendWeekToWatch(athlete.id, week.id);
 
   return NextResponse.json({ ok: true, detailed, remaining: week.sessions.length - detailed });
 }
