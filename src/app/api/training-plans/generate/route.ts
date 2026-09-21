@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { currentOrNextWeekId, removePlanFromWatch, sendWeekToWatch } from "@/lib/watch-sync";
 import { generatePlanSkeleton, detailSessions } from "@/lib/claude";
 import { capLongRun } from "@/lib/race-distances";
+import { linkTrainedSessions } from "@/lib/link-activities";
 import { HORIZON_WEEKS } from "@/lib/plan-horizon";
 import { getSessionUserId } from "@/lib/session";
 
@@ -298,6 +299,10 @@ export async function POST(req: NextRequest) {
         console.error("First week detailing failed:", detailErr);
       }
     }
+
+    // Training already done this week belongs to the new plan too: without this,
+    // a plan generated after a morning run asks for that run again.
+    await linkTrainedSessions(athlete.id, plan.id);
 
     // The plan exists and its first week is written: put it on the watch now,
     // rather than waiting for the athlete to discover the button.
