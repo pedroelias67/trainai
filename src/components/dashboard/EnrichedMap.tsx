@@ -50,6 +50,7 @@ function hrToColor(hr: number): string {
 export default function EnrichedMap({ gpsTrack, elevationGain, height = 380, compact = false, showHeartRate = true }: Props) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<any>(null);
+  const observerRef = useRef<ResizeObserver | null>(null);
   const [colorBy, setColorBy] = useState<ColorBy>("pace");
 
   useEffect(() => {
@@ -82,16 +83,20 @@ export default function EnrichedMap({ gpsTrack, elevationGain, height = 380, com
         maxZoom: 19,
       }).addTo(map);
 
-      const latlngs = gpsTrack.map((p) => [p.lat, p.lng] as [number, number]);
+      // A point without usable coordinates poisons the bounds, and a bad bounds
+      // is how the map ends up at maximum zoom with the route off screen.
+      const pontos = gpsTrack.filter(p => Number.isFinite(p.lat) && Number.isFinite(p.lng));
+      if (pontos.length < 2) return;
+      const latlngs = pontos.map((p) => [p.lat, p.lng] as [number, number]);
       const segmentSize = 10;
 
       // Compute pace quintiles for normalization
-      const paces = gpsTrack.map((p) => p.pace ?? 0).filter((p) => p > 0);
+      const paces = pontos.map((p) => p.pace ?? 0).filter((p) => p > 0);
       const minPace = paces.length ? Math.min(...paces) : 0;
       const maxPace = paces.length ? Math.max(...paces) : 1;
 
-      for (let i = 0; i < gpsTrack.length - segmentSize; i += segmentSize) {
-        const seg = gpsTrack.slice(i, i + segmentSize + 1);
+      for (let i = 0; i < pontos.length - segmentSize; i += segmentSize) {
+        const seg = pontos.slice(i, i + segmentSize + 1);
         const segLatLngs = seg.map((p) => [p.lat, p.lng] as [number, number]);
 
         let color = "#22c55e";
@@ -122,14 +127,31 @@ export default function EnrichedMap({ gpsTrack, elevationGain, height = 380, com
       L.marker(latlngs[0], { icon: startIcon }).addTo(map).bindPopup("Início");
       L.marker(latlngs[latlngs.length - 1], { icon: endIcon }).addTo(map).bindPopup("Fim");
 
-      // The container can still be settling when the map mounts (collapsible rows,
-      // dynamic import); recompute the size before fitting so the track is centred.
-      map.invalidateSize();
+      // Fitting while the container has no size gives a zoom of 19 centred on the
+      // route — every segment then falls outside the view and the map looks empty,
+      // which is what the public page showed. Fit only once there is a box to fit
+      // into, and fit again whenever that box changes.
       const bounds = L.latLngBounds(latlngs);
-      map.fitBounds(bounds, { padding: [20, 20] });
+      const enquadrar = () => {
+        const el = mapRef.current;
+        if (!el || el.clientWidth === 0 || el.clientHeight === 0) return false;
+        map.invalidateSize();
+        map.fitBounds(bounds, { padding: [20, 20] });
+        return true;
+      };
+
+      if (!enquadrar()) {
+        const observer = new ResizeObserver(() => {
+          if (enquadrar()) observer.disconnect();
+        });
+        observer.observe(mapRef.current!);
+        observerRef.current = observer;
+      }
     });
 
     return () => {
+      observerRef.current?.disconnect();
+      observerRef.current = null;
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
