@@ -110,13 +110,32 @@ export async function emailWeekReport(
 }
 
 /**
- * The last week of training that has finished, across the athlete's plans —
- * the one a report would be about. Weeks still running are not reported on.
+ * The week a report would be about: the most recent one that has either
+ * finished or already been reported on, from the plan in force when it has one.
+ *
+ * "Finished" alone was not enough, and failed at the only moment this is used.
+ * The Sunday job reports on the week ending that evening, some hours before it
+ * is actually over — so on a Sunday night, which is exactly when someone
+ * presses "send it now" because the mail did not arrive, the last finished week
+ * was the week before, on a plan since replaced. The button would have sent a
+ * fortnight-old summary and reported success.
  */
 export async function lastFinishedWeek(athleteId: string): Promise<{ id: string; weekNumber: number; endDate: Date } | null> {
-  return prisma.trainingWeek.findFirst({
-    where: { plan: { athleteId }, endDate: { lt: new Date() } },
-    orderBy: { endDate: "desc" },
-    select: { id: true, weekNumber: true, endDate: true },
-  });
+  const select = { id: true, weekNumber: true, endDate: true };
+  const relatada = { OR: [{ weeklyReport: { isNot: null } }, { endDate: { lt: new Date() } }] };
+
+  // An archived plan still holds weeks covering these dates, and its weeks end
+  // on the same evenings; the plan the athlete is actually following wins.
+  return (
+    (await prisma.trainingWeek.findFirst({
+      where: { plan: { athleteId, status: "ACTIVE" }, ...relatada },
+      orderBy: { endDate: "desc" },
+      select,
+    })) ??
+    (await prisma.trainingWeek.findFirst({
+      where: { plan: { athleteId }, ...relatada },
+      orderBy: { endDate: "desc" },
+      select,
+    }))
+  );
 }
