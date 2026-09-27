@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { enviarComEspera } from "./email-retry";
 import {
   emailShell, emailButton, emailHeading, emailText,
   emailBadge, emailStatGrid, emailInfoBox, emailDivider, emailSubheading, EMAIL_COLORS,
@@ -20,10 +21,11 @@ function resend(): Resend {
  * The SDK reports failure by returning `{ error }` rather than throwing, so a
  * bare `await resend.emails.send(...)` inside a try/catch never reaches the
  * catch: a rejected address or a bad key looks exactly like a delivered email.
+ *
+ * A rate limit is waited out rather than reported — see email-retry.ts.
  */
 async function send(message: Parameters<Resend["emails"]["send"]>[0]) {
-  const { error } = await resend().emails.send(message);
-  if (error) throw new Error(`Resend: ${error.name} — ${error.message}`);
+  await enviarComEspera(async () => (await resend().emails.send(message)).error);
 }
 
 const FROM = process.env.FROM_EMAIL ?? "TrainAI <noreply@trainai.pedroelias.com>";
