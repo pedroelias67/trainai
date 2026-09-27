@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { analyzeWeekAndAdapt, suggestSessionAdaptations, detailSessions } from "@/lib/claude";
 import { emailWeekReport } from "@/lib/weekly-report";
 import { orderByLongestWait } from "@/lib/report-queue";
+import { otherRacesInPlan } from "@/lib/secondary-races";
 import { sendWeekToWatch } from "@/lib/watch-sync";
 import * as Sentry from "@sentry/nextjs";
 import { startOfWeek, endOfWeek, subDays, startOfDay } from "date-fns";
@@ -250,6 +251,13 @@ export async function GET(req: NextRequest) {
           ? wellnessLogs.map(l => `${l.date.toISOString().split("T")[0]}: sono=${l.sleepQuality ?? "?"}/5 fadiga=${l.fatigue ?? "?"}/5 humor=${l.mood ?? "?"}/5`).join("\n")
           : "Sem dados de bem-estar";
 
+        // A race inside the week being adjusted changes what the adjustments may
+        // do: the easy days before it are deliberate, and the race is not a
+        // session to be shortened.
+        const provas = await otherRacesInPlan(
+          athlete.id, week.plan.eventId, nextWeek.startDate, nextWeek.endDate
+        );
+
         const adjustments = await suggestSessionAdaptations({
           analysis: analysis.summary,
           nextWeekAdjustments: analysis.nextWeekAdjustments,
@@ -258,11 +266,14 @@ export async function GET(req: NextRequest) {
             id: s.id, name: s.name, sessionType: s.sessionType,
             plannedDistance: s.plannedDistance, plannedDuration: s.plannedDuration, plannedPace: s.plannedPace,
           })),
+          upcomingRaces: provas,
         });
 
         for (const adj of adjustments) {
           const session = nextWeek.sessions.find(s => s.id === adj.sessionId);
           if (!session || adj.action === "keep") continue;
+          // Said in the prompt, held to here: a race is the race.
+          if (session.sessionType === "RACE") continue;
           const update: Record<string, unknown> = {};
           if (adj.action === "convert_to_easy" || adj.convertToType) {
             update.sessionType = adj.convertToType ?? "EASY";

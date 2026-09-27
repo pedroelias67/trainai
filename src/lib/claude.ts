@@ -2,6 +2,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import { inferThresholdPace, zonePaceTable } from "./intervals-icu";
 import { raceGuidance } from "./race-distances";
 import { recentTrainingGuidance, type RecentTraining } from "./recent-training";
+import { secondaryRaceGuidance, upcomingRaceGuidance, type SecondaryRace } from "./secondary-races";
 
 export const claude = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -38,6 +39,8 @@ export interface TrainingPlanRequest {
   recentTraining?: RecentTraining | null;
   /** How many weeks to materialise now; the rest are added as the athlete advances. */
   weeksToGenerate?: number;
+  /** The other races in the diary, so the plan is written around them. */
+  secondaryRaces?: SecondaryRace[];
 }
 
 export interface WeeklyAnalysisRequest {
@@ -133,6 +136,8 @@ export async function suggestSessionAdaptations(params: {
   nextWeekAdjustments: string;
   wellnessSummary: string;
   sessions: Array<{ id: string; name: string; sessionType: string; plannedDistance: number | null; plannedDuration: number | null; plannedPace: string | null }>;
+  /** Races falling in the week being adjusted, which the adjustments must respect. */
+  upcomingRaces?: SecondaryRace[];
 }): Promise<SessionAdjustment[]> {
   const prompt = `Com base na análise semanal e nos dados de bem-estar do atleta, sugere ajustes concretos para as sessões da próxima semana.
 
@@ -147,6 +152,8 @@ ${params.wellnessSummary}
 
 SESSÕES DA PRÓXIMA SEMANA:
 ${JSON.stringify(params.sessions, null, 2)}
+
+${upcomingRaceGuidance(params.upcomingRaces ?? [])}
 
 Para cada sessão, indica o ajuste a fazer. Usa apenas as ações: "reduce_distance", "reduce_intensity", "convert_to_easy", "increase_distance", "keep".
 - Se o atleta está fatigado: reduz volume ou converte para fácil
@@ -240,6 +247,7 @@ Data de hoje: ${request.currentDate} | Semanas disponíveis: ${request.weeksUnti
 ${calendarRules(request.athlete)}
 ${raceGuidance(request.event.distance)}
 ${recentTrainingGuidance(request.recentTraining ?? null)}
+${secondaryRaceGuidance(request.secondaryRaces ?? [])}
 ${triathlonGuidance(request.event.sport)}
 ${request.weeksUntilEvent <= 3
   ? `ATENÇÃO — PLANO CURTO: só há ${request.weeksUntilEvent} semana(s) até ao evento. Não há tempo para
@@ -406,6 +414,8 @@ export async function extendPlanSkeleton(params: {
   fromWeek: number;
   toWeek: number;
   previousWeeks: Array<{ weekNumber: number; focus: string | null; totalDistanceKm: number | null }>;
+  /** The other races in the diary, so these weeks are written around them too. */
+  secondaryRaces?: SecondaryRace[];
 }): Promise<string> {
   const historico = params.previousWeeks.length
     ? params.previousWeeks
@@ -428,6 +438,7 @@ ${historico}
 
 ${calendarRules(params.athlete)}
 ${raceGuidance(params.event.distance)}
+${secondaryRaceGuidance(params.secondaryRaces ?? [])}
 ${triathlonGuidance(params.event.sport)}
 Gera as semanas ${params.fromWeek} a ${params.toWeek}, continuando a progressão acima — não recomeces
 pela base. Depois da semana ${params.toWeek} faltarão ${semanasAteEvento} semanas até ao evento:

@@ -5,6 +5,9 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { Sport, Distance, GoalType, Priority } from "@prisma/client";
 import { getSessionUserId } from "@/lib/session";
+import { applyRacesToPlan, type ApplyResult } from "@/lib/secondary-races";
+import { sendWeekToWatch } from "@/lib/watch-sync";
+import * as Sentry from "@sentry/nextjs";
 
 // Nothing was validated here: an unparseable date reached Prisma as Invalid Date
 // and surfaced as a generic 500, a past date was stored and counted down to a
@@ -58,7 +61,40 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json(event, { status: 201 });
+    // A race entered now usually falls inside weeks written weeks ago. Settle
+    // the plan around it here, rather than leaving the athlete to regenerate —
+    // which would cost them the block they have been training.
+    let plano: ApplyResult | null = null;
+    try {
+      const ativo = await prisma.trainingPlan.findFirst({
+        where: { athleteId: athlete.id, status: "ACTIVE" },
+        select: { id: true },
+      });
+      if (ativo) {
+        plano = await applyRacesToPlan(athlete.id, ativo.id);
+        // The watch is holding the week as it was before the race existed.
+        for (const weekId of plano.weekIds) await sendWeekToWatch(athlete.id, weekId);
+      }
+    } catch (e) {
+      // The race is entered either way; it reaches the plan on the next
+      // regeneration or when the horizon is extended.
+      Sentry.captureException(e, { tags: { stage: "event-apply-races" }, extra: { eventId: event.id } });
+    }
+
+    return NextResponse.json(
+      {
+        ...event,
+        plan: plano && (plano.created || plano.cancelled || plano.updated)
+          ? {
+              created: plano.created,
+              cancelled: plano.cancelled,
+              updated: plano.updated,
+              changes: plano.placed.flatMap(p => p.changes),
+            }
+          : null,
+      },
+      { status: 201 }
+    );
   } catch (err) {
     console.error("Event creation error:", err);
     return NextResponse.json({ error: "Erro ao criar evento" }, { status: 500 });

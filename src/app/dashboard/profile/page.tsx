@@ -1,14 +1,13 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { format } from "date-fns";
-import { pt } from "date-fns/locale";
 import { LogoFull } from "@/components/ui/Logo";
 import NotificationSettings from "@/components/dashboard/NotificationSettings";
 import ThemeToggle from "@/components/dashboard/ThemeToggle";
 import { DeleteAccount } from "@/components/dashboard/DeleteAccount";
 import { WatchCompatibility } from "@/components/dashboard/WatchCompatibility";
 import { IntervalsConnect } from "@/components/dashboard/IntervalsConnect";
+import { RacesCard } from "@/components/dashboard/RacesCard";
 import { getSessionUserId } from "@/lib/session";
 
 const fitnessLabels: Record<string, string> = {
@@ -155,27 +154,18 @@ export default async function ProfilePage() {
           </div>
         </div>
 
-        {/* Events */}
-        {athlete.events.length > 0 && (
-          <div className="card">
-            <h2 className="font-semibold text-[var(--text-primary)] mb-4">Eventos</h2>
-            <div className="space-y-3">
-              {athlete.events.map((event) => (
-                <div key={event.id} className="flex items-center justify-between py-2.5 border-b border-[var(--border)] last:border-0">
-                  <div>
-                    <p className="text-[var(--text-primary)] text-sm font-medium">{event.name}</p>
-                    <p className="text-[var(--text-muted)] text-xs capitalize">
-                      {format(new Date(event.date), "d 'de' MMMM yyyy", { locale: pt })}
-                    </p>
-                  </div>
-                  {athlete.trainingPlans[0]?.eventId === event.id && (
-                    <span className="text-green-400 text-xs bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-full">Ativo</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Races: the goal, and the ones on the way to it */}
+        <RacesCard
+          races={athlete.events.map(event => ({
+            id: event.id,
+            name: event.name,
+            date: event.date.toISOString(),
+            sport: event.sport,
+            distance: event.distance,
+            priority: event.priority,
+          }))}
+          targetEventId={athlete.trainingPlans[0]?.eventId ?? null}
+        />
 
         {/* Logout */}
         <div className="pt-2">

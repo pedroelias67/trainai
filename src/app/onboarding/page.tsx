@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/ui/Logo";
+import { DISTANCES, SPORTS } from "@/lib/race-options";
 
 type Step = "profile" | "event" | "availability" | "done";
 
@@ -21,28 +22,6 @@ const FITNESS_LEVELS = [
   { value: "ADVANCED", label: "Avançado", desc: "3–7 anos, competições regulares" },
   { value: "ELITE", label: "Elite", desc: "+7 anos, alto rendimento" },
 ];
-
-const SPORTS = [
-  { value: "RUNNING", label: "Corrida", icon: "🏃" },
-  { value: "TRIATHLON_SPRINT", label: "Triatlo Sprint", icon: "⚡" },
-  { value: "TRIATHLON_OLYMPIC", label: "Triatlo Olímpico", icon: "🔱" },
-  { value: "TRIATHLON_HALF", label: "Half Ironman", icon: "💪" },
-  { value: "TRIATHLON_FULL", label: "Ironman", icon: "🔴" },
-];
-
-const DISTANCES: Record<string, Array<{ value: string; label: string }>> = {
-  RUNNING: [
-    { value: "FIVE_K", label: "5km" },
-    { value: "TEN_K", label: "10km" },
-    { value: "HALF_MARATHON", label: "Meia Maratona" },
-    { value: "MARATHON", label: "Maratona" },
-    { value: "ULTRA", label: "Ultra" },
-  ],
-  TRIATHLON_SPRINT: [{ value: "SPRINT_TRIATHLON", label: "Triatlo Sprint" }],
-  TRIATHLON_OLYMPIC: [{ value: "OLYMPIC_TRIATHLON", label: "Triatlo Olímpico" }],
-  TRIATHLON_HALF: [{ value: "HALF_IRONMAN", label: "70.3 Half Ironman" }],
-  TRIATHLON_FULL: [{ value: "IRONMAN", label: "140.6 Ironman" }],
-};
 
 export default function OnboardingPage() {
   const router = useRouter();

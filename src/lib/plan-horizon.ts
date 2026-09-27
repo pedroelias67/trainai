@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { extendPlanSkeleton } from "@/lib/claude";
 import { capLongRun } from "@/lib/race-distances";
+import { otherRacesInPlan, placeRaces, type SkeletonWeek } from "@/lib/secondary-races";
+
+/** A week as the model returns it: the sessions, plus the prose around them. */
+type SemanaGerada = SkeletonWeek & { focus?: string | null; coachMessage?: string | null };
 
 /**
  * Plans are kept on a rolling horizon: this many weeks are materialised ahead of
@@ -38,6 +42,17 @@ export async function topUpPlanHorizon(planId: string, maxWeeks = 2): Promise<nu
   const fromWeek = ultima + 1;
   const toWeek = Math.min(fromWeek + maxWeeks - 1, alvo);
 
+  // The races along the way that these weeks have to be written around. Reached
+  // back a week: a race on the Sunday before this batch wants the Monday inside
+  // it easy, and that Monday is written here.
+  const inicioDoLote = new Date(plan.startDate.getTime() + (fromWeek - 1) * 7 * DAY_MS);
+  const provas = await otherRacesInPlan(
+    plan.athleteId,
+    plan.eventId,
+    new Date(inicioDoLote.getTime() - 7 * DAY_MS),
+    plan.event.date
+  );
+
   const json = await extendPlanSkeleton({
     athlete: {
       name: plan.athlete.user.name ?? "Atleta",
@@ -71,18 +86,36 @@ export async function topUpPlanHorizon(planId: string, maxWeeks = 2): Promise<nu
       focus: w.focus,
       totalDistanceKm: w.totalDistance,
     })),
+    secondaryRaces: provas,
   });
 
   const dados = JSON.parse(json);
   const criadas: number[] = [];
 
-  for (const week of dados.weeks ?? []) {
-    const numero = Number(week.weekNumber);
-    // The model occasionally renumbers; only accept what was asked for, and
-    // never overwrite a week that already exists.
-    if (!Number.isInteger(numero) || numero < fromWeek || numero > toWeek) continue;
-    if (plan.weeks.some(w => w.weekNumber === numero)) continue;
+  // The model occasionally renumbers; only accept what was asked for, and never
+  // overwrite a week that already exists. The long-run cap is applied here so
+  // that the race placement below sees the volumes the athlete will actually get.
+  const aceites: SemanaGerada[] = (dados.weeks ?? [])
+    .map((week: any) => ({ ...week, weekNumber: Number(week.weekNumber) }))
+    .filter(
+      (week: any) =>
+        Number.isInteger(week.weekNumber) &&
+        week.weekNumber >= fromWeek &&
+        week.weekNumber <= toWeek &&
+        !plan.weeks.some(w => w.weekNumber === week.weekNumber)
+    )
+    .map((week: any) => ({
+      ...week,
+      sessions: (week.sessions ?? []).map((raw: any) => ({
+        ...capLongRun(raw, plan.event.distance),
+        dayOfWeek: Number(raw.dayOfWeek),
+      })),
+    }));
 
+  const { weeks: comProvas } = placeRaces(aceites, provas, plan.startDate);
+
+  for (const week of comProvas) {
+    const numero = week.weekNumber;
     const weekStart = new Date(plan.startDate.getTime() + (numero - 1) * 7 * DAY_MS);
     const weekEnd = new Date(weekStart.getTime() + 6 * DAY_MS);
     weekEnd.setHours(23, 59, 59, 999);
@@ -98,8 +131,7 @@ export async function topUpPlanHorizon(planId: string, maxWeeks = 2): Promise<nu
         totalDistance: week.totalDistanceKm ?? null,
         totalDuration: week.totalDurationMin ?? null,
         sessions: {
-          create: (week.sessions ?? []).map((raw: any) => {
-            const s = capLongRun(raw, plan.event.distance);
+          create: (week.sessions ?? []).map((s: any) => {
             const sessionDate = new Date(weekStart.getTime());
             sessionDate.setDate(sessionDate.getDate() + (Number(s.dayOfWeek) - 1));
             return {

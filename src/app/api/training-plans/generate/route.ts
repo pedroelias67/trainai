@@ -10,6 +10,7 @@ import { generatePlanSkeleton, detailSessions } from "@/lib/claude";
 import { capLongRun } from "@/lib/race-distances";
 import { linkTrainedSessions } from "@/lib/link-activities";
 import { summariseRecentTraining } from "@/lib/recent-training";
+import { otherRacesInPlan, placeRaces } from "@/lib/secondary-races";
 import { HORIZON_WEEKS } from "@/lib/plan-horizon";
 import { getSessionUserId } from "@/lib/session";
 
@@ -77,6 +78,12 @@ export async function POST(req: NextRequest) {
     });
     const recentTraining = summariseRecentTraining(recentActivities);
 
+    // The races along the way — a 10K next month, a club half in six weeks. The
+    // model is told about them, and placeRaces below holds it to what it was told.
+    const inicioDeHoje = new Date(today);
+    inicioDeHoje.setHours(0, 0, 0, 0);
+    const outrasProvas = await otherRacesInPlan(athlete.id, event.id, inicioDeHoje, event.date);
+
     // Structure first — seconds rather than minutes — so the athlete gets a
     // browsable plan straight away. The prose follows, one week at a time.
     const planJson = await generatePlanSkeleton({
@@ -105,6 +112,7 @@ export async function POST(req: NextRequest) {
       currentDate: today.toISOString().split("T")[0],
       weeksUntilEvent,
       recentTraining,
+      secondaryRaces: outrasProvas,
       // Only the horizon is written now; the Monday job tops it up each week, so
       // a plan for an event months away costs the same to create as a short one.
       weeksToGenerate: Math.min(weeksUntilEvent, HORIZON_WEEKS),
@@ -193,6 +201,15 @@ export async function POST(req: NextRequest) {
         );
       }
     }
+
+    // Each race the athlete has entered goes on its own date, and the days
+    // around it give way to it.
+    //
+    // After the calendar shuffle and the session-count trim above, deliberately:
+    // neither may move a race or drop it, so a week can end up with one session
+    // more than trainingDaysPerWeek. A race is not an optional session.
+    const colocadas = placeRaces(planData.weeks, outrasProvas, planStart);
+    planData.weeks = colocadas.weeks;
 
     // One plan is in force at a time: the dashboard and the plan page each take
     // "the" active plan, and a second one would make that an arbitrary choice.
@@ -319,7 +336,21 @@ export async function POST(req: NextRequest) {
     const firstWeekId = await currentOrNextWeekId(plan.id);
     if (firstWeekId) await sendWeekToWatch(athlete.id, firstWeekId);
 
-    return NextResponse.json({ ...plan, firstWeekDetailed }, { status: 201 });
+    return NextResponse.json(
+      {
+        ...plan,
+        firstWeekDetailed,
+        // So the athlete is told what the other races moved, rather than finding
+        // a long run missing and wondering.
+        races: colocadas.placed.map(p => ({
+          name: p.race.name,
+          priority: p.race.priority,
+          weekNumber: p.weekNumber,
+          changes: p.changes,
+        })),
+      },
+      { status: 201 }
+    );
   } catch (err) {
     console.error("Generate plan error:", err);
     return NextResponse.json({ error: "Erro ao gerar plano" }, { status: 500 });
