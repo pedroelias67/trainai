@@ -11,6 +11,10 @@ import { capLongRun } from "@/lib/race-distances";
 import { linkTrainedSessions } from "@/lib/link-activities";
 import { summariseRecentTraining } from "@/lib/recent-training";
 import { otherRacesInPlan, placeRaces } from "@/lib/secondary-races";
+import {
+  planStartFrom, sessionDateFor, startsNextWeek, todayDayOfWeek, utcMidnight,
+  weekEndFor, weekStartFor,
+} from "@/lib/plan-calendar";
 import { HORIZON_WEEKS } from "@/lib/plan-horizon";
 import { getSessionUserId } from "@/lib/session";
 
@@ -80,9 +84,7 @@ export async function POST(req: NextRequest) {
 
     // The races along the way — a 10K next month, a club half in six weeks. The
     // model is told about them, and placeRaces below holds it to what it was told.
-    const inicioDeHoje = new Date(today);
-    inicioDeHoje.setHours(0, 0, 0, 0);
-    const outrasProvas = await otherRacesInPlan(athlete.id, event.id, inicioDeHoje, event.date);
+    const outrasProvas = await otherRacesInPlan(athlete.id, event.id, utcMidnight(today), event.date);
 
     // Structure first — seconds rather than minutes — so the athlete gets a
     // browsable plan straight away. The prose follows, one week at a time.
@@ -176,20 +178,14 @@ export async function POST(req: NextRequest) {
       RUN: "RUNNING", BIKE: "CYCLING", CYCLE: "CYCLING", SWIM: "SWIMMING",
     };
 
-    // The week grid is always anchored to Monday — session dates are derived from
-    // weekStart + (dayOfWeek - 1), so weekStart must be a Monday for days to line up.
-    // Sunday (0) → roll to tomorrow's Monday; otherwise fall back to this week's Monday.
-    const dayOfWeek = today.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
-    const startsNextWeek = dayOfWeek === 0;
-    const daysToMonday = startsNextWeek ? 1 : -(dayOfWeek - 1);
-    const planStart = new Date(today);
-    planStart.setDate(planStart.getDate() + daysToMonday);
-    planStart.setHours(0, 0, 0, 0);
+    // The week grid is always anchored to Monday, at UTC midnight — see
+    // plan-calendar.ts for why the timezone is pinned rather than inherited.
+    const planStart = planStartFrom(today);
 
     // Week 1 starts today, not last Monday — drop the sessions already in the past
     // and recompute the week totals so the summary matches what's left to train.
-    if (!startsNextWeek) {
-      const todayDow = dayOfWeek; // 1=Mon ... 6=Sat, matching the session scheme
+    if (!startsNextWeek(today)) {
+      const todayDow = todayDayOfWeek(today);
       const firstWeek = planData.weeks.find((w: any) => w.weekNumber === 1);
       if (firstWeek) {
         firstWeek.sessions = firstWeek.sessions.filter((s: any) => s.dayOfWeek >= todayDow);
@@ -239,9 +235,8 @@ export async function POST(req: NextRequest) {
         aiPromptContext: planData.periodization,
         weeks: {
           create: planData.weeks.map((week: any) => {
-            const weekStart = new Date(planStart.getTime() + (week.weekNumber - 1) * 7 * 24 * 60 * 60 * 1000);
-            const weekEnd = new Date(weekStart.getTime() + 6 * 24 * 60 * 60 * 1000);
-            weekEnd.setHours(23, 59, 59, 999);
+            const weekStart = weekStartFor(planStart, week.weekNumber);
+            const weekEnd = weekEndFor(weekStart);
             return {
             weekNumber: week.weekNumber,
             startDate: weekStart,
@@ -253,8 +248,7 @@ export async function POST(req: NextRequest) {
             sessions: {
               create: week.sessions.map((session: any) => {
                 // dayOfWeek: 1=Mon, 2=Tue, ..., 7=Sun
-                const sessionDate = new Date(weekStart.getTime());
-                sessionDate.setDate(sessionDate.getDate() + (session.dayOfWeek - 1));
+                const sessionDate = sessionDateFor(weekStart, session.dayOfWeek);
                 return {
                   dayOfWeek: session.dayOfWeek,
                   date: sessionDate,

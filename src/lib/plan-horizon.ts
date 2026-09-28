@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { extendPlanSkeleton } from "@/lib/claude";
 import { capLongRun } from "@/lib/race-distances";
 import { otherRacesInPlan, placeRaces, type SkeletonWeek } from "@/lib/secondary-races";
+import { sessionDateFor, weekEndFor, weekStartFor } from "@/lib/plan-calendar";
 
 /** A week as the model returns it: the sessions, plus the prose around them. */
 type SemanaGerada = SkeletonWeek & { focus?: string | null; coachMessage?: string | null };
@@ -116,9 +117,8 @@ export async function topUpPlanHorizon(planId: string, maxWeeks = 2): Promise<nu
 
   for (const week of comProvas) {
     const numero = week.weekNumber;
-    const weekStart = new Date(plan.startDate.getTime() + (numero - 1) * 7 * DAY_MS);
-    const weekEnd = new Date(weekStart.getTime() + 6 * DAY_MS);
-    weekEnd.setHours(23, 59, 59, 999);
+    const weekStart = weekStartFor(plan.startDate, numero);
+    const weekEnd = weekEndFor(weekStart);
 
     await prisma.trainingWeek.create({
       data: {
@@ -132,8 +132,7 @@ export async function topUpPlanHorizon(planId: string, maxWeeks = 2): Promise<nu
         totalDuration: week.totalDurationMin ?? null,
         sessions: {
           create: (week.sessions ?? []).map((s: any) => {
-            const sessionDate = new Date(weekStart.getTime());
-            sessionDate.setDate(sessionDate.getDate() + (Number(s.dayOfWeek) - 1));
+            const sessionDate = sessionDateFor(weekStart, Number(s.dayOfWeek));
             return {
               dayOfWeek: Number(s.dayOfWeek),
               date: sessionDate,
