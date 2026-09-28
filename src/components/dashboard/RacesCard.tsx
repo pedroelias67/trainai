@@ -13,6 +13,8 @@ export type Race = {
   sport: string;
   distance: string;
   priority: string;
+  /** A race a plan was built for. It cannot be removed without the plan going first. */
+  hasPlans: boolean;
 };
 
 const PRIORITY_STYLE: Record<string, string> = {
@@ -101,6 +103,69 @@ export function RacesCard({ races, targetEventId }: { races: Race[]; targetEvent
 
   const distancias = DISTANCES[form.sport] ?? DISTANCES.RUNNING;
 
+  // A race that has been run is history. It stays visible, but below and quiet:
+  // what the athlete comes here for is what is still ahead.
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const futuras = races.filter(r => new Date(r.date) >= hoje);
+  const passadas = races.filter(r => new Date(r.date) < hoje).reverse();
+
+  function linha(race: Race, passada: boolean) {
+    const alvo = race.id === targetEventId;
+    // Offering to delete a race a plan was built for would only produce a
+    // refusal: the plan points at it.
+    const podeApagar = !alvo && !race.hasPlans;
+
+    return (
+      <div
+        key={race.id}
+        className={`flex items-center justify-between gap-3 py-2.5 border-b border-[var(--border)] last:border-0 ${passada ? "opacity-60" : ""}`}
+      >
+        <div className="min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-[var(--text-primary)] text-sm font-medium truncate">{race.name}</p>
+            <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${PRIORITY_STYLE[race.priority] ?? PRIORITY_STYLE.C}`}>
+              {race.priority}
+            </span>
+            {alvo && (
+              <span className="text-green-400 text-[10px] bg-green-500/10 border border-green-500/20 px-1.5 py-0.5 rounded-full">
+                Plano ativo
+              </span>
+            )}
+          </div>
+          <p className="text-[var(--text-muted)] text-xs">
+            {format(new Date(race.date), "d 'de' MMMM 'de' yyyy", { locale: pt })}
+            {DISTANCE_LABELS[race.distance] ? ` · ${DISTANCE_LABELS[race.distance]}` : ""}
+          </p>
+        </div>
+
+        {podeApagar && (
+          apagar === race.id ? (
+            <div className="flex items-center gap-2 shrink-0">
+              <button
+                onClick={() => remover(race.id)}
+                disabled={working}
+                className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50"
+              >
+                {working ? "A apagar…" : "Confirmar"}
+              </button>
+              <button onClick={() => setApagar(null)} className="text-xs text-[var(--text-muted)]">
+                Não
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setApagar(race.id)}
+              className="text-xs text-[var(--text-muted)] hover:text-red-400 shrink-0 transition-colors"
+            >
+              Apagar
+            </button>
+          )
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="card">
       <div className="flex items-center justify-between mb-4">
@@ -119,57 +184,25 @@ export function RacesCard({ races, targetEventId }: { races: Race[]; targetEvent
         </p>
       )}
 
-      {races.length > 0 && (
-        <div className="space-y-3 mb-4">
-          {races.map(race => {
-            const alvo = race.id === targetEventId;
-            return (
-              <div key={race.id} className="flex items-center justify-between gap-3 py-2.5 border-b border-[var(--border)] last:border-0">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <p className="text-[var(--text-primary)] text-sm font-medium truncate">{race.name}</p>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full border ${PRIORITY_STYLE[race.priority] ?? PRIORITY_STYLE.C}`}>
-                      {race.priority}
-                    </span>
-                    {alvo && (
-                      <span className="text-green-400 text-[10px] bg-green-500/10 border border-green-500/20 px-1.5 py-0.5 rounded-full">
-                        Plano ativo
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-[var(--text-muted)] text-xs capitalize">
-                    {format(new Date(race.date), "d 'de' MMMM yyyy", { locale: pt })}
-                    {DISTANCE_LABELS[race.distance] ? ` · ${DISTANCE_LABELS[race.distance]}` : ""}
-                  </p>
-                </div>
+      {futuras.length > 0 && (
+        <div className="space-y-3 mb-4">{futuras.map(r => linha(r, false))}</div>
+      )}
 
-                {!alvo && (
-                  apagar === race.id ? (
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        onClick={() => remover(race.id)}
-                        disabled={working}
-                        className="text-xs text-red-400 hover:text-red-300 disabled:opacity-50"
-                      >
-                        {working ? "A apagar…" : "Confirmar"}
-                      </button>
-                      <button onClick={() => setApagar(null)} className="text-xs text-[var(--text-muted)]">
-                        Não
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setApagar(race.id)}
-                      className="text-xs text-[var(--text-muted)] hover:text-red-400 shrink-0 transition-colors"
-                    >
-                      Apagar
-                    </button>
-                  )
-                )}
-              </div>
-            );
-          })}
-        </div>
+      {futuras.length === 0 && passadas.length > 0 && !aberto && (
+        <p className="text-[var(--text-muted)] text-sm mb-4">
+          Não tens nenhuma prova por correr.
+        </p>
+      )}
+
+      {passadas.length > 0 && (
+        <details className="mb-4 group">
+          <summary className="text-xs text-[var(--text-muted)] cursor-pointer hover:text-[var(--text-secondary)] transition-colors list-none">
+            {passadas.length === 1 ? "1 prova já corrida" : `${passadas.length} provas já corridas`}
+            <span className="ml-1 group-open:hidden">▸</span>
+            <span className="ml-1 hidden group-open:inline">▾</span>
+          </summary>
+          <div className="space-y-3 mt-3">{passadas.map(r => linha(r, true))}</div>
+        </details>
       )}
 
       {nota && (

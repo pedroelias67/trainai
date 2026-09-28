@@ -25,7 +25,9 @@ export default async function ProfilePage() {
     where: { userId },
     include: {
       user: true,
-      events: { orderBy: { date: "asc" } },
+      // The plan count decides whether a race can be removed at all: a plan
+      // points at its event, so an event with one cannot be deleted.
+      events: { orderBy: { date: "asc" }, include: { _count: { select: { trainingPlans: true } } } },
       trainingPlans: {
         where: { status: "ACTIVE" },
         include: { event: true },
@@ -163,6 +165,7 @@ export default async function ProfilePage() {
             sport: event.sport,
             distance: event.distance,
             priority: event.priority,
+            hasPlans: event._count.trainingPlans > 0,
           }))}
           targetEventId={athlete.trainingPlans[0]?.eventId ?? null}
         />
