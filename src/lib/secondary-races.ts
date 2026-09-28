@@ -16,6 +16,7 @@
 
 import { prisma } from "@/lib/prisma";
 import { RACE_KM } from "@/lib/race-distances";
+import { weekVolumeFromRows } from "@/lib/week-volume";
 
 export type RacePriority = "A" | "B" | "C";
 
@@ -200,14 +201,20 @@ export function placeRaces<W extends SkeletonWeek>(
       const depois = dia + DAY_MS;
       for (const p of plano.filter(p => p.date === depois)) {
         if (p.session.sessionType === "RECOVERY") continue;
+        // Shortened as well as renamed. Calling an unchanged 8 km base run
+        // "recovery" the morning after a race only makes the label a lie.
+        const km = p.session.plannedDistanceKm;
+        const min = p.session.plannedDurationMin;
         p.session = {
           ...p.session,
           sessionType: "RECOVERY",
           name: "Recuperação (pós-prova)",
+          plannedDistanceKm: km ? Math.round(km * FACTOR_FACIL * 10) / 10 : km,
+          plannedDurationMin: min ? Math.round(min * FACTOR_FACIL) : min,
           plannedPace: null,
           isPriority: false,
         };
-        changes.push("O dia seguinte passou a recuperação.");
+        changes.push(`O dia seguinte passou a recuperação${km ? `, ${Math.round(km * FACTOR_FACIL * 10) / 10} km` : ""}.`);
       }
 
       // A long race is the week's long run; keeping both would double it.
@@ -507,14 +514,18 @@ export async function applyRacesToPlan(athleteId: string, planId: string): Promi
 
     if (!mexeu) continue;
     resultado.weekIds.push(semana.id);
-    const totalKm = agora.reduce((t, s) => t + (s.plannedDistanceKm ?? 0), 0);
-    const totalMin = agora.reduce((t, s) => t + (s.plannedDurationMin ?? 0), 0);
+
+    // Read back rather than summing `agora`, which holds only the sessions
+    // still ahead: a week whose Monday had already been trained came out
+    // missing that Monday, and the athlete saw a week that had shrunk.
+    const restantes = await prisma.trainingSession.findMany({
+      where: { weekId: semana.id, cancelled: false },
+      select: { plannedDistance: true, plannedDuration: true },
+    });
+    const volume = weekVolumeFromRows(restantes);
     await prisma.trainingWeek.update({
       where: { id: semana.id },
-      data: {
-        totalDistance: Math.round(totalKm * 10) / 10,
-        totalDuration: totalMin,
-      },
+      data: { totalDistance: volume.km, totalDuration: volume.minutes },
     });
   }
 

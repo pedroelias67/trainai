@@ -11,6 +11,7 @@ import { capLongRun } from "@/lib/race-distances";
 import { linkTrainedSessions } from "@/lib/link-activities";
 import { summariseRecentTraining } from "@/lib/recent-training";
 import { otherRacesInPlan, placeRaces } from "@/lib/secondary-races";
+import { weekVolume } from "@/lib/week-volume";
 import {
   planStartFrom, sessionDateFor, startsNextWeek, todayDayOfWeek, utcMidnight,
   weekEndFor, weekStartFor,
@@ -243,8 +244,9 @@ export async function POST(req: NextRequest) {
             endDate: weekEnd,
             focus: week.focus,
             coachMessage: week.coachMessage,
-            totalDistance: week.totalDistanceKm,
-            totalDuration: week.totalDurationMin,
+            // Summed, not taken from the model: see week-volume.ts.
+            totalDistance: weekVolume(week.sessions).km,
+            totalDuration: weekVolume(week.sessions).minutes,
             sessions: {
               create: week.sessions.map((session: any) => {
                 // dayOfWeek: 1=Mon, 2=Tue, ..., 7=Sun

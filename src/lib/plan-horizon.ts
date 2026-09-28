@@ -3,6 +3,7 @@ import { extendPlanSkeleton } from "@/lib/claude";
 import { capLongRun } from "@/lib/race-distances";
 import { otherRacesInPlan, placeRaces, type SkeletonWeek } from "@/lib/secondary-races";
 import { sessionDateFor, weekEndFor, weekStartFor } from "@/lib/plan-calendar";
+import { weekVolume } from "@/lib/week-volume";
 
 /** A week as the model returns it: the sessions, plus the prose around them. */
 type SemanaGerada = SkeletonWeek & { focus?: string | null; coachMessage?: string | null };
@@ -128,8 +129,8 @@ export async function topUpPlanHorizon(planId: string, maxWeeks = 2): Promise<nu
         endDate: weekEnd,
         focus: week.focus ?? null,
         coachMessage: week.coachMessage ?? null,
-        totalDistance: week.totalDistanceKm ?? null,
-        totalDuration: week.totalDurationMin ?? null,
+        totalDistance: weekVolume(week.sessions ?? []).km,
+        totalDuration: weekVolume(week.sessions ?? []).minutes,
         sessions: {
           create: (week.sessions ?? []).map((s: any) => {
             const sessionDate = sessionDateFor(weekStart, Number(s.dayOfWeek));

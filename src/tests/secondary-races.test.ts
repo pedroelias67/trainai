@@ -236,3 +236,19 @@ describe("secondaryRaceGuidance", () => {
     expect(texto).toContain("prioridade B");
   });
 });
+
+describe("placeRaces — o dia seguinte a uma prova B", () => {
+  it("encurta a sessão, além de lhe mudar o nome", () => {
+    // Chamar "recuperação" a uma base de 8 km inalterada só torna o rótulo falso.
+    const semanas: SkeletonWeek[] = [
+      { weekNumber: 1, sessions: [sessao(7, "LONG", "Longo Z2", 18, 110)] },
+      { weekNumber: 2, sessions: [sessao(1, "EASY", "Corrida Base Z2", 8, 50)] },
+    ];
+    const { weeks } = placeRaces(semanas, [prova("2026-10-04", "B")], PLAN_START);
+
+    const seguinte = dia(weeks, 2, 1);
+    expect(seguinte).toMatchObject({ sessionType: "RECOVERY", name: "Recuperação (pós-prova)" });
+    expect(seguinte!.plannedDistanceKm).toBe(4.8);
+    expect(seguinte!.plannedDurationMin).toBe(30);
+  });
+});

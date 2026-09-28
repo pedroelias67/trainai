@@ -8,7 +8,7 @@ const db = vi.hoisted(() => ({
   trainingPlan: { findFirst: vi.fn() },
   event: { findMany: vi.fn() },
   trainingWeek: { findMany: vi.fn(), update: vi.fn() },
-  trainingSession: { update: vi.fn(), create: vi.fn() },
+  trainingSession: { update: vi.fn(), create: vi.fn(), findMany: vi.fn() },
 }));
 vi.mock("@/lib/prisma", () => ({ prisma: db }));
 
@@ -49,6 +49,12 @@ beforeEach(() => {
     { name: "Meia de Coimbra", date: DOMINGO, distance: "HALF_MARATHON", sport: "RUNNING", priority: "B" },
   ]);
   db.trainingWeek.findMany.mockResolvedValue(semanaComLongo());
+  // O total é relido da semana inteira, não somado do que estava em mãos: a
+  // semana pode conter treinos já feitos, que continuam a contar para o volume.
+  db.trainingSession.findMany.mockResolvedValue([
+    { plannedDistance: 8, plannedDuration: 50 },
+    { plannedDistance: 21.1, plannedDuration: null },
+  ]);
 });
 
 describe("applyRacesToPlan", () => {
@@ -70,11 +76,17 @@ describe("applyRacesToPlan", () => {
     expect(r).toMatchObject({ created: 1, cancelled: 1, weekIds: ["w2"] });
   });
 
-  it("volta a pôr os totais da semana de acordo com o que ela passou a ter", async () => {
+  it("volta a pôr os totais a partir da semana inteira, feitos incluídos", async () => {
+    // O que fica na semana: a fácil de 8 km e a prova de 21,1. O longo saiu.
+    // Contam-se lendo a semana de volta, para que um treino já feito à segunda
+    // não desapareça do total só por não estar entre os que faltam.
     const { applyRacesToPlan } = await import("@/lib/secondary-races");
     await applyRacesToPlan("a1", "p1");
 
-    // 8 km da fácil + 21,1 da prova. O longo de 18 saiu.
+    expect(db.trainingSession.findMany).toHaveBeenCalledWith({
+      where: { weekId: "w2", cancelled: false },
+      select: { plannedDistance: true, plannedDuration: true },
+    });
     expect(db.trainingWeek.update).toHaveBeenCalledWith({
       where: { id: "w2" },
       data: { totalDistance: 29.1, totalDuration: 50 },
