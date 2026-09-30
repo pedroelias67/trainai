@@ -154,9 +154,21 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         // The dashboard says this too, but only to someone who opens it. An
         // athlete whose activities arrive through Strava has no reason to
         // think anything is wrong, so this is the way to reach them.
-        const athlete = await prisma.athlete.findUnique({ where: { userId: id }, select: { id: true } });
+        const athlete = await prisma.athlete.findUnique({
+          where: { userId: id },
+          select: { id: true, trainingPlans: { where: { status: "ACTIVE" }, select: { id: true }, take: 1 } },
+        });
         if (!athlete) {
           return NextResponse.json({ error: "Este utilizador não tem perfil de atleta" }, { status: 400 });
+        }
+        // Two different silences, and telling them apart matters: someone with
+        // no plan has no workouts to deliver, and saying their watch is
+        // receiving them would be untrue.
+        if (athlete.trainingPlans.length === 0) {
+          return NextResponse.json(
+            { error: "Este atleta ainda não tem plano. Não há treinos para entregar ao relógio — o que falta é gerar o plano." },
+            { status: 400 }
+          );
         }
         const notice = await loadWatchNotice(athlete.id);
         if (!notice) {

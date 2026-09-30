@@ -57,7 +57,7 @@ beforeEach(() => {
   admin.requireAdmin.mockResolvedValue(true);
   db.user.findUnique.mockResolvedValue({ id: "u1", email: "amigo@exemplo.pt", name: "Francisco" });
   db.user.findUniqueOrThrow.mockResolvedValue({ id: "u1" });
-  db.athlete.findUnique.mockResolvedValue({ id: "a1" });
+  db.athlete.findUnique.mockResolvedValue({ id: "a1", trainingPlans: [{ id: "p1" }] });
 });
 
 describe("ação send-watch-setup", () => {
@@ -81,6 +81,19 @@ describe("ação send-watch-setup", () => {
     const res = await POST(pedido() as never, { params });
     expect(res.status).toBe(400);
     expect((await res.json()).error).toContain("está a receber os treinos");
+    expect(email.sendWatchSetupEmail).not.toHaveBeenCalled();
+  });
+
+  it("distingue quem ainda não tem plano de quem está bem", async () => {
+    // Dizer a quem não tem plano que "o relógio está a receber os treinos"
+    // seria falso: não há treinos nenhuns para receber.
+    db.athlete.findUnique.mockResolvedValue({ id: "a1", trainingPlans: [] });
+    const { POST } = await import("@/app/api/admin/users/[id]/actions/route");
+
+    const res = await POST(pedido() as never, { params });
+    expect(res.status).toBe(400);
+    expect((await res.json()).error).toContain("ainda não tem plano");
+    expect(watch.loadWatchNotice).not.toHaveBeenCalled();
     expect(email.sendWatchSetupEmail).not.toHaveBeenCalled();
   });
 
