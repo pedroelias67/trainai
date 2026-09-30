@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { INTERVALS_STEPS } from "@/lib/intervals-setup";
 
 export function IntervalsConnect({ connected }: { connected: boolean }) {
   const router = useRouter();
@@ -78,17 +79,15 @@ export function IntervalsConnect({ connected }: { connected: boolean }) {
             e as outras não os aceitam vindos diretamente daqui. Configura-se uma vez:
           </p>
           <ol className="text-xs text-[var(--text-secondary)] space-y-2">
-            {[
-              "Cria uma conta gratuita em intervals.icu.",
-              "Liga lá o relógio: ícone do perfil → Settings → Integrations → escolhe a tua marca → Connect. Inicia sessão com a mesma conta do relógio.",
-              "Ainda em Settings, desce até ao fundo, a Developer Settings, e copia a API key.",
-              "Cola-a aqui em baixo.",
-            ].map((text, i) => (
+            {INTERVALS_STEPS.map((step, i) => (
               <li key={i} className="flex items-start gap-2.5">
                 <span className="shrink-0 w-5 h-5 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-[10px] font-bold flex items-center justify-center mt-px">
                   {i + 1}
                 </span>
-                <span className="leading-relaxed">{text}</span>
+                <span className="leading-relaxed">
+                  <strong className="font-medium text-[var(--text-primary)]">{step.title}.</strong>{" "}
+                  {step.detail}
+                </span>
               </li>
             ))}
           </ol>

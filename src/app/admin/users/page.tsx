@@ -19,7 +19,7 @@ type AccountStatus = {
 
 type UserAction =
   | "activate" | "unlock" | "resend-verification" | "send-password-reset" | "send-welcome"
-  | "suspend" | "unsuspend" | "revoke-sessions" | "send-weekly-report";
+  | "suspend" | "unsuspend" | "revoke-sessions" | "send-weekly-report" | "send-watch-setup";
 
 type User = {
   id: string;
@@ -524,6 +524,11 @@ export default function AdminUsersPage() {
                         title="Gera o resumo da última semana terminada, se ainda não existir, e envia-o por email"
                         className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all disabled:opacity-50">
                         {acting === `${user.id}:send-weekly-report` ? "A preparar…" : "Enviar resumo semanal"}
+                      </button>
+                      <button onClick={() => runAction(user, "send-watch-setup")} disabled={acting !== null}
+                        title="Pede ao atleta que ligue o relógio, ou que corrija o que falta. Recusa enviar se já estiver tudo a funcionar"
+                        className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all disabled:opacity-50">
+                        {acting === `${user.id}:send-watch-setup` ? "A verificar…" : "Pedir ligação do relógio"}
                       </button>
                       <button onClick={() => runAction(user, "send-password-reset")} disabled={acting !== null}
                         className="px-3 py-1.5 rounded-lg border border-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:border-[var(--border-strong)] text-xs transition-all disabled:opacity-50">

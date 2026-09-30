@@ -1,5 +1,7 @@
 import { Resend } from "resend";
 import { enviarComEspera } from "./email-retry";
+import { INTERVALS_STEPS, THRESHOLD_HELP } from "./intervals-setup";
+import type { WatchNotice } from "./connection-status";
 import {
   emailShell, emailButton, emailHeading, emailText,
   emailBadge, emailStatGrid, emailInfoBox, emailDivider, emailSubheading, EMAIL_COLORS,
@@ -247,4 +249,83 @@ export async function sendFeedbackEmail(data: {
       `,
     }),
   });
+}
+
+/**
+ * Tells an athlete their planned workouts are not reaching their watch.
+ *
+ * The app says the same thing on their dashboard, but only once they open it.
+ * Someone whose activities arrive through Strava has no reason to think
+ * anything is wrong, so they may never open it to find out.
+ *
+ * What the mail says comes from the same diagnosis the dashboard shows, so the
+ * two cannot tell the athlete different things.
+ */
+export function watchSetupEmail(name: string, notice: WatchNotice): { subject: string; html: string } {
+  const passos = `
+    <table width="100%" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom:20px">
+      ${INTERVALS_STEPS.map((s, i) => `
+        <tr><td style="padding-bottom:12px">
+          <div style="display:flex;align-items:flex-start;gap:12px">
+            <div style="width:24px;height:24px;border-radius:50%;background:${EMAIL_COLORS.ACCENT};color:#ffffff;font-weight:800;font-size:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">${i + 1}</div>
+            <div>
+              <p style="margin:0 0 2px;font-size:13px;font-weight:600;color:${EMAIL_COLORS.HEADING}">${s.title}</p>
+              <p style="margin:0;font-size:12px;color:${EMAIL_COLORS.MUTED}">${s.detail}</p>
+            </div>
+          </div>
+        </td></tr>
+      `).join("")}
+    </table>`;
+
+  const corpo = (() => {
+    switch (notice.reason) {
+      case "not-connected":
+        return `
+          ${emailText(
+            "Os teus treinos planeados não estão a chegar ao teu relógio. As tuas corridas chegam à " +
+            "app pelo Strava e a análise semanal funciona — falta o caminho contrário, o que leva o " +
+            "treino do dia ao pulso."
+          )}
+          ${emailText(
+            "Faz-se através do Intervals.icu, que é gratuito e serve de ponte para Garmin, COROS, " +
+            "Suunto e Wahoo. Configura-se uma vez:"
+          )}
+          ${passos}
+          ${emailButton(`${BASE_URL}/dashboard/profile`, "Ligar o relógio →")}`;
+
+      case "no-threshold":
+        return `
+          ${emailText(
+            "Os treinos estão a chegar ao teu relógio, mas sem ritmo nenhum. Cada fase aparece só " +
+            "com a duração, e o relógio acaba a orientar-te pela frequência cardíaca."
+          )}
+          ${emailInfoBox("Falta uma definição", THRESHOLD_HELP.why, "#a16207")}
+          ${emailText(`Onde se preenche: <strong>${THRESHOLD_HELP.where}</strong>`)}
+          ${emailButton("https://intervals.icu/settings", "Abrir definições do Intervals.icu →")}`;
+
+      default:
+        return `
+          ${emailText(notice.detail)}
+          ${emailButton(`${BASE_URL}${notice.action.external ? "/dashboard/plan" : notice.action.href}`, "Abrir o TrainAI →")}`;
+    }
+  })();
+
+  return {
+    subject: `⌚ ${notice.title}`,
+    html: emailShell({
+      previewText: notice.detail,
+      content: `
+        ${emailBadge("O teu relógio")}
+        ${emailHeading(`${name}, ${notice.title.charAt(0).toLowerCase()}${notice.title.slice(1)}`)}
+        ${corpo}
+        ${emailText("Se precisares de ajuda com algum passo, responde a este email.", true)}
+      `,
+    }),
+  };
+}
+
+/** Builds it and sends it. Split so the mail can be looked at without sending one. */
+export async function sendWatchSetupEmail(email: string, name: string, notice: WatchNotice) {
+  const { subject, html } = watchSetupEmail(name, notice);
+  await send({ from: FROM, to: email, subject, html });
 }

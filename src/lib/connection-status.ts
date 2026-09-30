@@ -158,6 +158,8 @@ export function worstLevel(...levels: Level[]): Level {
 // ---------------------------------------------------------------------------
 
 export type WatchNotice = {
+  /** Which condition this is, for callers that say it a different way — the email. */
+  reason: IntervalsReason;
   level: "warning" | "error";
   title: string;
   detail: string;
@@ -187,6 +189,7 @@ export function watchNotice(f: ConnectionFacts, now = new Date()): WatchNotice |
   switch (reason) {
     case "not-connected":
       return {
+        reason,
         level: "warning",
         title: "Os treinos não estão a chegar ao teu relógio",
         detail:
@@ -200,6 +203,7 @@ export function watchNotice(f: ConnectionFacts, now = new Date()): WatchNotice |
       // its steps; only the pace targets are missing, so the watch counts down
       // minutes and guides by heart rate instead.
       return {
+        reason,
         level: "warning",
         title: "O relógio recebe os treinos sem ritmo",
         detail:
@@ -210,6 +214,7 @@ export function watchNotice(f: ConnectionFacts, now = new Date()): WatchNotice |
 
     case "push-error":
       return {
+        reason,
         level: "error",
         title: "O último envio para o relógio falhou",
         detail: detail ?? "Não conseguimos entregar os treinos ao Intervals.icu.",
@@ -219,6 +224,7 @@ export function watchNotice(f: ConnectionFacts, now = new Date()): WatchNotice |
     case "week-missing":
     case "never-sent":
       return {
+        reason,
         level: "warning",
         title: "A semana atual não está no relógio",
         detail: "Os treinos desta semana ainda não foram entregues. Podes enviá-los a partir do plano.",
@@ -227,6 +233,7 @@ export function watchNotice(f: ConnectionFacts, now = new Date()): WatchNotice |
 
     case "quiet":
       return {
+        reason,
         level: "warning",
         title: "Há uma semana que não se envia nada para o relógio",
         detail: "Os treinos desta semana podem não estar lá. Vale a pena confirmar.",

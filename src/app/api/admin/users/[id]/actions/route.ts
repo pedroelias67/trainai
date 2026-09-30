@@ -7,12 +7,13 @@ import { prisma } from "@/lib/prisma";
 import { accountStatus, accountStatusSelect, ADMIN_EMAIL, requireAdmin } from "@/lib/admin";
 import { revokeAllSessions } from "@/lib/session";
 import { cleared } from "@/lib/login-lock";
-import { sendPasswordResetEmail, sendVerificationEmail, sendWelcomeEmail } from "@/lib/email";
+import { sendPasswordResetEmail, sendVerificationEmail, sendWatchSetupEmail, sendWelcomeEmail } from "@/lib/email";
+import { loadWatchNotice } from "@/lib/athlete-watch";
 import { emailWeekReport, generateWeekReport, lastFinishedWeek } from "@/lib/weekly-report";
 
 const ACTIONS = [
   "activate", "unlock", "resend-verification", "send-password-reset", "send-welcome",
-  "suspend", "unsuspend", "revoke-sessions", "send-weekly-report",
+  "suspend", "unsuspend", "revoke-sessions", "send-weekly-report", "send-watch-setup",
 ] as const;
 type Action = (typeof ACTIONS)[number];
 
@@ -146,6 +147,28 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         message = created
           ? `Relatório da semana ${week.weekNumber} gerado e enviado para ${sentTo}.`
           : `Relatório da semana ${week.weekNumber} reenviado para ${sentTo}.`;
+        break;
+      }
+
+      case "send-watch-setup": {
+        // The dashboard says this too, but only to someone who opens it. An
+        // athlete whose activities arrive through Strava has no reason to
+        // think anything is wrong, so this is the way to reach them.
+        const athlete = await prisma.athlete.findUnique({ where: { userId: id }, select: { id: true } });
+        if (!athlete) {
+          return NextResponse.json({ error: "Este utilizador não tem perfil de atleta" }, { status: 400 });
+        }
+        const notice = await loadWatchNotice(athlete.id);
+        if (!notice) {
+          // Refused rather than sent: an email telling someone to fix what is
+          // not broken costs their trust in the next one.
+          return NextResponse.json(
+            { error: "O relógio deste atleta está a receber os treinos. Não há nada para pedir." },
+            { status: 400 }
+          );
+        }
+        await sendWatchSetupEmail(user.email, user.name ?? "atleta", notice);
+        message = `Email enviado para ${user.email}: ${notice.title.toLowerCase()}.`;
         break;
       }
 
