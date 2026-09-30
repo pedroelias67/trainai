@@ -11,6 +11,8 @@ import { ArchivePlan } from "@/components/dashboard/ArchivePlan";
 import { GeneratePlanForEvent } from "@/components/dashboard/GeneratePlanForEvent";
 import { getSessionUserId } from "@/lib/session";
 import { parseWeekAnalysis } from "@/lib/week-analysis";
+import { WatchNoticeBanner } from "@/components/dashboard/WatchNoticeBanner";
+import { loadWatchNotice } from "@/lib/athlete-watch";
 
 
 export default async function PlanPage() {
@@ -37,6 +39,10 @@ export default async function PlanPage() {
   if (!athlete) redirect("/onboarding");
 
   const plan = athlete.trainingPlans[0];
+
+  // Said here as well as on the dashboard: this is the page with the button
+  // that fixes it, and the page someone opens when the watch looks wrong.
+  const avisoRelogio = await loadWatchNotice(athlete.id);
 
   const startOfToday = new Date();
   startOfToday.setHours(0, 0, 0, 0);
@@ -78,6 +84,12 @@ export default async function PlanPage() {
       </header>
 
       <main className="max-w-6xl mx-auto px-6 py-8">
+        {avisoRelogio && (
+          <div className="mb-6">
+            <WatchNoticeBanner notice={avisoRelogio} />
+          </div>
+        )}
+
         {!plan ? (
           <div className="card text-center py-20">
             <p className="text-4xl mb-4">📋</p>

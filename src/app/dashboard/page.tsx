@@ -8,9 +8,11 @@ import { RacePrediction } from "@/components/dashboard/RacePrediction";
 import { WellnessCheckin } from "@/components/dashboard/WellnessCheckin";
 import RecentActivitiesFeed from "@/components/dashboard/RecentActivitiesFeed";
 import { OnboardingTour } from "@/components/dashboard/OnboardingTour";
+import { WatchNoticeBanner } from "@/components/dashboard/WatchNoticeBanner";
 import { WeeklyLoadChart, PaceEvolutionChart } from "@/components/dashboard/TrainingCharts";
 import { sessionTypeLabel, sessionTypeDescription } from "@/lib/session-types";
 import { getSessionUserId } from "@/lib/session";
+import { loadWatchNotice } from "@/lib/athlete-watch";
 
 async function getDashboardData(userId: string) {
   return prisma.athlete.findUnique({
@@ -105,6 +107,10 @@ export default async function DashboardPage() {
 
   const activePlan = athlete.trainingPlans[0];
   const now = new Date();
+
+  // Whether the plan is actually reaching the watch. Nothing else on this page
+  // would say otherwise: activities arrive through Strava either way.
+  const avisoRelogio = await loadWatchNotice(athlete.id);
 
   // The week today actually falls in. plan.currentWeek is the fallback, since it
   // is maintained by a cron and can lag; the first week is the last resort.
@@ -214,6 +220,12 @@ export default async function DashboardPage() {
               <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
             </svg>
             <span className="text-green-400 text-xs font-medium">Strava conectado · sincronização automática ativa</span>
+          </div>
+        )}
+
+        {avisoRelogio && (
+          <div className="mb-6">
+            <WatchNoticeBanner notice={avisoRelogio} />
           </div>
         )}
 

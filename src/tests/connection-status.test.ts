@@ -52,7 +52,7 @@ describe("intervalsStatus", () => {
     // A week sent before sends were recorded is still on the watch, and one sent
     // yesterday to a different week is not this week.
     expect(intervalsStatus(facts({ intervalsIcuWeekOnCalendar: true, intervalsIcuLastPushAt: null }), now))
-      .toEqual({ level: "ok", label: "Semana atual no relógio" });
+      .toEqual({ reason: "week-on-calendar", level: "ok", label: "Semana atual no relógio" });
     expect(intervalsStatus(facts({ intervalsIcuWeekOnCalendar: false, intervalsIcuLastPushAt: ago(1) }), now))
       .toMatchObject({ level: "warning", label: "Semana atual por enviar" });
   });
