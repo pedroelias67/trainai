@@ -512,7 +512,7 @@ export async function deleteEventsForSessions(
 }
 
 /**
- * Replaces our events rather than updating them in place.
+ * Makes a stretch of the athlete's calendar match the workouts given, exactly.
  *
  * Intervals.icu hands a workout to Garmin when the event is created. Updating
  * an existing event changes it on their calendar without exporting it again, so
@@ -520,33 +520,44 @@ export async function deleteEventsForSessions(
  * event was first written — never reaches the watch. Deleting our own events
  * first makes every send a real export.
  *
- * A delete that fails is not fatal: the create that follows still upserts, which
- * is exactly what this did before. Losing the re-export is better than losing
- * the week.
+ * Every one of our events in the window goes, not only the ones about to be
+ * written again. It used to delete just those, which meant a workout that left
+ * the week never left the watch: a session the athlete cancelled, or one a race
+ * displaced, stayed on the calendar for good. On the day of a race that showed
+ * up as the race and the long run it had replaced, both asking to be run.
+ *
+ * Nothing but ours is touched — whatever the athlete planned themselves on
+ * those days stays where it is.
+ *
+ * A delete that fails is not fatal: the create that follows still upserts.
+ * Losing the re-export is better than losing the week.
  */
 export async function replaceEvents(
   apiKey: string,
   athleteId: string,
-  events: IntervalsEvent[]
+  events: IntervalsEvent[],
+  /** The days this send is responsible for. Defaults to the span of the events. */
+  window?: { from: string; to: string }
 ): Promise<{ ok: true; count: number } | { ok: false; error: string }> {
-  if (events.length === 0) return { ok: true, count: 0 };
-
   const dates = events.map(e => e.start_date_local.split("T")[0]).sort();
+  const from = window?.from ?? dates[0];
+  const to = window?.to ?? dates[dates.length - 1];
+  // Without a window and without events there is nothing to be responsible for.
+  if (!from || !to) return { ok: true, count: 0 };
+
   // A calendar we could not read means nothing to replace; the upsert still stands.
-  const existing = (await ourEventIds(apiKey, athleteId, dates[0], dates[dates.length - 1])) ?? new Map();
+  const existing = (await ourEventIds(apiKey, athleteId, from, to)) ?? new Map();
 
   await Promise.all(
-    events
-      .map(e => existing.get(e.external_id))
-      .filter((id): id is number => id !== undefined)
-      .map(id =>
-        fetch(`${API}/athlete/${athleteId}/events/${id}`, {
-          method: "DELETE",
-          headers: { Authorization: authHeader(apiKey) },
-        }).catch(() => null)
-      )
+    [...existing.values()].map(id =>
+      fetch(`${API}/athlete/${athleteId}/events/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: authHeader(apiKey) },
+      }).catch(() => null)
+    )
   );
 
+  if (events.length === 0) return { ok: true, count: 0 };
   return pushEvents(apiKey, athleteId, events);
 }
 

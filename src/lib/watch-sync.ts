@@ -13,6 +13,7 @@ import {
 import {
   checkWeekOnCalendar, recordIntervalsPush, recordWeekOnCalendar,
 } from "@/lib/intervals-connection";
+import { utcMidnight } from "@/lib/plan-calendar";
 
 export type WatchSendResult =
   | {
@@ -45,6 +46,7 @@ export async function sendWeekToWatch(athleteId: string, weekId: string): Promis
     const week = await prisma.trainingWeek.findFirst({
       where: { id: weekId, plan: { athleteId } },
       select: {
+        startDate: true,
         endDate: true,
         planId: true,
         sessions: {
@@ -62,11 +64,24 @@ export async function sendWeekToWatch(athleteId: string, weekId: string): Promis
 
     // A week that is over has already been trained; rewriting it on the calendar
     // would only disturb what the athlete has done.
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (week.endDate < today) return { status: "skipped", reason: "past-week" };
+    //
+    // Compared in UTC, because that is what a plan's dates are anchored to. By
+    // the local clock, a machine west of Greenwich still called Sunday's week
+    // current at one in the morning on Monday.
+    if (week.endDate < utcMidnight(new Date())) return { status: "skipped", reason: "past-week" };
 
-    if (week.sessions.length === 0) return { status: "skipped", reason: "no-sessions" };
+    // The week is the unit, so the calendar is made to match it — including a
+    // week whose every session was cancelled, which has to come off the watch
+    // rather than stay there unanswered.
+    const janela = {
+      from: week.startDate.toISOString().slice(0, 10),
+      to: week.endDate.toISOString().slice(0, 10),
+    };
+
+    if (week.sessions.length === 0) {
+      await replaceEvents(athlete.intervalsIcuApiKey, athlete.intervalsIcuAthleteId, [], janela);
+      return { status: "skipped", reason: "no-sessions" };
+    }
 
     // Read the reference pace from the whole plan, not just this week: a
     // recovery week's gentle paces imply a slower threshold, and the same zone
@@ -77,7 +92,7 @@ export async function sendWeekToWatch(athleteId: string, weekId: string): Promis
     });
     const threshold = inferThresholdPace(athlete.ltPace, planSessions.length > 0 ? planSessions : week.sessions);
     const events = week.sessions.map(s => buildCalendarEvent(s, threshold));
-    const result = await replaceEvents(athlete.intervalsIcuApiKey, athlete.intervalsIcuAthleteId, events);
+    const result = await replaceEvents(athlete.intervalsIcuApiKey, athlete.intervalsIcuAthleteId, events, janela);
 
     if (!result.ok) {
       await recordIntervalsPush(athleteId, result.error);
@@ -106,10 +121,8 @@ export async function sendWeekToWatch(athleteId: string, weekId: string): Promis
 
 /** The week of a plan that covers today, or the first one still to come. */
 export async function currentOrNextWeekId(planId: string): Promise<string | null> {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
   const week = await prisma.trainingWeek.findFirst({
-    where: { planId, endDate: { gte: today } },
+    where: { planId, endDate: { gte: utcMidnight(new Date()) } },
     orderBy: { startDate: "asc" },
     select: { id: true },
   });
@@ -132,11 +145,8 @@ export async function removePlanFromWatch(athleteId: string, planId: string): Pr
     });
     if (!athlete?.intervalsIcuApiKey || !athlete.intervalsIcuAthleteId) return 0;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const sessions = await prisma.trainingSession.findMany({
-      where: { week: { planId, plan: { athleteId } }, date: { gte: today } },
+      where: { week: { planId, plan: { athleteId } }, date: { gte: utcMidnight(new Date()) } },
       select: { id: true, date: true },
       orderBy: { date: "asc" },
     });

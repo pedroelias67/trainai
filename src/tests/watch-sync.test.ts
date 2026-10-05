@@ -27,6 +27,9 @@ const connected = {
 };
 
 const week = (over: Record<string, unknown> = {}) => ({
+  // Both ends: the calendar is made to match the week, so the send needs to
+  // know which days it is answering for.
+  startDate: new Date(Date.now() - 3 * 864e5),
   endDate: new Date(Date.now() + 3 * 864e5),
   planId: "p1",
   sessions: [{

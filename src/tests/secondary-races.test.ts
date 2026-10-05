@@ -252,3 +252,26 @@ describe("placeRaces — o dia seguinte a uma prova B", () => {
     expect(seguinte!.plannedDurationMin).toBe(30);
   });
 });
+
+describe("placeRaces — correr duas vezes não duplica nada", () => {
+  it("reconhece a prova que já lá está em vez de a substituir", () => {
+    // Foi assim que a mesma prova apareceu duas vezes no relógio no dia dela:
+    // a segunda passagem tratou a primeira como um treino a deslocar.
+    const primeira = placeRaces(bloco(), [prova("2026-10-11", "B")], PLAN_START);
+    const segunda = placeRaces(primeira.weeks, [prova("2026-10-11", "B")], PLAN_START);
+
+    const domingo = semana(segunda.weeks, 2).sessions.filter(s => s.dayOfWeek === 7);
+    expect(domingo).toHaveLength(1);
+    expect(domingo[0]).toMatchObject({ sessionType: "RACE" });
+    // E a semana não encolheu mais a cada passagem.
+    expect(semana(segunda.weeks, 2).sessions).toEqual(semana(primeira.weeks, 2).sessions);
+  });
+
+  it("é estável à terceira e à quarta", () => {
+    let weeks = bloco();
+    for (let i = 0; i < 4; i++) weeks = placeRaces(weeks, [prova("2026-10-04", "C")], PLAN_START).weeks;
+    const estavel = placeRaces(weeks, [prova("2026-10-04", "C")], PLAN_START).weeks;
+    expect(estavel).toEqual(weeks);
+    expect(weeks.flatMap(w => w.sessions).filter(s => s.sessionType === "RACE")).toHaveLength(1);
+  });
+});

@@ -45,15 +45,23 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   inicio.setHours(0, 0, 0, 0);
   const fim = new Date(event.date);
   fim.setHours(23, 59, 59, 999);
-  const agora = new Date();
 
+  // Its session comes out first, and the race is only forgotten once it has.
+  //
+  // This used to swallow a failure here and delete the event anyway, which left
+  // a race nobody could see in the diary still sitting in the plan and on the
+  // watch — with no row left to explain where it came from.
   let removidas = 0;
   const semanas = new Set<string>();
   try {
     const sessoes = await prisma.trainingSession.findMany({
       where: {
         sessionType: "RACE",
-        date: { gte: inicio > agora ? inicio : agora, lte: fim },
+        // Not clamped to the future, which depended on the server's own clock
+        // and matched nothing on the very day it mattered. A race already run
+        // is protected by `completed` instead: that one is history.
+        completed: false,
+        date: { gte: inicio, lte: fim },
         week: { plan: { athleteId: athlete.id, status: "ACTIVE" } },
       },
       select: { id: true, weekId: true },
@@ -67,6 +75,10 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     }
   } catch (e) {
     Sentry.captureException(e, { tags: { stage: "event-delete-sessions" }, extra: { eventId: id } });
+    return NextResponse.json(
+      { error: "Não foi possível retirar a prova do plano, por isso não a apaguei. Tenta outra vez." },
+      { status: 502 }
+    );
   }
 
   await prisma.event.delete({ where: { id } });

@@ -171,7 +171,13 @@ export function placeRaces<W extends SkeletonWeek>(
       changes.push("Marcada como prova A, mas o plano já tem um objetivo principal — preparada como prova B.");
     }
 
-    if (temSemana) {
+    // A race already standing on its own day is this race, put there by an
+    // earlier pass. Treating it as an occupant to be displaced is how the same
+    // race came to be entered twice: the first one cancelled, a second created,
+    // and both left on the athlete's watch on the morning of the race.
+    const jaColocada = plano.some(p => p.date === dia && p.session.sessionType === "RACE");
+
+    if (temSemana && !jaColocada) {
       const substituidas = plano.filter(p => p.date === dia);
       plano = plano.filter(p => p.date !== dia);
       if (substituidas.length > 0) {
