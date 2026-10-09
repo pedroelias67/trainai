@@ -102,6 +102,9 @@ model Athlete {
   garminUserId     String?
   stravaConnected  Boolean   @default(false)
   stravaAthleteId  String?
+  /// Whose Strava this is. Shown back to the athlete, because one of them
+  /// authorised a different person's account and nothing could have told him.
+  stravaAthleteName String?
   stravaAccessToken  String?
   stravaRefreshToken String?
   stravaTokenExpiry  DateTime?

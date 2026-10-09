@@ -8,6 +8,7 @@ import { DeleteAccount } from "@/components/dashboard/DeleteAccount";
 import { WatchCompatibility } from "@/components/dashboard/WatchCompatibility";
 import { IntervalsConnect } from "@/components/dashboard/IntervalsConnect";
 import { RacesCard } from "@/components/dashboard/RacesCard";
+import { StravaConnection } from "@/components/dashboard/StravaConnection";
 import { getSessionUserId } from "@/lib/session";
 
 const fitnessLabels: Record<string, string> = {
@@ -131,24 +132,11 @@ export default async function ProfilePage() {
         {/* Strava */}
         <div className="card">
           <h2 className="font-semibold text-[var(--text-primary)] mb-4">Integrações</h2>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <svg viewBox="0 0 24 24" className="w-8 h-8 fill-orange-400 shrink-0">
-                <path d="M15.387 17.944l-2.089-4.116h-3.065L15.387 24l5.15-10.172h-3.066m-7.008-5.599l2.836 5.598h4.172L10.463 0l-7 13.828h4.169" />
-              </svg>
-              <div>
-                <p className="text-[var(--text-primary)] text-sm font-medium">Strava</p>
-                <p className="text-[var(--text-muted)] text-xs">
-                  {athlete.stravaConnected ? "Conectado · sincronização automática ativa" : "Não conectado"}
-                </p>
-              </div>
-            </div>
-            {athlete.stravaConnected ? (
-              <span className="text-green-400 text-xs font-medium bg-green-500/10 border border-green-500/20 px-3 py-1 rounded-full">✓ Ativo</span>
-            ) : (
-              <Link href="/api/strava/connect" className="btn-primary text-xs py-2">Conectar</Link>
-            )}
-          </div>
+          <StravaConnection
+            connected={athlete.stravaConnected}
+            athleteName={athlete.stravaAthleteName}
+            athleteId={athlete.stravaAthleteId}
+          />
           <IntervalsConnect connected={!!athlete.intervalsIcuApiKey} />
 
           <div className="mt-4">

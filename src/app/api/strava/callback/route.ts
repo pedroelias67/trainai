@@ -33,6 +33,8 @@ export async function GET(req: NextRequest) {
       data: {
         stravaConnected: true,
         stravaAthleteId: String(tokens.athlete.id),
+        stravaAthleteName: [tokens.athlete.firstname, tokens.athlete.lastname]
+          .filter(Boolean).join(" ").trim() || null,
         stravaAccessToken: tokens.access_token,
         stravaRefreshToken: tokens.refresh_token,
         stravaTokenExpiry: new Date(tokens.expires_at * 1000),
