@@ -49,6 +49,8 @@ export default async function EditPlanPage() {
           initialPreferredDays={athlete.preferredDays ?? []}
           eventId={activePlan?.event.id ?? ""}
           eventName={activePlan?.event.name ?? ""}
+          initialGoalType={activePlan?.event.goalType ?? "FINISH"}
+          initialGoalTime={activePlan?.event.goalTime ?? ""}
           hasPlan={!!activePlan}
         />
       </main>

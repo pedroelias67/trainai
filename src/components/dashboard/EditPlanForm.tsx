@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { GOAL_TYPES } from "@/lib/race-options";
 
 // 1=Segunda ... 6=Sábado, 7=Domingo
 const DAYS_OF_WEEK = ["Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado", "Domingo"];
@@ -22,12 +23,14 @@ interface Props {
   initialPreferredDays: number[];
   eventId: string;
   eventName: string;
+  initialGoalType: string;
+  initialGoalTime: string;
   hasPlan: boolean;
 }
 
 export function EditPlanForm({
   initialDays, initialLongRunDay, initialWeeklyHours, initialFitnessLevel,
-  initialPreferredDays, eventId, eventName, hasPlan,
+  initialPreferredDays, eventId, eventName, initialGoalType, initialGoalTime, hasPlan,
 }: Props) {
   const router = useRouter();
   const [days, setDays] = useState(initialDays);
@@ -35,6 +38,8 @@ export function EditPlanForm({
   const [weeklyHours, setWeeklyHours] = useState(initialWeeklyHours);
   const [fitnessLevel, setFitnessLevel] = useState(initialFitnessLevel);
   const [preferredDays, setPreferredDays] = useState<number[]>(initialPreferredDays);
+  const [goalType, setGoalType] = useState(initialGoalType);
+  const [goalTime, setGoalTime] = useState(initialGoalTime);
 
   function toggleDay(day: number) {
     setPreferredDays(prev => {
@@ -58,11 +63,34 @@ export function EditPlanForm({
    * alone. Regenerating for a change of calendar throws away the progression
    * built so far, which is a steep price for "I now train on Tuesdays".
    */
+  /**
+   * Saves the goal, which lives on the race rather than the athlete.
+   *
+   * Done on both paths. The goal only reshapes the plan when it is regenerated,
+   * but an athlete who typed a target time and pressed the other button should
+   * not find it gone afterwards.
+   */
+  async function guardarObjetivo() {
+    if (!eventId) return;
+    if (goalType === initialGoalType && goalTime === initialGoalTime) return;
+    const res = await fetch(`/api/athletes/events/${eventId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ goalType, goalTime }),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => null);
+      throw new Error(data?.error ?? "Erro ao guardar o objetivo");
+    }
+  }
+
   async function handleReschedule() {
     setRescheduling(true);
     setError("");
     setDone(null);
     try {
+      await guardarObjetivo();
+
       const res = await fetch("/api/training-plans/reschedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -90,6 +118,8 @@ export function EditPlanForm({
     setError("");
 
     try {
+      await guardarObjetivo();
+
       // 1. Save preferences to athlete profile
       const profileRes = await fetch("/api/athletes/profile", {
         method: "PUT",
@@ -136,6 +166,46 @@ export function EditPlanForm({
             <p className="text-xs text-[var(--text-muted)] uppercase tracking-widest">Evento alvo</p>
             <p className="text-[var(--text-primary)] font-medium text-sm">{eventName}</p>
           </div>
+        </div>
+      )}
+
+      {eventName && (
+        <div className="card">
+          <label className="label">O que queres desta prova?</label>
+          <p className="text-[var(--text-muted)] text-xs mb-3">
+            Os ritmos do plano são escritos a partir daqui. Sem um tempo alvo, o plano é construído
+            para te levar ao fim do percurso.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {GOAL_TYPES.map(g => (
+              <button
+                key={g.value}
+                type="button"
+                onClick={() => setGoalType(g.value)}
+                className={`text-sm px-4 py-2 rounded-xl border transition-all ${
+                  goalType === g.value
+                    ? "border-[var(--border-strong)] bg-[var(--surface-2)] text-[var(--text-primary)]"
+                    : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-hover)]"
+                }`}
+              >
+                {g.label}
+              </button>
+            ))}
+          </div>
+          {goalType === "TIME" && (
+            <input
+              value={goalTime}
+              onChange={e => setGoalTime(e.target.value)}
+              placeholder="50:00 ou 1:45:00"
+              className="mt-3 w-40 px-3 py-2 rounded-xl bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-primary)] text-sm outline-none focus:border-[var(--border-strong)]"
+            />
+          )}
+          {goalType !== initialGoalType || goalTime !== initialGoalTime ? (
+            <p className="mt-3 text-xs text-[var(--text-secondary)]">
+              Guardado com qualquer um dos botões abaixo. Para o plano ser reescrito com este
+              objetivo, gera um plano novo.
+            </p>
+          ) : null}
         </div>
       )}
 
