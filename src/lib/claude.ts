@@ -3,6 +3,7 @@ import { inferThresholdPace, zonePaceTable } from "./intervals-icu";
 import { raceGuidance } from "./race-distances";
 import { recentTrainingGuidance, type RecentTraining } from "./recent-training";
 import { secondaryRaceGuidance, upcomingRaceGuidance, type SecondaryRace } from "./secondary-races";
+import { thresholdGuidance, type ThresholdPace } from "./threshold-pace";
 
 export const claude = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -41,6 +42,8 @@ export interface TrainingPlanRequest {
   weeksToGenerate?: number;
   /** The other races in the diary, so the plan is written around them. */
   secondaryRaces?: SecondaryRace[];
+  /** What the plan's paces are built from — measured, derived or estimated. */
+  threshold?: ThresholdPace;
 }
 
 export interface WeeklyAnalysisRequest {
@@ -245,6 +248,7 @@ Objetivo: ${request.event.goalType}${request.event.goalTime ? ` em ${request.eve
 Data de hoje: ${request.currentDate} | Semanas disponíveis: ${request.weeksUntilEvent}
 
 ${calendarRules(request.athlete)}
+${request.threshold ? thresholdGuidance(request.threshold) : ""}
 ${raceGuidance(request.event.distance)}
 ${recentTrainingGuidance(request.recentTraining ?? null)}
 ${secondaryRaceGuidance(request.secondaryRaces ?? [])}

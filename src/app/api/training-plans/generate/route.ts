@@ -10,6 +10,7 @@ import { generatePlanSkeleton, detailSessions } from "@/lib/claude";
 import { capLongRun } from "@/lib/race-distances";
 import { linkTrainedSessions } from "@/lib/link-activities";
 import { summariseRecentTraining } from "@/lib/recent-training";
+import { estimateThresholdPace } from "@/lib/threshold-pace";
 import { otherRacesInPlan, placeRaces } from "@/lib/secondary-races";
 import { weekVolume } from "@/lib/week-volume";
 import {
@@ -83,6 +84,23 @@ export async function POST(req: NextRequest) {
     });
     const recentTraining = summariseRecentTraining(recentActivities);
 
+    // The paces of the whole plan hang off this. Without it the model invented
+    // them, and invented them slow: an athlete racing 10 km at 4:55 was given
+    // easy runs at 7:00. Measured, derived from his races, or — for somebody
+    // with nothing on record yet — estimated from level and age, and said to be
+    // an estimate.
+    const marcas = await prisma.personalRecord.findMany({
+      where: { athleteId: athlete.id },
+      select: { distance: true, timeSeconds: true, date: true },
+    });
+    const limiar = estimateThresholdPace({
+      declared: athlete.ltPace,
+      records: marcas,
+      fitnessLevel: athlete.fitnessLevel,
+      age,
+      gender: athlete.gender,
+    });
+
     // The races along the way — a 10K next month, a club half in six weeks. The
     // model is told about them, and placeRaces below holds it to what it was told.
     const outrasProvas = await otherRacesInPlan(athlete.id, event.id, utcMidnight(today), event.date);
@@ -116,6 +134,7 @@ export async function POST(req: NextRequest) {
       weeksUntilEvent,
       recentTraining,
       secondaryRaces: outrasProvas,
+      threshold: limiar,
       // Only the horizon is written now; the Monday job tops it up each week, so
       // a plan for an event months away costs the same to create as a short one.
       weeksToGenerate: Math.min(weeksUntilEvent, HORIZON_WEEKS),
