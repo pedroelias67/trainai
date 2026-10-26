@@ -56,3 +56,25 @@ export const PRIORITIES = [
     help: "Sem aliviar nada. Ocupa o lugar do treino duro dessa semana, em vez de se somar a ele.",
   },
 ];
+
+/**
+ * What the athlete is running the race for.
+ *
+ * Asked for every race, not only the main one: a B race run for a time is
+ * prepared differently from one run to be finished, and the plan's paces are
+ * built from the answer. The add-a-race form did not ask at all, so a race
+ * created there was silently stored as "finish".
+ */
+export const GOAL_TYPES = [
+  { value: "FINISH", label: "Terminar", help: "Chegar ao fim, sem tempo em mente." },
+  { value: "TIME", label: "Fazer um tempo", help: "Tens uma marca em vista." },
+  { value: "PODIUM", label: "Pódio", help: "Vais a lugar." },
+];
+
+/** "00:50:00" → "50:00", which is how a time is spoken. */
+export function formatGoalTime(goalTime: string | null): string | null {
+  if (!goalTime) return null;
+  const partes = goalTime.split(":");
+  if (partes.length === 3 && partes[0] === "00") return `${Number(partes[1])}:${partes[2]}`;
+  return goalTime;
+}

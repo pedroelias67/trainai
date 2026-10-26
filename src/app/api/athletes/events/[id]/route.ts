@@ -3,6 +3,8 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getSessionUserId } from "@/lib/session";
+import { z } from "zod";
+import { GoalType } from "@prisma/client";
 import { sendWeekToWatch } from "@/lib/watch-sync";
 import * as Sentry from "@sentry/nextjs";
 
@@ -86,4 +88,67 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   for (const weekId of semanas) await sendWeekToWatch(athlete.id, weekId);
 
   return NextResponse.json({ ok: true, removedSessions: removidas });
+}
+
+const objetivoSchema = z.object({
+  goalType: z.nativeEnum(GoalType, { errorMap: () => ({ message: "Tipo de objetivo inválido" }) }),
+  goalTime: z
+    .string()
+    .regex(/^\d{1,2}:\d{2}(:\d{2})?$/, "Tempo alvo deve ser no formato H:MM:SS ou MM:SS")
+    .optional()
+    .or(z.literal("")),
+});
+
+/**
+ * Changes what the athlete is aiming for in a race.
+ *
+ * There was no way to change anything about a race once entered. The form that
+ * adds one did not ask for a goal at all, so a race created there was stored as
+ * "finish" with no target time — and the plan written for it was shaped for
+ * finishing. The athlete could not correct it: the race cannot be deleted while
+ * a plan points at it, and nothing else could edit it.
+ *
+ * Only the goal. Moving a race, or changing its distance, means moving the
+ * sessions written around it, which is a different piece of work.
+ */
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const userId = await getSessionUserId();
+  if (!userId) return NextResponse.json({ error: "Não autenticado" }, { status: 401 });
+
+  const { id } = await params;
+  const parsed = objetivoSchema.safeParse(await req.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Dados inválidos" },
+      { status: 400 }
+    );
+  }
+  const { goalType, goalTime } = parsed.data;
+  if (goalType === "TIME" && !goalTime) {
+    return NextResponse.json({ error: "Indica o tempo que queres fazer" }, { status: 400 });
+  }
+
+  const athlete = await prisma.athlete.findUnique({ where: { userId }, select: { id: true } });
+  if (!athlete) return NextResponse.json({ error: "Atleta não encontrado" }, { status: 404 });
+
+  const event = await prisma.event.findUnique({
+    where: { id },
+    select: { athleteId: true, trainingPlans: { where: { status: "ACTIVE" }, select: { id: true }, take: 1 } },
+  });
+  if (!event || event.athleteId !== athlete.id) {
+    return NextResponse.json({ error: "Prova não encontrada" }, { status: 404 });
+  }
+
+  await prisma.event.update({
+    where: { id },
+    data: { goalType, goalTime: goalType === "TIME" ? goalTime || null : null },
+  });
+
+  // The plan in force was written for the old goal, and a goal is what the
+  // paces are built from. Said rather than done: regenerating is the athlete's
+  // decision, and it archives the block they are training.
+  return NextResponse.json({
+    ok: true,
+    planNeedsRegenerating: event.trainingPlans.length > 0,
+  });
 }

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
-import { DISTANCES, DISTANCE_LABELS, PRIORITIES, SPORTS } from "@/lib/race-options";
+import { DISTANCES, DISTANCE_LABELS, formatGoalTime, GOAL_TYPES, PRIORITIES, SPORTS } from "@/lib/race-options";
 
 export type Race = {
   id: string;
@@ -13,6 +13,8 @@ export type Race = {
   sport: string;
   distance: string;
   priority: string;
+  goalType: string;
+  goalTime: string | null;
   /** A race a plan was built for. It cannot be removed without the plan going first. */
   hasPlans: boolean;
 };
@@ -37,6 +39,8 @@ export function RacesCard({ races, targetEventId }: { races: Race[]; targetEvent
   const [error, setError] = useState<string | null>(null);
   const [nota, setNota] = useState<string[] | null>(null);
   const [apagar, setApagar] = useState<string | null>(null);
+  const [editar, setEditar] = useState<string | null>(null);
+  const [objetivo, setObjetivo] = useState({ goalType: "FINISH", goalTime: "" });
 
   const [form, setForm] = useState({
     name: "",
@@ -71,6 +75,32 @@ export function RacesCard({ races, targetEventId }: { races: Race[]; targetEvent
       );
       setForm({ ...form, name: "", date: "", goalTime: "" });
       setAberto(false);
+      router.refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Erro inesperado");
+    } finally {
+      setWorking(false);
+    }
+  }
+
+  async function gravarObjetivo(id: string) {
+    setWorking(true);
+    setError(null);
+    setNota(null);
+    try {
+      const res = await fetch(`/api/athletes/events/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(objetivo),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) throw new Error(data?.error ?? `Erro ao gravar (${res.status})`);
+      setNota(
+        data?.planNeedsRegenerating
+          ? ["Objetivo guardado. O plano em curso foi escrito para o objetivo anterior — os ritmos saem daqui, por isso vale a pena regenerá-lo em Preferências de treino."]
+          : ["Objetivo guardado."]
+      );
+      setEditar(null);
       router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Erro inesperado");
@@ -137,6 +167,62 @@ export function RacesCard({ races, targetEventId }: { races: Race[]; targetEvent
             {format(new Date(race.date), "d 'de' MMMM 'de' yyyy", { locale: pt })}
             {DISTANCE_LABELS[race.distance] ? ` · ${DISTANCE_LABELS[race.distance]}` : ""}
           </p>
+          {!passada && (
+            <p className="text-[var(--text-muted)] text-xs mt-0.5">
+              {race.goalType === "TIME" && race.goalTime
+                ? <>Objetivo: <strong className="text-[var(--text-secondary)] font-medium">{formatGoalTime(race.goalTime)}</strong></>
+                : race.goalType === "PODIUM"
+                ? "Objetivo: pódio"
+                : "Objetivo: terminar"}
+              {" · "}
+              <button
+                onClick={() => {
+                  setEditar(editar === race.id ? null : race.id);
+                  setObjetivo({ goalType: race.goalType, goalTime: race.goalTime ?? "" });
+                  setNota(null);
+                  setError(null);
+                }}
+                className="underline underline-offset-2 hover:text-[var(--text-secondary)]"
+              >
+                {editar === race.id ? "fechar" : "alterar"}
+              </button>
+            </p>
+          )}
+
+          {editar === race.id && (
+            <div className="mt-2 space-y-2">
+              <div className="flex flex-wrap gap-1.5">
+                {GOAL_TYPES.map(g => (
+                  <button
+                    key={g.value}
+                    onClick={() => setObjetivo({ ...objetivo, goalType: g.value })}
+                    className={`text-[11px] px-2 py-1 rounded-lg border transition-all ${
+                      objetivo.goalType === g.value
+                        ? "border-[var(--border-strong)] bg-[var(--surface-2)] text-[var(--text-primary)]"
+                        : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-hover)]"
+                    }`}
+                  >
+                    {g.label}
+                  </button>
+                ))}
+              </div>
+              {objetivo.goalType === "TIME" && (
+                <input
+                  value={objetivo.goalTime}
+                  onChange={e => setObjetivo({ ...objetivo, goalTime: e.target.value })}
+                  placeholder="50:00 ou 1:45:00"
+                  className="w-32 px-2 py-1 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-primary)] text-xs outline-none"
+                />
+              )}
+              <button
+                onClick={() => gravarObjetivo(race.id)}
+                disabled={working}
+                className="block text-[11px] px-2.5 py-1 rounded-lg bg-[var(--accent)] text-white disabled:opacity-50"
+              >
+                {working ? "A guardar…" : "Guardar objetivo"}
+              </button>
+            </div>
+          )}
         </div>
 
         {podeApagar && (
@@ -264,6 +350,37 @@ export function RacesCard({ races, targetEventId }: { races: Race[]; targetEvent
               onChange={e => setForm({ ...form, date: e.target.value })}
               className="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-primary)] text-sm outline-none"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs text-[var(--text-muted)] mb-2">O que queres desta prova?</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {GOAL_TYPES.map(g => (
+                <button
+                  key={g.value}
+                  type="button"
+                  onClick={() => setForm({ ...form, goalType: g.value })}
+                  className={`text-xs px-3 py-1.5 rounded-lg border transition-all ${
+                    form.goalType === g.value
+                      ? "border-[var(--border-strong)] bg-[var(--surface-2)] text-[var(--text-primary)]"
+                      : "border-[var(--border)] text-[var(--text-muted)] hover:border-[var(--border-hover)]"
+                  }`}
+                >
+                  {g.label}
+                </button>
+              ))}
+            </div>
+            {form.goalType === "TIME" && (
+              <input
+                value={form.goalTime}
+                onChange={e => setForm({ ...form, goalTime: e.target.value })}
+                placeholder="50:00 ou 1:45:00"
+                className="w-full px-3 py-2 rounded-lg bg-[var(--surface-2)] border border-[var(--border)] text-[var(--text-primary)] text-sm outline-none"
+              />
+            )}
+            <p className="text-[11px] text-[var(--text-muted)] mt-1.5">
+              {GOAL_TYPES.find(g => g.value === form.goalType)?.help} Os ritmos do plano saem daqui.
+            </p>
           </div>
 
           <div>

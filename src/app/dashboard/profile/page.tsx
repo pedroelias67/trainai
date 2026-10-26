@@ -153,6 +153,8 @@ export default async function ProfilePage() {
             sport: event.sport,
             distance: event.distance,
             priority: event.priority,
+            goalType: event.goalType,
+            goalTime: event.goalTime,
             hasPlans: event._count.trainingPlans > 0,
           }))}
           targetEventId={athlete.trainingPlans[0]?.eventId ?? null}
