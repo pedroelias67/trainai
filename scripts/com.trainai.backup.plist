@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Cópia de segurança noturna, às 03:15.
+
+  Instalar (uma vez):
+    cp scripts/com.trainai.backup.plist ~/Library/LaunchAgents/
+    launchctl load ~/Library/LaunchAgents/com.trainai.backup.plist
+
+  Correr já, para confirmar:
+    launchctl start com.trainai.backup
+    tail -20 ~/Backups/trainai/backup.log
+
+  Desinstalar:
+    launchctl unload ~/Library/LaunchAgents/com.trainai.backup.plist
+
+  Se o Mac estiver desligado à hora marcada, o launchd corre a tarefa assim que
+  ele voltar — é essa a diferença para uma entrada no cron, que simplesmente
+  perderia a noite.
+
+  Antes de instalar é preciso a chave de cifra:
+    mkdir -p ~/.config/trainai
+    age-keygen -o ~/.config/trainai/backup-key.txt
+    chmod 600 ~/.config/trainai/backup-key.txt
+  E guardar uma cópia desse ficheiro fora do Mac. Sem ele as cópias não abrem.
+-->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.trainai.backup</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-lc</string>
+    <string>/Users/pedroelias/Documents/PlataformaTreinos/scripts/backup-db.sh</string>
+  </array>
+
+  <key>StartCalendarInterval</key>
+  <dict>
+    <key>Hour</key><integer>3</integer>
+    <key>Minute</key><integer>15</integer>
+  </dict>
+
+  <!-- Apanha a noite perdida quando o Mac esteve desligado. -->
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>/Users/pedroelias/Backups/trainai/backup.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/pedroelias/Backups/trainai/backup.log</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <!-- O launchd não carrega o PATH da shell; pg_dump e age vivem aqui. -->
+    <key>PATH</key>
+    <string>/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <key>LC_ALL</key>
+    <string>C</string>
+  </dict>
+</dict>
+</plist>

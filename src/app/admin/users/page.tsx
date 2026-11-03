@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { LogoFull } from "@/components/ui/Logo";
 import Link from "next/link";
+import { BackupButton } from "@/components/admin/BackupButton";
 
 type AccountStatus = {
   suspended: boolean;
@@ -782,6 +783,10 @@ export default function AdminUsersPage() {
             <div className="mb-6">
               <h1 className="text-2xl font-bold text-[var(--text-primary)]">Estatísticas</h1>
               <p className="text-[var(--text-muted)] text-sm mt-0.5">Visão geral da plataforma</p>
+            </div>
+
+            <div className="mb-6">
+              <BackupButton />
             </div>
 
             {statsLoading || !stats ? (
