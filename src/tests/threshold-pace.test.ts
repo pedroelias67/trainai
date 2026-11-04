@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
-  estimateThresholdPace, formatPace, thresholdGuidance, thresholdPaceFromVdot,
+  estimateThresholdPace, formatPace, nameForSessionType, paceForSessionType,
+  thresholdGuidance, thresholdPaceFromVdot,
 } from "@/lib/threshold-pace";
 
 const now = new Date("2026-10-26T12:00:00Z");
@@ -101,5 +102,39 @@ describe("thresholdGuidance", () => {
     const texto = thresholdGuidance(estimateThresholdPace({ fitnessLevel: "BEGINNER" }, now));
     expect(texto).toContain("ponto de partida");
     expect(texto).toContain("conservadora");
+  });
+});
+
+describe("quando a adaptação muda o tipo de uma sessão", () => {
+  it("dá-lhe o ritmo do tipo novo, não o do antigo", () => {
+    // O defeito: intervalos convertidos para fácil ficavam a 4:38/km, com a
+    // nota do treinador a mandar correr abaixo de 142 bpm na mesma sessão.
+    const limiar = 300; // 5:00/km
+    expect(paceForSessionType("EASY", limiar)).toBe("6:30/km");
+    expect(paceForSessionType("RECOVERY", limiar)).toBe("7:00/km");
+    expect(paceForSessionType("LONG", limiar)).toBe("6:25/km");
+    expect(paceForSessionType("TEMPO", limiar)).toBe("5:00/km");
+    expect(paceForSessionType("INTERVALS", limiar)).toBe("4:40/km");
+  });
+
+  it("não inventa ritmo para o que não tem ritmo próprio", () => {
+    expect(paceForSessionType("RACE", 300)).toBeNull();
+    expect(paceForSessionType("STRENGTH", 300)).toBeNull();
+    expect(paceForSessionType("SWIM", 300)).toBeNull();
+  });
+
+  it("dá-lhe um nome que diz o que a sessão passou a ser", () => {
+    // "[Adaptado] Intervalos 10K — 4x1200m" para algo que já não tem
+    // intervalos nenhuns é o que se lê no relógio, e está errado.
+    expect(nameForSessionType("EASY")).toBe("[Adaptado] Corrida Fácil Z2");
+    expect(nameForSessionType("RECOVERY")).toBe("[Adaptado] Corrida de Recuperação Z1");
+    expect(nameForSessionType("RACE")).toBeNull();
+  });
+
+  it("um fácil convertido fica mesmo mais lento do que o limiar", () => {
+    const limiar = 300;
+    const facil = paceForSessionType("EASY", limiar)!;
+    const segundos = Number(facil.split(":")[0]) * 60 + Number(facil.split(":")[1].slice(0, 2));
+    expect(segundos).toBeGreaterThan(limiar);
   });
 });

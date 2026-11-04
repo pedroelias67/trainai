@@ -561,6 +561,21 @@ export async function replaceEvents(
   return pushEvents(apiKey, athleteId, events);
 }
 
+/**
+ * Markers the app puts in a session's name for its own screens.
+ *
+ * "[Adaptado]" tells the athlete, in the app, that the weekly adaptation
+ * changed this session. On a watch it is noise: you are at the door about to
+ * run, the screen has room for a few words, and two of them are a bracket and
+ * a participle. What changed and why is in the app, where there is room to
+ * read it.
+ */
+const MARCAS_INTERNAS = /^\s*\[(Adaptado|Modificado)\]\s*/i;
+
+export function nameForWatch(name: string): string {
+  return name.replace(MARCAS_INTERNAS, "").trim() || name.trim();
+}
+
 export function buildCalendarEvent(
   session: PlannedSession,
   thresholdSecPerKm: number | null = null
@@ -573,7 +588,7 @@ export function buildCalendarEvent(
     category: "WORKOUT",
     start_date_local: startLocal,
     type: SPORT_TO_TYPE[session.sport] ?? "Run",
-    name: session.name,
+    name: nameForWatch(session.name),
     description: buildWorkoutDescription(session, thresholdSecPerKm),
     // Lets a re-push update the same event instead of duplicating it.
     external_id: `trainai-${session.id}`,

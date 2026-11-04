@@ -13,6 +13,7 @@ import {
   zoneToPaceTarget,
   retargetToPace,
   type PlannedSession,
+  nameForWatch,
 } from "@/lib/intervals-icu";
 
 const base: PlannedSession = {
@@ -456,5 +457,25 @@ describe("buildCalendarEvent", () => {
 
   it("keys the event on the session so re-pushing updates rather than duplicates", () => {
     expect(buildCalendarEvent(base).external_id).toBe(buildCalendarEvent({ ...base, name: "Outro nome" }).external_id);
+  });
+});
+
+describe("nameForWatch", () => {
+  it("tira a marca interna que só serve na app", () => {
+    // No relógio lê-se o nome e pouco mais; "[Adaptado]" gasta duas palavras
+    // a dizer algo que só faz sentido com o ecrã da app à frente.
+    expect(nameForWatch("[Adaptado] Corrida Fácil Z2")).toBe("Corrida Fácil Z2");
+    expect(nameForWatch("[adaptado]  Longo Aeróbico")).toBe("Longo Aeróbico");
+    expect(nameForWatch("[Modificado] Tempo Contínuo")).toBe("Tempo Contínuo");
+  });
+
+  it("deixa em paz um nome normal", () => {
+    expect(nameForWatch("Intervalos 1000m — Ritmo 10K")).toBe("Intervalos 1000m — Ritmo 10K");
+    // Parênteses retos no meio não são marca nossa.
+    expect(nameForWatch("Longo [progressivo]")).toBe("Longo [progressivo]");
+  });
+
+  it("nunca devolve um nome vazio", () => {
+    expect(nameForWatch("[Adaptado]")).toBe("[Adaptado]");
   });
 });

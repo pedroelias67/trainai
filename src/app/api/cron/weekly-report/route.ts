@@ -9,6 +9,7 @@ import { analyzeWeekAndAdapt, suggestSessionAdaptations, detailSessions } from "
 import { emailWeekReport } from "@/lib/weekly-report";
 import { orderByLongestWait } from "@/lib/report-queue";
 import { otherRacesInPlan } from "@/lib/secondary-races";
+import { estimateThresholdPace, nameForSessionType, paceForSessionType } from "@/lib/threshold-pace";
 import { sendWeekToWatch } from "@/lib/watch-sync";
 import * as Sentry from "@sentry/nextjs";
 import { startOfWeek, endOfWeek, subDays, startOfDay } from "date-fns";
@@ -269,6 +270,19 @@ export async function GET(req: NextRequest) {
           upcomingRaces: provas,
         });
 
+        // What the converted sessions' paces are rewritten against.
+        const marcas = await prisma.personalRecord.findMany({
+          where: { athleteId: athlete.id },
+          select: { distance: true, timeSeconds: true, date: true },
+        });
+        const limiar = estimateThresholdPace({
+          declared: athlete.ltPace,
+          records: marcas,
+          fitnessLevel: athlete.fitnessLevel,
+          age: athlete.dateOfBirth ? new Date().getFullYear() - athlete.dateOfBirth.getFullYear() : null,
+          gender: athlete.gender,
+        });
+
         for (const adj of adjustments) {
           const session = nextWeek.sessions.find(s => s.id === adj.sessionId);
           if (!session || adj.action === "keep") continue;
@@ -276,9 +290,22 @@ export async function GET(req: NextRequest) {
           if (session.sessionType === "RACE") continue;
           const update: Record<string, unknown> = {};
           if (adj.action === "convert_to_easy" || adj.convertToType) {
-            update.sessionType = adj.convertToType ?? "EASY";
-            update.name = `[Adaptado] ${session.name}`;
+            const tipo = adj.convertToType ?? "EASY";
+            update.sessionType = tipo;
             update.coachTip = adj.reason;
+            // The pace and the name move with the kind. Changing only the type
+            // left an easy run carrying an interval pace and an interval's
+            // name, contradicting the note explaining why it had been eased.
+            update.name = nameForSessionType(tipo) ?? `[Adaptado] ${session.name}`;
+            const ritmo = paceForSessionType(tipo, limiar.secondsPerKm);
+            if (ritmo) update.plannedPace = ritmo;
+            // The prose describes the session it used to be; it is written
+            // again when the athlete opens it.
+            update.shortDescription = null;
+            update.warmup = null;
+            update.mainSet = null;
+            update.cooldown = null;
+            update.steps = null;
           }
           if (adj.distanceMultiplier && session.plannedDistance)
             update.plannedDistance = Math.round(session.plannedDistance * adj.distanceMultiplier * 10) / 10;

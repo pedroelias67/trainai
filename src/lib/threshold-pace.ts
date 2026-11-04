@@ -153,3 +153,53 @@ export function thresholdGuidance(t: ThresholdPace): string {
   }
   return linhas.join("\n");
 }
+
+/** How far each kind of session sits from threshold, in seconds per kilometre. */
+const DESVIO_POR_TIPO: Record<string, number> = {
+  RECOVERY: 120,
+  EASY: 90,
+  LONG: 85,
+  TEMPO: 0,
+  INTERVALS: -20,
+};
+
+/**
+ * The pace a session of this kind should carry, given the athlete's threshold.
+ *
+ * Used when a session changes kind under the weekly adaptation. Converting an
+ * interval session to an easy run used to change its type, its name, its
+ * distance and its duration — and leave the interval pace on it. The athlete
+ * was handed a 6.8 km easy run with a 4:38/km target and a coach's note telling
+ * him to keep his heart rate under 142, all on the same screen and all on his
+ * watch.
+ *
+ * Null for kinds that have no pace of their own, such as a race or strength
+ * work, where whatever was there should be left alone.
+ */
+export function paceForSessionType(sessionType: string, thresholdSecPerKm: number): string | null {
+  const desvio = DESVIO_POR_TIPO[sessionType];
+  if (desvio === undefined) return null;
+  return `${formatPace(thresholdSecPerKm + desvio)}/km`;
+}
+
+/** What a session converted to this kind should be called. */
+const NOME_POR_TIPO: Record<string, string> = {
+  RECOVERY: "Corrida de Recuperação Z1",
+  EASY: "Corrida Fácil Z2",
+  LONG: "Longo Aeróbico Z2",
+  TEMPO: "Tempo Contínuo",
+  INTERVALS: "Intervalos",
+};
+
+/**
+ * A name that says what the session now is.
+ *
+ * It used to keep the old one behind a marker — "[Adaptado] Intervalos 10K —
+ * 4x1200m" for something that is no longer intervals and no longer 1200s. On a
+ * watch, where the name is most of what you see, that is simply wrong. What it
+ * replaced is still recorded, in the coach's note that explains the change.
+ */
+export function nameForSessionType(sessionType: string): string | null {
+  const nome = NOME_POR_TIPO[sessionType];
+  return nome ? `[Adaptado] ${nome}` : null;
+}
