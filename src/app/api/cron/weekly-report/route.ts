@@ -5,6 +5,7 @@ export const maxDuration = 300;
 
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { analyzeWeekAndAdapt, suggestSessionAdaptations, detailSessions } from "@/lib/claude";
 import { emailWeekReport } from "@/lib/weekly-report";
 import { orderByLongestWait } from "@/lib/report-queue";
@@ -305,7 +306,9 @@ export async function GET(req: NextRequest) {
             update.warmup = null;
             update.mainSet = null;
             update.cooldown = null;
-            update.steps = null;
+            // DbNull, not null: for a Json column the two are different values,
+            // and only one of them is an empty column.
+            update.steps = Prisma.DbNull;
           }
           if (adj.distanceMultiplier && session.plannedDistance)
             update.plannedDistance = Math.round(session.plannedDistance * adj.distanceMultiplier * 10) / 10;

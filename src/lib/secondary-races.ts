@@ -15,6 +15,7 @@
 //       hard session instead of being added on top of it.
 
 import { prisma } from "@/lib/prisma";
+import { Prisma } from "@prisma/client";
 import { RACE_KM } from "@/lib/race-distances";
 import { weekVolumeFromRows } from "@/lib/week-volume";
 
@@ -489,8 +490,13 @@ export async function applyRacesToPlan(athleteId: string, planId: string): Promi
           isPriority: nova.isPriority ?? false,
           // The prose describes a session that no longer exists; it is written
           // again when the athlete opens it.
+          //
+          // `steps` with it, which is the one that matters: the watch executes
+          // the structured steps, not the name. An interval session eased to a
+          // 4 km shakeout before a race kept its four 1200s, and the athlete
+          // got intervals on his wrist from a workout the app called easy.
           shortDescription: null, warmup: null, mainSet: null, cooldown: null,
-          coachTip: null, rpe: null, keyFocus: null,
+          coachTip: null, rpe: null, keyFocus: null, steps: Prisma.DbNull,
         },
       });
       resultado.updated++;
