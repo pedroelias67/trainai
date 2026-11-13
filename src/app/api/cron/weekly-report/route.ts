@@ -10,6 +10,7 @@ import { analyzeWeekAndAdapt, suggestSessionAdaptations, detailSessions } from "
 import { emailWeekReport } from "@/lib/weekly-report";
 import { orderByLongestWait } from "@/lib/report-queue";
 import { otherRacesInPlan } from "@/lib/secondary-races";
+import { garminSummaryForAdaptation, syncGarminDays } from "@/lib/garmin-sync";
 import { estimateThresholdPace, nameForSessionType, paceForSessionType } from "@/lib/threshold-pace";
 import { sendWeekToWatch } from "@/lib/watch-sync";
 import * as Sentry from "@sentry/nextjs";
@@ -249,9 +250,18 @@ export async function GET(req: NextRequest) {
           where: { athleteId: athlete.id, date: { gte: subDays(startOfDay(new Date()), 7) } },
           orderBy: { date: "desc" },
         });
-        const wellnessSummary = wellnessLogs.length > 0
-          ? wellnessLogs.map(l => `${l.date.toISOString().split("T")[0]}: sono=${l.sleepQuality ?? "?"}/5 fadiga=${l.fatigue ?? "?"}/5 humor=${l.mood ?? "?"}/5`).join("\n")
-          : "Sem dados de bem-estar";
+        const declarado = wellnessLogs.length > 0
+          ? "DECLARADO PELO ATLETA (escala 1-5):\n" + wellnessLogs.map(l => `- ${l.date.toISOString().split("T")[0]}: sono=${l.sleepQuality ?? "?"}/5 fadiga=${l.fatigue ?? "?"}/5 humor=${l.mood ?? "?"}/5`).join("\n")
+          : "";
+
+        // What the watch measured, for an athlete who linked one. Fetched first
+        // so the week being adjusted is read from fresh data rather than
+        // whatever was last pulled.
+        await syncGarminDays(athlete.id);
+        const medido = await garminSummaryForAdaptation(athlete.id);
+
+        const wellnessSummary = [medido, declarado].filter(Boolean).join("\n\n")
+          || "Sem dados de bem-estar";
 
         // A race inside the week being adjusted changes what the adjustments may
         // do: the easy days before it are deliberate, and the race is not a

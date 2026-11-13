@@ -7,6 +7,7 @@ import ThemeToggle from "@/components/dashboard/ThemeToggle";
 import { DeleteAccount } from "@/components/dashboard/DeleteAccount";
 import { WatchCompatibility } from "@/components/dashboard/WatchCompatibility";
 import { IntervalsConnect } from "@/components/dashboard/IntervalsConnect";
+import { GarminConnect } from "@/components/dashboard/GarminConnect";
 import { RacesCard } from "@/components/dashboard/RacesCard";
 import { StravaConnection } from "@/components/dashboard/StravaConnection";
 import { getSessionUserId } from "@/lib/session";
@@ -138,6 +139,11 @@ export default async function ProfilePage() {
             athleteId={athlete.stravaAthleteId}
           />
           <IntervalsConnect connected={!!athlete.intervalsIcuApiKey} />
+          <GarminConnect
+            connected={!!athlete.garminApiKey}
+            lastSyncAt={athlete.garminLastSyncAt?.toISOString() ?? null}
+            syncError={athlete.garminSyncError}
+          />
 
           <div className="mt-4">
             <WatchCompatibility />
