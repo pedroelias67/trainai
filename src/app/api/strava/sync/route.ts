@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getRecentStravaActivities, StravaAuthError } from "@/lib/strava";
+import { stravaId } from "@/lib/strava-ids";
 import { getValidStravaToken, recordStravaSync } from "@/lib/strava-connection";
 import { syncStravaActivity } from "@/lib/sync-activity";
 import { recalculatePersonalRecords } from "@/lib/personal-records";
@@ -23,7 +24,11 @@ export async function POST() {
     const afterTimestamp = Math.floor(Date.now() / 1000) - 28 * 24 * 60 * 60;
     const stravaActivities = await getRecentStravaActivities(accessToken, afterTimestamp);
     for (const sa of stravaActivities) {
-      await syncStravaActivity(String(sa.id), athlete.id, accessToken);
+      // id_str quando a Strava o manda: a partir de junho de 2027 o campo
+      // numérico já vem arredondado do JSON.parse.
+      const id = stravaId(sa);
+      if (!id) continue;
+      await syncStravaActivity(id, athlete.id, accessToken);
       synced++;
     }
     await recordStravaSync(athlete.id, null);

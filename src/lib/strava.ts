@@ -12,11 +12,13 @@ export interface StravaTokens {
   access_token: string;
   refresh_token: string;
   expires_at: number;
-  athlete: { id: number; firstname: string; lastname: string };
+  athlete: { id: number; id_str?: string; firstname: string; lastname: string };
 }
 
 export interface StravaActivity {
   id: number;
+  /** The same id as text. From June 2027 this is the only one safe to read. */
+  id_str?: string;
   name: string;
   type: string;
   sport_type: string;

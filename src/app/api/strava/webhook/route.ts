@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { StravaAuthError } from "@/lib/strava";
+import { idFromJsonText } from "@/lib/strava-ids";
 import { syncStravaActivity } from "@/lib/sync-activity";
 import { recalculatePersonalRecords } from "@/lib/personal-records";
 import * as Sentry from "@sentry/nextjs";
@@ -29,24 +30,48 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const event = await req.json().catch(() => null);
+  // Read as text and take the ids out of it by hand. The webhook payload has
+  // no id_str, and from June 2027 these are 64-bit: JSON.parse would round
+  // them before anything here could stringify them, and the activity would be
+  // filed under an id that does not exist.
+  const corpo = await req.text().catch(() => "");
+  if (!corpo) return NextResponse.json({ ok: true });
+
+  const event = (() => {
+    try {
+      return JSON.parse(corpo);
+    } catch {
+      return null;
+    }
+  })();
   if (!event) return NextResponse.json({ ok: true });
+
+  // Only the owner is needed to find the athlete; the object matters to an
+  // activity event and not to a deauthorisation, so it is required where it is
+  // used rather than here.
+  const ownerId = idFromJsonText(corpo, "owner_id");
+  if (!ownerId) return NextResponse.json({ ok: true });
+  const objectId = idFromJsonText(corpo, "object_id");
 
   // Strava wants a 200 within two seconds and retries up to three times without
   // one. Importing an activity — three Strava calls, then records — takes longer,
   // so the work runs after the response instead of before it.
-  after(() => handleEvent(event));
+  after(() => handleEvent(event, objectId, ownerId));
   return NextResponse.json({ ok: true });
 }
 
-async function handleEvent(event: {
-  object_type?: string;
-  aspect_type?: string;
-  object_id?: number | string;
-  owner_id?: number | string;
-  updates?: Record<string, unknown>;
-}) {
-  const stravaAthleteId = String(event.owner_id);
+async function handleEvent(
+  event: {
+    object_type?: string;
+    aspect_type?: string;
+    updates?: Record<string, unknown>;
+  },
+  // Taken from the raw body rather than from `event`, which is why they are
+  // passed in instead of read off it.
+  objectId: string | null,
+  ownerId: string
+) {
+  const stravaAthleteId = ownerId;
   const athlete = await prisma.athlete.findFirst({ where: { stravaAthleteId } });
   if (!athlete) return;
 
@@ -62,7 +87,8 @@ async function handleEvent(event: {
 
   try {
     const accessToken = await getValidStravaToken(athlete);
-    await syncStravaActivity(String(event.object_id), athlete.id, accessToken);
+    if (!objectId) return;
+    await syncStravaActivity(objectId, athlete.id, accessToken);
     await recordStravaSync(athlete.id, null);
   } catch (err) {
     await recordStravaSync(athlete.id, err).catch(() => {});

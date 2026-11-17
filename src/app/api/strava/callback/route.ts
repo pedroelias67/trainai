@@ -3,6 +3,7 @@ export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { exchangeStravaCode, STRAVA_STATE_COOKIE } from "@/lib/strava";
+import { stravaId } from "@/lib/strava-ids";
 import { getSessionUserId } from "@/lib/session";
 
 export async function GET(req: NextRequest) {
@@ -32,7 +33,7 @@ export async function GET(req: NextRequest) {
       where: { userId },
       data: {
         stravaConnected: true,
-        stravaAthleteId: String(tokens.athlete.id),
+        stravaAthleteId: stravaId(tokens.athlete) ?? String(tokens.athlete.id),
         stravaAthleteName: [tokens.athlete.firstname, tokens.athlete.lastname]
           .filter(Boolean).join(" ").trim() || null,
         stravaAccessToken: tokens.access_token,
