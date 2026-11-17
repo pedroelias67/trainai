@@ -1,3 +1,16 @@
+// AO ACRESCENTAR UMA TABELA: liga-lhe o Row-Level Security.
+//
+// O Supabase serve tudo o que está em `public` pela API pública, e a chave que
+// a abre vai no pacote do browser. O `prisma db push` cria tabelas sem RLS e
+// não avisa — foi assim que a GarminDay ficou quatro dias legível e apagável
+// por qualquer pessoa. A app não é afetada: liga-se como `postgres`, que tem
+// BYPASSRLS.
+//
+//   ALTER TABLE public."Nome" ENABLE ROW LEVEL SECURITY;
+//   REVOKE ALL ON public."Nome" FROM anon, authenticated;
+//
+// Para conferir depois de mexer no esquema: npx tsx scripts/check-rls.ts
+
 generator client {
   provider = "prisma-client-js"
 }
