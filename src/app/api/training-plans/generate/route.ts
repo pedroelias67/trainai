@@ -7,7 +7,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { currentOrNextWeekId, removePlanFromWatch, sendWeekToWatch } from "@/lib/watch-sync";
 import { generatePlanSkeleton, detailSessions } from "@/lib/claude";
+import * as Sentry from "@sentry/nextjs";
 import { capLongRun } from "@/lib/race-distances";
+import { capFirstWeek } from "@/lib/week-volume";
 import { linkTrainedSessions } from "@/lib/link-activities";
 import { summariseRecentTraining } from "@/lib/recent-training";
 import { estimateThresholdPace } from "@/lib/threshold-pace";
@@ -146,6 +148,22 @@ export async function POST(req: NextRequest) {
     // the model to it. A plan is written once and trained for weeks.
     for (const week of planData.weeks ?? []) {
       week.sessions = (week.sessions ?? []).map((s: any) => capLongRun(s, event.distance));
+    }
+
+    // And the same for where the block starts. The prompt gives the model the
+    // athlete's highest recent week and asks it to open near that; a block
+    // written in September opened at 48 km for someone whose best week in the
+    // previous month had been 40.3, then progressed correctly from a starting
+    // point that was already too high. Only the first week, only downwards —
+    // what follows is the model's progression and is left alone.
+    const inicio = capFirstWeek(planData.weeks ?? [], recentTraining?.peakKmPerWeek);
+    planData.weeks = inicio.weeks;
+    if (inicio.capped) {
+      Sentry.captureMessage("Plan: first week brought down to recent peak", {
+        level: "info",
+        tags: { stage: "generate" },
+        extra: { athleteId: athlete.id, ...inicio.capped },
+      });
     }
 
     // Enforce max sessions per week — priority: LONG > INTERVALS > TEMPO > STRENGTH > EASY > RECOVERY
