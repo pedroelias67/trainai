@@ -15,6 +15,7 @@ import { estimateThresholdPace, nameForSessionType, paceForSessionType } from "@
 import { sendWeekToWatch } from "@/lib/watch-sync";
 import * as Sentry from "@sentry/nextjs";
 import { startOfWeek, endOfWeek, subDays, startOfDay } from "date-fns";
+import { reviewWeek } from "@/lib/week-review";
 
 // No athlete is started after this point; the ones under way finish within the
 // 300s limit. Measured from the reports themselves, an athlete takes 45-95s.
@@ -194,24 +195,7 @@ export async function GET(req: NextRequest) {
           name: athlete.user.name ?? "Atleta",
           fitnessLevel: athlete.fitnessLevel,
         },
-        plannedSessions: week.sessions.map((s) => ({
-          name: s.name,
-          sport: s.sport,
-          sessionType: s.sessionType,
-          plannedDistance: s.plannedDistance ?? undefined,
-          plannedDuration: s.plannedDuration ?? undefined,
-          plannedPace: s.plannedPace ?? undefined,
-        })),
-        completedActivities: activities.map((a) => ({
-          name: a.name ?? a.sport,
-          sport: a.sport,
-          date: a.date.toISOString(),
-          distance: a.distance ? a.distance / 1000 : undefined,
-          duration: a.duration ? a.duration / 60 : undefined,
-          avgHR: a.avgHR ?? undefined,
-          avgPace: a.avgPace ?? undefined,
-          trainingLoad: a.trainingLoad ?? undefined,
-        })),
+      review: reviewWeek(week.sessions, activities),
         weekNumber: week.weekNumber,
         totalWeeks: week.plan.totalWeeks,
         eventName: week.plan.event.name,

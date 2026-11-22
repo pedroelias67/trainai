@@ -8,10 +8,14 @@ import { differenceInWeeks } from "date-fns";
 import { prisma } from "@/lib/prisma";
 import { analyzeWeekAndAdapt } from "@/lib/claude";
 import { sendWeeklyReportEmail } from "@/lib/email";
+import { reviewWeek } from "@/lib/week-review";
 
 const weekForReport = {
   id: true, weekNumber: true, startDate: true, endDate: true, totalDistance: true,
-  sessions: { select: { name: true, sport: true, sessionType: true, completed: true,
+  // id, date and activityId are the pairing: without them the analysis cannot
+  // be told which run was which session, and goes back to guessing by name.
+  sessions: { select: { id: true, date: true, name: true, sport: true, sessionType: true,
+    completed: true, activityId: true,
     plannedDistance: true, plannedDuration: true, plannedPace: true } },
   plan: {
     select: {
@@ -41,19 +45,7 @@ export async function generateWeekReport(weekId: string): Promise<{ created: boo
 
   const analysis = await analyzeWeekAndAdapt({
     athlete: { name: athlete.user.name ?? "Atleta", fitnessLevel: athlete.fitnessLevel },
-    plannedSessions: week.sessions.map(s => ({
-      name: s.name, sport: s.sport, sessionType: s.sessionType,
-      plannedDistance: s.plannedDistance ?? undefined,
-      plannedDuration: s.plannedDuration ?? undefined,
-      plannedPace: s.plannedPace ?? undefined,
-    })),
-    completedActivities: activities.map(a => ({
-      name: a.name ?? a.sport, sport: a.sport, date: a.date.toISOString(),
-      distance: a.distance ? a.distance / 1000 : undefined,
-      duration: a.duration ? a.duration / 60 : undefined,
-      avgHR: a.avgHR ?? undefined, avgPace: a.avgPace ?? undefined,
-      trainingLoad: a.trainingLoad ?? undefined,
-    })),
+      review: reviewWeek(week.sessions, activities),
     weekNumber: week.weekNumber,
     totalWeeks: week.plan.totalWeeks,
     eventName: week.plan.event.name,

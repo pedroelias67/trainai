@@ -4,6 +4,7 @@ import { raceGuidance } from "./race-distances";
 import { recentTrainingGuidance, type RecentTraining } from "./recent-training";
 import { secondaryRaceGuidance, upcomingRaceGuidance, type SecondaryRace } from "./secondary-races";
 import { thresholdGuidance, type ThresholdPace } from "./threshold-pace";
+import { formatWeekReview, type WeekReview } from "./week-review";
 
 export const claude = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY,
@@ -51,24 +52,13 @@ export interface WeeklyAnalysisRequest {
     name: string;
     fitnessLevel: string;
   };
-  plannedSessions: Array<{
-    name: string;
-    sport: string;
-    sessionType: string;
-    plannedDistance?: number;
-    plannedDuration?: number;
-    plannedPace?: string;
-  }>;
-  completedActivities: Array<{
-    name: string;
-    sport: string;
-    date: string;
-    distance?: number;
-    duration?: number;
-    avgHR?: number;
-    avgPace?: string;
-    trainingLoad?: number;
-  }>;
+  /**
+   * The week already reconciled: each session with its day, what was asked and
+   * what was run in its place. Two unpaired lists used to go instead, and the
+   * model matched them by name — so an interval session run as "Corrida
+   * matinal" was reported as not done.
+   */
+  review: WeekReview;
   weekNumber: number;
   totalWeeks: number;
   eventName: string;
@@ -86,11 +76,7 @@ ATLETA: ${request.athlete.name} (Nível: ${request.athlete.fitnessLevel})
 EVENTO: ${request.eventName} em ${request.eventDate}
 SEMANA: ${request.weekNumber} de ${request.totalWeeks} (${Math.round((request.weekNumber / request.totalWeeks) * 100)}% do plano concluído)
 
-TREINOS PLANEADOS:
-${JSON.stringify(request.plannedSessions, null, 2)}
-
-ATIVIDADES REALIZADAS:
-${JSON.stringify(request.completedActivities, null, 2)}
+${formatWeekReview(request.review)}
 
 Analisa:
 1. Cumprimento do plano (volume, intensidade, distribuição de zonas)
