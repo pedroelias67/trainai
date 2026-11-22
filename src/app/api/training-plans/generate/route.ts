@@ -13,7 +13,7 @@ import { capFirstWeek } from "@/lib/week-volume";
 import { linkTrainedSessions } from "@/lib/link-activities";
 import { summariseRecentTraining } from "@/lib/recent-training";
 import { estimateThresholdPace } from "@/lib/threshold-pace";
-import { otherRacesInPlan, placeRaces } from "@/lib/secondary-races";
+import { otherRacesInPlan, placeRaces, placeTargetRace } from "@/lib/secondary-races";
 import { weekVolume } from "@/lib/week-volume";
 import {
   planStartFrom, sessionDateFor, startsNextWeek, todayDayOfWeek, utcMidnight,
@@ -244,6 +244,16 @@ export async function POST(req: NextRequest) {
     // more than trainingDaysPerWeek. A race is not an optional session.
     const colocadas = placeRaces(planData.weeks, outrasProvas, planStart);
     planData.weeks = colocadas.weeks;
+
+    // And the race the block exists for. Pinned last, so nothing above can
+    // move it: the model had been putting a Saturday race on the Sunday,
+    // leaving a warm-up jog on race morning and a 10K the day after.
+    const alvo = placeTargetRace(
+      planData.weeks,
+      { name: event.name, date: event.date, distance: event.distance, sport: event.sport },
+      planStart
+    );
+    planData.weeks = alvo.weeks;
 
     // One plan is in force at a time: the dashboard and the plan page each take
     // "the" active plan, and a second one would make that an arbitrary choice.

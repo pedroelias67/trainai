@@ -543,3 +543,59 @@ export async function applyRacesToPlan(athleteId: string, planId: string): Promi
 
   return resultado;
 }
+
+/**
+ * Puts the plan's own race on the day it is actually run.
+ *
+ * Secondary races have been pinned to their dates since they existed; the
+ * target race — the one the whole block is built for — was left to the model,
+ * which puts it at the end of the week. For a race on a Saturday that means
+ * the plan hands the athlete a warm-up jog on race morning and a 10K the day
+ * after, and the watch says the same.
+ *
+ * No taper logic here: the plan's last weeks already are the taper. This only
+ * makes the day right, and clears whatever else the model left on it.
+ */
+export function placeTargetRace<W extends SkeletonWeek>(
+  weeks: W[],
+  race: { name: string; date: Date; distance: string; sport: string },
+  planStart: Date
+): { weeks: W[]; moved: boolean } {
+  if (weeks.length === 0) return { weeks, moved: false };
+
+  const inicio = meiaNoite(planStart);
+  const dia = meiaNoite(race.date);
+  const semana = Math.floor((dia - inicio) / (7 * DAY_MS)) + 1;
+  const diaDaSemana = Math.round((dia - (inicio + (semana - 1) * 7 * DAY_MS)) / DAY_MS) + 1;
+
+  const alvo = weeks.find(w => w.weekNumber === semana);
+  if (!alvo) return { weeks, moved: false };
+
+  const jaCerto =
+    alvo.sessions.some(s => s.sessionType === "RACE" && s.dayOfWeek === diaDaSemana) &&
+    !weeks.some(w => w.sessions.some(s => s.sessionType === "RACE" && (w !== alvo || s.dayOfWeek !== diaDaSemana)));
+  if (jaCerto) return { weeks, moved: false };
+
+  const corrida: SkeletonSession = {
+    ...(alvo.sessions.find(s => s.sessionType === "RACE") ?? {}),
+    dayOfWeek: diaDaSemana,
+    sport: race.sport,
+    sessionType: "RACE",
+    name: race.name,
+    plannedDistanceKm: RACE_KM[race.distance] ?? null,
+    isPriority: true,
+  } as SkeletonSession;
+
+  const refeitas = weeks.map(w => {
+    // Every other RACE the model wrote goes: there is one target race, and a
+    // second one on the wrong day is what this exists to remove.
+    let sessions = w.sessions.filter(s => s.sessionType !== "RACE");
+    if (w.weekNumber === semana) {
+      sessions = sessions.filter(s => s.dayOfWeek !== diaDaSemana);
+      sessions = [...sessions, corrida].sort((a, b) => a.dayOfWeek - b.dayOfWeek);
+    }
+    return { ...w, sessions } as W;
+  });
+
+  return { weeks: refeitas, moved: true };
+}
